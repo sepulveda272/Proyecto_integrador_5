@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIFEX - Funcionario ICA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="../../css/main.css">
+</head>
+<body>
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <span class="topbar-title">Funcionario ICA</span>
+        <span class="topbar-user">Juan David Sepulveda Rojas</span>
+        <button class="btn-salir">Salir</button>
+    </div>
+
+    <div class="layout">
+
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+            <div class="sidebar-logo">
+                <span class="icon">🌿</span>
+                <span>SIFEX</span>
+            </div>
+            <a class="nav-item" href="perfil.html"><span class="icon">👤</span> Perfil</a>
+            <a class="nav-item" href="observaciones.html"><span class="icon">🔎</span> Gestionar observaciones</a>
+            <a class="nav-item" href="solicitudes.html"><span class="icon">📩</span> Mis solicitudes</a>
+            <a class="nav-item" href="reportes.html"><span class="icon">📊</span> Reportes</a>
+            <div class="sidebar-bottom">
+                <button class="btn-hide-menu" id="toggleSidebar">← Ocultar menú</button>
+            </div>
+        </nav>
+
+        <!-- MAIN -->
+        <main class="main">
+            <div class="contenido-principal">
+                <div id="contenido">
+                    <div class="header">
+                        <h2>Observaciones</h2>
+                        <button class="btn-primary" onclick="abrirModalObs()">+ Agregar observación</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr><th>Fecha</th><th>Observación</th><th>Inspección</th><th>Acciones</th></tr>
+                        </thead>
+                        <tbody id="cuerpoTablaObs">
+                            <tr>
+                                <td>08/03/2026</td>
+                                <td>Le falta más agüita a esas plantas, papi. Echele ojo.</td>
+                                <td><span class="badge badge-calido">INS001</span></td>
+                                <td>
+                                    <button class="action-btn action-edit" title="Editar">✏️</button>
+                                    <button class="action-btn action-del"  title="Eliminar">🗑</button>
+                                    <button class="action-btn action-eye"  title="Ver">👁</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- MODAL: AGREGAR OBSERVACIÓN -->
+    <div class="modal-obs-overlay" id="modal-obs-overlay">
+        <div class="modal-obs-box">
+
+            <div class="modal-obs-head">
+                <div>
+                    <div class="modal-obs-titulo">Nueva observación</div>
+                    <div class="modal-obs-sub">Solo lugares con inspección completada</div>
+                </div>
+                <button class="modal-obs-close" onclick="cerrarModalObs()">✕</button>
+            </div>
+
+            <div class="modal-obs-body">
+
+                <label class="modal-obs-label">Lugar de producción</label>
+                <div id="lugares-obs-grid" class="lugares-obs-grid"></div>
+
+                <label class="modal-obs-label" style="margin-top:14px;">Observación *</label>
+                <textarea
+                    id="obs-textarea"
+                    class="obs-textarea"
+                    rows="3"
+                    disabled
+                    placeholder="Selecciona primero un lugar de producción...">
+                </textarea>
+
+            </div>
+
+            <div class="modal-obs-foot">
+                <span id="obs-counter" class="obs-counter"></span>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="cerrarModalObs()">Cancelar</button>
+                    <button class="btn btn-sm btn-success" id="btn-guardar-obs" disabled onclick="guardarObservacion()">
+                        Guardar observación
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="../../js/funcionario.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+</body>
+</html>

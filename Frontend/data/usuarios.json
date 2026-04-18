@@ -1,0 +1,14 @@
+{
+  "usuarios": [
+    {
+      "email": "admin@sifex.gov.co",
+      "password": "123456",
+      "nombre": "Administrador"
+    },
+    {
+      "email": "inspector@sifex.gov.co",
+      "password": "abc123",
+      "nombre": "Inspector"
+    }
+  ]
+}

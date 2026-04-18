@@ -1,0 +1,31 @@
+{
+  "tecnicos": [
+    {
+      "nombre": "Juan Pérez",
+      "tipo_identificacion": "Cédula",
+      "numero_identificacion": "1234567890",
+      "celular": "300 123 4567",
+      "correo": "juanperez@email.com",
+      "direccion": "Cra 10 # 20-30, Cali",
+      "foto": "../img/IMG-20230323-WA0019.jpg"
+    },
+    {
+      "nombre": "María Gómez",
+      "tipo_identificacion": "Cédula",
+      "numero_identificacion": "987654321",
+      "celular": "310 555 9988",
+      "correo": "maria@email.com",
+      "direccion": "Av 5 # 12-55, Bogotá",
+      "foto": "../img/IMG-20230323-WA0021.jpg"
+    },
+    {
+      "nombre": "Yeison Suarez",
+      "tipo_identificacion": "Cédula",
+      "numero_identificacion": "12345674",
+      "celular": "315 9875456",
+      "correo": "yeison@email.com",
+      "direccion": "Av 6 # 12-55, Bogotá",
+      "foto": ""
+    }
+  ]
+}

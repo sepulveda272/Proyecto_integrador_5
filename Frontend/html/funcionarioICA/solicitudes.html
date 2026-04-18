@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIFEX - Funcionario ICA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="../../css/main.css">
+</head>
+<body>
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <span class="topbar-title">Funcionario ICA</span>
+        <span class="topbar-user">Juan David Sepulveda Rojas</span>
+        <button class="btn-salir">Salir</button>
+    </div>
+
+    <div class="layout">
+
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+            <div class="sidebar-logo">
+                <span class="icon">🌿</span>
+                <span>SIFEX</span>
+            </div>
+            <a class="nav-item" href="perfil.html"><span class="icon">👤</span> Perfil</a>
+            <a class="nav-item" href="observaciones.html"><span class="icon">🔎</span> Gestionar observaciones</a>
+            <a class="nav-item" href="solicitudes.html"><span class="icon">📩</span> Mis solicitudes</a>
+            <a class="nav-item" href="reportes.html"><span class="icon">📊</span> Reportes</a>
+            <div class="sidebar-bottom">
+                <button class="btn-hide-menu" id="toggleSidebar">← Ocultar menú</button>
+            </div>
+        </nav>
+
+        <!-- MAIN -->
+        <main class="main">
+            <div class="contenido-principal">
+                <div id="contenido">
+                    <div class="header">
+                        <div class="filtros">
+                            <button class="filtro active" onclick="filtrarSolicitudes('todos', this)">Todos</button>
+                            <button class="filtro" onclick="filtrarSolicitudes('pendiente', this)">Pendiente</button>
+                            <button class="filtro" onclick="filtrarSolicitudes('rechazada', this)">Rechazada</button>
+                            <button class="filtro" onclick="filtrarSolicitudes('aceptada', this)">Aceptada</button>
+                        </div>
+                    </div>
+                    
+
+                    <!-- Cards -->
+                    <div class="cards-grid">
+
+                        <div class="card"
+                            data-estado="pendiente"
+                            data-lugar="Abduzcan"
+                            data-departamento="Norte de Santander"
+                            data-municipio="Pamplona">
+                            <div class="card__accent card__accent--pendiente"></div>
+                            <div class="card__inner">
+                                <div class="card-header">
+                                    <span class="card-codigo">Abduzcan</span>
+                                    <span class="badge badge-revision">PENDIENTE</span>
+                                </div>
+                                <div class="card-coords">
+                                    <div class="coord-row">
+                                        <div class="coord-icon">📍</div>
+                                        <span class="coord-text"><strong>Departamento:</strong> Norte de Santander</span>
+                                    </div>
+                                    <div class="coord-row">
+                                        <div class="coord-icon">📍</div>
+                                        <span class="coord-text"><strong>Municipio:</strong> Pamplona</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn-detalles full" onclick="abrirModalVerificarCita(this.closest('.card'))">
+                                    Verificar cita ➜</button>
+                            </div>
+                        </div>
+
+                        <div class="card"
+                            data-estado="rechazada"
+                            data-lugar="San Cristobal"
+                            data-departamento="Santander"
+                            data-municipio="Bucaramanga">
+                            <div class="card__accent card__accent--rechazado"></div>
+                            <div class="card__inner">
+                                <div class="card-header">
+                                    <span class="card-codigo">San Cristobal</span>
+                                    <span class="badge badge-rechazado">RECHAZADA</span>
+                                </div>
+                                <div class="card-coords">
+                                    <div class="coord-row">
+                                        <div class="coord-icon">📍</div>
+                                        <span class="coord-text"><strong>Departamento:</strong> Santander</span>
+                                    </div>
+                                    <div class="coord-row">
+                                        <div class="coord-icon">📍</div>
+                                        <span class="coord-text"><strong>Municipio:</strong> Bucaramanga</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn-detalles full" onclick="abrirModalVerificarCita(this.closest('.card'))">
+                                    Verificar cita ➜</button>
+                            </div>
+                        </div>
+
+                        <div class="card"
+                            data-estado="aceptada"
+                            data-lugar="Pentecostal"
+                            data-departamento="Santander"
+                            data-municipio="Floridablanca">
+                            <div class="card__accent card__accent--aprobado"></div>
+                            <div class="card__inner">
+                                <div class="card-header">
+                                    <span class="card-codigo">Pentecostal</span>
+                                    <span class="badge badge-aprobado">ACEPTADA</span>
+                                </div>
+                                <div class="card-coords">
+                                    <div class="coord-row">
+                                        <div class="coord-icon">📍</div>
+                                        <span class="coord-text"><strong>Departamento:</strong> Santander</span>
+                                    </div>
+                                    <div class="coord-row">
+                                        <div class="coord-icon">📍</div>
+                                        <span class="coord-text"><strong>Municipio:</strong> Floridablanca</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn-detalles full" onclick="abrirModalVerificarCita(this.closest('.card'))">
+                                    Verificar cita ➜</button>
+                            </div>
+                        </div>
+                
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- MODAL: VERIFICAR CITA (asignación de técnico + fecha) -->
+    <div class="modal-cita-overlay" id="modal-cita-overlay">
+        <div class="modal-cita-box">
+ 
+            <!-- Cabecera -->
+            <div class="modal-cita-head">
+                <div>
+                    <div class="modal-cita-titulo">Verificar cita</div>
+                    <div class="modal-cita-sub">
+                        <strong id="cita-modal-lugar"></strong>
+                        &mdash;
+                        <span id="cita-modal-ubicacion"></span>
+                    </div>
+                </div>
+                <button class="modal-cita-close" onclick="cerrarModalCita()">✕</button>
+            </div>
+ 
+            <!-- Cuerpo -->
+            <div class="modal-cita-body">
+ 
+                <!-- Paso 1: Seleccionar técnico -->
+                <label class="modal-cita-label">
+                    <span class="modal-cita-step">1</span>
+                    Selecciona un técnico disponible
+                </label>
+                <div id="cita-tecnicos-lista" class="cita-tecnicos-lista"></div>
+ 
+                <!-- Paso 2: Seleccionar fecha (se habilita tras elegir técnico) -->
+                <label class="modal-cita-label" style="margin-top:16px;">
+                    <span class="modal-cita-step">2</span>
+                    Fecha de inspección
+                </label>
+                <input
+                    type="date"
+                    id="cita-fecha"
+                    class="cita-fecha-input"
+                    disabled
+                    onchange="validarFormCita()">
+ 
+                <!-- Mensaje de confirmación -->
+                <div class="cita-success-msg" id="cita-success-msg"></div>
+ 
+            </div>
+ 
+            <!-- Footer -->
+            <div class="modal-cita-foot">
+                <button class="btn btn-sm btn-outline-secondary" onclick="cerrarModalCita()">Cancelar</button>
+                <button class="btn btn-sm btn-success" id="btn-aceptar-cita" disabled onclick="aceptarCita()">
+                    ✔ Aceptar cita
+                </button>
+            </div>
+ 
+        </div>
+    </div>
+
+    <script src="../../js/funcionario.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+</body>
+</html>

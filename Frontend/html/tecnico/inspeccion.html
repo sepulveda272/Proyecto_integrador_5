@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIFEX - Tecnico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="../../css/inspecciones.css">
+    <link rel="stylesheet" href="../../css/main.css">
+</head>
+<body>
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <span class="topbar-title">Tecnico Oficial</span>
+        <span class="topbar-user">Yeison Suárez Suárez</span>
+        <button class="btn-salir">Salir</button>
+    </div>
+
+    <div class="layout">
+
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+            <div class="sidebar-logo">
+                <span class="icon">🌿</span>
+                <span>SIFEX</span>
+            </div>
+            <a class="nav-item" href="perfil.html"><span class="icon">👤</span> Perfil</a>
+            <a class="nav-item" href="inspeccion.html"><span class="icon">📋</span> Inspección</a>
+            <div class="sidebar-bottom">
+                <button class="btn-hide-menu" id="toggleSidebar">← Ocultar menú</button>
+            </div>
+        </nav>
+
+        <!-- MAIN -->
+        <main class="main">
+            <div class="contenido-principal">
+                <div id="contenido">
+                    <div class="header">
+                        <div class="filtros">
+                            <button class="filtro active" onclick="filtrarInspecciones('todos', this)">Todos</button>
+                            <button class="filtro" onclick="filtrarInspecciones('pendiente', this)">Pendiente</button>
+                            <button class="filtro" onclick="filtrarInspecciones('completado', this)">Completado</button>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 1: Cards resumen -->
+                    <div id="seccion-cards" class="cards-grid">
+
+                    <div class="card" data-estado="pendiente">
+                        <div class="card__accent card__accent--pendiente"></div>
+                        <div class="card__inner">
+                        <div class="card-header">
+                            <span class="card-codigo">Abduzcan</span>
+                            <span class="badge badge-revision">Pendiente</span>
+                        </div>
+                        <div class="card-coords">
+                            <div class="coord-row">
+                            <div class="coord-icon">📍</div>
+                            <span class="coord-text">Norte de Santander · <strong>Pamplona</strong></span>
+                            </div>
+                        </div>
+                        <div class="prog-wrap">
+                            <div class="prog-label">
+                            <span class="prog-key">Progreso</span>
+                            <span class="prog-val prog-val--pend">25%</span>
+                            </div>
+                            <div class="prog-track">
+                            <div class="prog-bar prog-bar--pend" style="width: 25%"></div>
+                            </div>
+                        </div>
+                        </div>
+                        <div class="card-actions">
+                        <button class="btn-detalles"
+                            onclick="abrirVistaLotes('Abduzcan', 'Norte de Santander · Pamplona')">
+                            Continuar inspección ➜
+                        </button>
+                        </div>
+                    </div>
+
+                    <div class="card" data-estado="completado">
+                        <div class="card__accent card__accent--aprobado"></div>
+                        <div class="card__inner">
+                        <div class="card-header">
+                            <span class="card-codigo">San Cristóbal</span>
+                            <span class="badge badge-aprobado">Completado</span>
+                        </div>
+                        <div class="card-coords">
+                            <div class="coord-row">
+                            <div class="coord-icon">📍</div>
+                            <span class="coord-text">Santander · <strong>Bucaramanga</strong></span>
+                            </div>
+                        </div>
+                        <div class="prog-wrap">
+                            <div class="prog-label">
+                            <span class="prog-key">Progreso</span>
+                            <span class="prog-val prog-val--comp">100%</span>
+                            </div>
+                            <div class="prog-track">
+                            <div class="prog-bar prog-bar--comp" style="width: 100%"></div>
+                            </div>
+                        </div>
+                        </div>
+                        <div class="card-actions">
+                        <button class="btn-detalles"
+                            onclick="abrirVistaLotes('San Cristóbal', 'Santander · Bucaramanga')">
+                            Ver inspección
+                        </button>
+                        </div>
+                    </div>
+
+                    </div>
+
+                    <!-- SECCIÓN 2: Vista de lotes (oculta por defecto) -->
+                    <div id="seccion-lotes" style="display: none;">
+                    <div class="page">
+
+                        <div class="page__header">
+                        <button class="btn-back" onclick="volverACards()" title="Volver">←</button>
+                        <div>
+                            <div class="page__title" id="lotes-titulo">Lotes</div>
+                            <div class="page__sub" id="lotes-sub"></div>
+                        </div>
+                        </div>
+
+                        <!-- LOTE ROW 1 -->
+                        <div class="lote-row" data-estado="pendiente">
+                        <div class="lote-row__img" onclick="abrirModal('LOTE-001')">
+                            <img class="img-cultivo" src="../../img/tomates.png" alt="Tomate">
+                        </div>
+                        <div class="lote-row__info">
+                            <div class="lote-info__head">
+                            <span class="lote-info__numero">LOTE-001</span>
+                            <span class="lote-badge lote-badge--pend"><span class="lote-badge__dot"></span>Pendiente</span>
+                            </div>
+                            <div class="lote-fields">
+                            <div class="lote-field">
+                                <span class="lote-field__label">Cultivo</span>
+                                <span class="lote-field__value">Tomate</span>
+                            </div>
+                            <div class="lote-field">
+                                <span class="lote-field__label">Nombre científico</span>
+                                <span class="lote-field__value lote-field__value--italic">Solanum lycopersicum L.</span>
+                            </div>
+                            <div class="lote-field">
+                                <span class="lote-field__label">Variedad</span>
+                                <span class="lote-field__value">Chonto Nacional</span>
+                            </div>
+                            <div class="lote-field">
+                                <span class="lote-field__label">Área siembra</span>
+                                <span class="lote-field__value">2.4 ha</span>
+                            </div>
+                            <div class="lote-field">
+                                <span class="lote-field__label">Plantas sembradas</span>
+                                <span class="lote-field__value">1.272</span>
+                            </div>
+                            <div class="lote-field">
+                                <span class="lote-field__label">Estado fenológico</span>
+                                <span class="fenologico-pill">🌸 Floración</span>
+                            </div>
+                            <div class="lote-field">
+                                <span class="lote-field__label">Fecha siembra</span>
+                                <span class="lote-field__value">12/01/2026</span>
+                            </div>
+                            <div class="lote-field" style="grid-column:3/-1">
+                                <div class="lote-prog">
+                                <div class="lote-prog__label">
+                                    <span>Progreso</span>
+                                    <span class="lote-prog__pct-pend">25%</span>
+                                </div>
+                                <div class="lote-prog__track">
+                                    <div class="lote-prog__bar lote-prog__bar--pend" style="width:25%"></div>
+                                </div>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                        <div class="lote-row__action" onclick="abrirModal('LOTE-001')">
+                            <div class="action-icon">📋</div>
+                            <span class="action-label">Realizar inspección</span>
+                        </div>
+                        </div>
+
+                        <!-- LOTE ROW 2 -->
+                        <div class="lote-row" data-estado="completado">
+                        <div class="lote-row__img" onclick="abrirModal('LOTE-002')">
+                            <img src="../../img/papas.png" alt="Papa">
+                        </div>
+                        <div class="lote-row__info">
+                            <div class="lote-info__head">
+                            <span class="lote-info__numero">LOTE-002</span>
+                            <span class="lote-badge lote-badge--comp"><span class="lote-badge__dot"></span>Completado</span>
+                            </div>
+                            <div class="lote-fields">
+                            <div class="lote-field">
+                                <span class="lote-field__label">Cultivo</span>
+                                <span class="lote-field__value">Papa</span>
+                            </div>
+                            <div class="lote-field">
+                                <span class="lote-field__label">Nombre científico</span>
+                                <span class="lote-field__value lote-field__value--italic">Solanum tuberosum L.</span>
+                            </div>
+                            <div class="lote-field">
+                                <span class="lote-field__label">Variedad</span>
+                                <span class="lote-field__value">Pastusa Suprema</span>
+                            </div>
+                            <div class="lote-field">
+                                <span class="lote-field__label">Área siembra</span>
+                                <span class="lote-field__value">1.8 ha</span>
+                            </div>
+                            <div class="lote-field">
+                                <span class="lote-field__label">Plantas sembradas</span>
+                                <span class="lote-field__value">3.243</span>
+                            </div>
+                            <div class="lote-field">
+                                <span class="lote-field__label">Estado fenológico</span>
+                                <span class="fenologico-pill" style="background:#e8f5ee;color:var(--green-dark)">🥔 Maduración</span>
+                            </div>
+                            <div class="lote-field">
+                                <span class="lote-field__label">Fecha siembra</span>
+                                <span class="lote-field__value">05/11/2025</span>
+                            </div>
+                            <div class="lote-field" style="grid-column:3/-1">
+                                <div class="lote-prog">
+                                <div class="lote-prog__label">
+                                    <span>Progreso</span>
+                                    <span class="lote-prog__pct-comp">100%</span>
+                                </div>
+                                <div class="lote-prog__track">
+                                    <div class="lote-prog__bar lote-prog__bar--comp" style="width:100%"></div>
+                                </div>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                        <div class="lote-row__action" onclick="abrirModal('LOTE-002')">
+                            <div class="action-icon">🔍</div>
+                            <span class="action-label">Ver inspección</span>
+                        </div>
+                        </div>
+
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="../../js/inspecciones.js"></script>
+    <script src="../../js/tecnicos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+</body>
+</html>

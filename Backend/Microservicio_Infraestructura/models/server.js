@@ -3,11 +3,11 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser'
 
-import pruebaRouter from "../routes/prueba.routes.js"
-//import loginRouter from '../routes/login.routes.js';
-//import candidatosRouter from "../routes/candidato.routes.js";
-//import solicitudesRouter from "../routes/solicitudes.routes.js";
-//import searchRouter from '../routes/search.routes.js'
+import productorRouter from "../routes/productor.routes.js"
+import loginRouter from '../routes/login.routes.js';
+import lugarProduccionRouter from "../routes/lugarProduccion.routes.js";
+import predioRouter from "../routes/predio.routes.js";
+import loteRouter from '../routes/lote.routes.js'
 
 dotenv.config()
 
@@ -21,16 +21,21 @@ class Server{
         this.routes();
     }
 
-    /* middlewares(){
-        this.app.use(cors({
+    middlewares(){
+        /* this.app.use(cors({
             origin: 'http://localhost:3000', // Reemplaza con el dominio de tu aplicación React
             credentials: true,
-          }));
+          })); */
+        this.app.use(cors());
         this.app.use(express.json());
-    } */
+    }
 
     routes(){
-        this.app.use("/usuarios", pruebaRouter);
+        this.app.use("/productor", productorRouter);
+        this.app.use("/login", loginRouter);
+        this.app.use("/lugarPro", lugarProduccionRouter);
+        this.app.use("/predio", predioRouter);
+        this.app.use("/lote", loteRouter);
     }
 
     listen(){
