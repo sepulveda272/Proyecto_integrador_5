@@ -8,6 +8,23 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="../../css/main.css">
+
+    <!--
+        [REFACTOR] Bloque <style> eliminado por completo.
+        Todos los estilos han sido migrados a main.css §18
+        (Modal detalle — layout y contenido específico).
+
+        Clases reutilizadas del CSS existente:
+          - .edit-empty-msg   → reemplaza .detalle-empty  (mismos estilos)
+          - .dl-row           → reemplaza .detalle-item-row (mismos estilos)
+          - .page-title--sm   → reemplaza style="font-size:22px" (nueva clase modificadora)
+
+        Clases nuevas añadidas en main.css §18:
+          - .modal-detalle-box, .detalle-head, .detalle-body
+          - .detalle-stats, .detalle-stat, .stat-label, .stat-value
+          - .detalle-list, .detalle-item, .detalle-item-title
+          - .predio-extended, .predio-header
+    -->
 </head>
 
 <body>
@@ -35,104 +52,182 @@
 
         <!-- MAIN -->
         <main class="main">
-
             <div class="contenido-principal">
                 <div id="contenido">
+
                     <!-- ══ VIEW: TABLE ══ -->
                     <div id="view-table" class="view active">
-                    <div class="page-header">
-                        <h1 class="page-title">Lugares de producción</h1>
-                        <button class="btn-agregar" onclick="goToForm()">
-                        <span>+</span> Agregar lugar
-                        </button>
+                        <div class="page-header">
+                            <h1 class="page-title">Lugares de producción</h1>
+                            <button class="btn-agregar" onclick="goToForm()">
+                                <span>+</span> Agregar lugar
+                            </button>
+                        </div>
+                        <div class="table-card">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Nombre</th>
+                                        <th>Departamento</th>
+                                        <th>Municipio</th>
+                                        <th>Vereda</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body">
+                                    
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div class="table-card">
-                        <table>
-                        <thead>
-                            <tr>
-                            <th>#</th>
-                            <th>Nombre</th>
-                            <th>Departamento</th>
-                            <th>Municipio</th>
-                            <th>Vereda</th>
-                            <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-body">
-                            
-                        </tbody>
-                        </table>
-                    </div>
-                    </div>
-                
-                    <!-- ══ VIEW: FORM ══ -->
+
+                    <!-- ══ VIEW: FORM — Crear lugar de producción ══ -->
                     <div id="view-form" class="view">
-                    <div class="form-header">
-                        <button class="btn-back" onclick="goToTable()" title="Volver">←</button>
-                        <h1 class="page-title" style="font-size:22px;">Crear lugar de producción</h1>
+                        <div class="form-header">
+                            <button class="btn-back" onclick="goToTable()" title="Volver">←</button>
+                            <!--
+                                [REFACTOR] Eliminado style="font-size:22px;" inline.
+                                Se usa la clase modificadora .page-title--sm definida en main.css §8.
+                            -->
+                            <h1 class="page-title page-title--sm">Crear lugar de producción</h1>
+                        </div>
+
+                        <div id="section-1" class="form-card">
+                            <div class="section-title">📍 Información básica del lugar</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Nombre del lugar de producción *</label>
+                                    <input id="f-nombre" class="form-input" type="text"
+                                        placeholder="Ej. Finca La Esperanza" oninput="onBasicChange()">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Número de predios *</label>
+                                    <input id="f-num-predios" class="form-input" type="number" min="1" max="20"
+                                        placeholder="Ej. 2" oninput="onPrediosChange()">
+                                </div>
+                            </div>
+                            <div id="predios-container" class="predio-fields"></div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn-sec" onclick="goToTable()">Cancelar</button>
+                            <button id="btn-aceptar" class="btn-primary" disabled onclick="crearLugar()">✔ Aceptar</button>
+                        </div>
                     </div>
-                
-                    <!-- Steps -->
-                    <div class="steps-indicator">
-                        <div class="step active" id="step-indicator-1">
-                        <div class="step-num">1</div>
-                        <span>Información básica</span>
+
+                    <!-- ══ VIEW: LOTES — Agregar lotes a un lugar ══ -->
+                    <div id="view-lotes" class="view">
+                        <div class="form-header">
+                            <button class="btn-back" onclick="goToTable()" title="Volver">←</button>
+                            <!--
+                                [REFACTOR] Eliminado style="font-size:22px;" inline.
+                                Se usa la clase modificadora .page-title--sm definida en main.css §8.
+                            -->
+                            <h1 class="page-title page-title--sm">
+                                Agregar lotes — <span id="lotes-lugar-nombre"></span>
+                            </h1>
                         </div>
-                        <div class="step-connector" id="connector-1"></div>
-                        <div class="step" id="step-indicator-2">
-                        <div class="step-num">2</div>
-                        <span>Información detallada</span>
+
+                        <div class="form-card">
+                            <div class="section-title">🗺️ Información detallada</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Área total del lugar (ha) *</label>
+                                    <input id="l-area-total" class="form-input" type="number" min="0.1" step="0.1"
+                                        placeholder="Ej. 5.0" oninput="onLotesDetailChange()">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Número de lotes *</label>
+                                    <input id="l-num-lotes" class="form-input" type="number" min="1" max="30"
+                                        placeholder="Ej. 3" oninput="onNumLotesChange()">
+                                </div>
+                            </div>
+                            <div id="lotes-container" class="lote-cards"></div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn-sec" onclick="goToTable()">Cancelar</button>
+                            <button id="btn-guardar-lotes" class="btn-primary" disabled
+                                onclick="guardarLotes()">✔ Guardar lotes</button>
                         </div>
                     </div>
-                
-                    <!-- ── Section 1 ── -->
-                    <div id="section-1" class="form-card">
-                        <div class="section-title">📍 Información básica del lugar</div>
-                
-                        <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Nombre del lugar de producción *</label>
-                            <input id="f-nombre" class="form-input" type="text" placeholder="Ej. Finca La Esperanza" oninput="onBasicChange()">
+
+                    <!-- ══════════════════════════════════════════════════════════
+                         VIEW: EDIT — Editar lugar de producción
+                         ══════════════════════════════════════════════════════════
+                         NUEVO: Vista de edición completa para un lugar existente.
+
+                         Estructura:
+                         ┌─ form-header ──────────────────────────────────────┐
+                         │  ← Volver  |  Editar lugar — [nombre del lugar]    │
+                         │  (el nombre es solo lectura en el encabezado)       │
+                         └─────────────────────────────────────────────────────┘
+                         Hidden: edit-lugar-id (id del lugar activo)
+                         [ELIMINADO] form-card: Información básica
+                         ┌─ form-card: Predios ────────────────────────────────┐
+                         │  • Lista de predios (renderPrediosEdit)             │
+                         │    - Cada fila: label + código + botón 🗑           │
+                         │  • Fila de agregar nuevo predio                     │
+                         └─────────────────────────────────────────────────────┘
+                         ┌─ form-card: Lotes ──────────────────────────────────┐
+                         │  • Tarjetas accordion (renderLotesEdit)             │
+                         │    - Cada tarjeta: Área siembra + Fecha siembra     │
+                         └─────────────────────────────────────────────────────┘
+                         ┌─ form-actions ──────────────────────────────────────┐
+                         │  Cancelar  |  ✔ Guardar cambios                    │
+                         └─────────────────────────────────────────────────────┘
+
+                         Contenedores clave inyectados por JS:
+                         - #edit-predios-container → renderPrediosEdit()
+                         - #edit-lotes-container   → renderLotesEdit()
+                    ══════════════════════════════════════════════════════════ -->
+                    <div id="view-edit" class="view">
+                        <div class="form-header">
+                            <button class="btn-back" onclick="goToTable()" title="Volver">←</button>
+                            <!--
+                                [REFACTOR] Eliminado style="font-size:22px;" inline.
+                                Se usa la clase modificadora .page-title--sm definida en main.css §8.
+                            -->
+                            <h1 class="page-title page-title--sm">
+                                Editar lugar — <span id="edit-lugar-nombre-titulo"></span>
+                            </h1>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Número de predios *</label>
-                            <input id="f-num-predios" class="form-input" type="number" min="1" max="20" placeholder="Ej. 2" oninput="onPrediosChange()">
+
+                        <!--
+                            Campo oculto que persiste el id del lugar en edición.
+                            [CAMBIO] Se eliminó la tarjeta "Información básica" (nombre del lugar).
+                            El nombre ahora solo es visible en el encabezado de la vista (solo lectura).
+                        -->
+                        <input type="hidden" id="edit-lugar-id" value="">
+
+                        <!-- Sección 1: Predios editables
+                             El contenido es inyectado por renderPrediosEdit(lugarId) al abrir la vista.
+                             Incluye: lista de predios existentes (con botón 🗑) + fila para agregar nuevo. -->
+                        <div class="form-card">
+                            <div class="section-title">🏡 Predios</div>
+                            <div id="edit-predios-container">
+                                <!-- Inyectado dinámicamente por renderPrediosEdit() -->
+                            </div>
                         </div>
+
+                        <!-- Sección 3: Lotes en modo accordion
+                             El contenido es inyectado por renderLotesEdit(lugarId) al abrir la vista.
+                             Cada tarjeta expone Área de siembra y Fecha de siembra como campos editables. -->
+                        <div class="form-card">
+                            <div class="section-title">🌾 Lotes</div>
+                            <div id="edit-lotes-container">
+                                <!-- Inyectado dinámicamente por renderLotesEdit() -->
+                            </div>
                         </div>
-                
-                        <div id="predios-container" class="predio-fields"></div>
+
+                        <div class="form-actions">
+                            <button class="btn-sec" onclick="goToTable()">Cancelar</button>
+                            <button class="btn-primary" onclick="guardarEdicion()">✔ Guardar cambios</button>
+                        </div>
                     </div>
-                
-                    <!-- ── Section 2 ── -->
-                    <div id="section-2" class="form-card" style="opacity:.45; pointer-events:none; transition: opacity .35s;">
-                        <div class="section-title">🗺️ Información detallada</div>
-                
-                        <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Lugar de producción</label>
-                            <input id="f-nombre-ro" class="form-input readonly" type="text" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Área total (ha) *</label>
-                            <input id="f-area-total" class="form-input" type="number" min="0.1" step="0.1" placeholder="Ej. 5.0" oninput="onDetailChange()">
-                        </div>
-                        </div>
-                
-                        <div class="form-row single">
-                        <div class="form-group">
-                            <label class="form-label">Número de lotes *</label>
-                            <input id="f-num-lotes" class="form-input" type="number" min="1" max="30" placeholder="Ej. 3" oninput="onLotesChange()">
-                        </div>
-                        </div>
-                
-                        <div id="lotes-container" class="lote-cards"></div>
-                    </div>
-                
-                    <div class="form-actions">
-                        <button class="btn-sec" onclick="goToTable()">Cancelar</button>
-                        <button id="btn-crear" class="btn-primary" disabled onclick="crearLugar()">✔ Crear lugar</button>
-                    </div>
-                    </div>
+                    <!-- ══ /VIEW: EDIT ══ -->
+
                 </div>
             </div>
         </main>
@@ -140,11 +235,62 @@
 
     <div class="toast" id="toast"></div>
 
+    <div class="modal fade" id="modalDetalleLugar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <div class="d-flex flex-column">
+                        <h5 class="modal-title fw-bold text-success" id="modalTitulo">
+                            </h5>
+                        <small class="px-4 text-muted"></small>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <ul class="nav nav-tabs mb-3" id="detalleTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="lotes-tab" data-bs-toggle="tab" data-bs-target="#lotes" type="button" role="tab">
+                                🌾 Lotes
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="predios-tab" data-bs-toggle="tab" data-bs-target="#predios" type="button" role="tab">
+                                🏡 Predios
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="detalleTabsContent">
+                        
+                        <div class="tab-pane fade show active" id="lotes" role="tabpanel">
+                            <div class="row g-3 mb-4" id="stats-lotes-container">
+                                </div> 
+                            <div id="lista-lotes-dinamica">
+                                </div> 
+                        </div>
+
+                        <div class="tab-pane fade" id="predios" role="tabpanel">
+                            <div class="row g-3 mb-4" id="stats-predios-container">
+                                </div> 
+                            <div id="lista-predios-dinamica" class="d-flex flex-column gap-3">
+                                </div> 
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="../../js/verificarJs.js"></script>
     <script src="../../js/lugarProJs.js"></script>
 
-    <script src="../../js/productor.js"></script>
+    <!-- <script src="../../js/productor.js"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>

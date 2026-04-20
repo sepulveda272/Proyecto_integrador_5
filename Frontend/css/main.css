@@ -1,99 +1,95 @@
 /* ============================================================
-   SIFEX — main.css
-   Refactorización profesional con BEM y clases reutilizables
-   ============================================================
+   SIFEX — main.css  (refactorizado)
 
    ÍNDICE
    0.  Variables y tokens de diseño
    1.  Reset
-   2.  Utilidades base reutilizables
-       2a. Botones
-       2b. Badges
-       2c. Inputs / Campos
-       2d. Tarjetas (card)
-       2e. Modales (overlay base)
-   3.  Layout: topbar, sidebar, main
-   4.  Login
-   5.  Componentes de vista
-       5a. Tabla
-       5b. Header de sección
-       5c. Filtros
-       5d. Cards grid (inspecciones / solicitudes)
-       5e. Perfil
-       5f. Formularios multi-paso
-   6.  Modales específicos
-       6a. Modal agendar cita
-       6b. Modal inspección (lotes)
-       6c. Modal agregar observación
-   7.  Feedback: Toast
-   8.  Animaciones
+   2.  Botones  (base .btn + modificadores)
+       → Añadido: .action-lote (botón lotes en tabla)
+   3.  Badges
+   4.  Inputs y campos
+       → Añadido: .form-input[readonly]  (bloquea date-picker nativo)
+       → Añadido: .label-hint            (sufijo "(solo lectura)" en labels)
+   5.  Layout: body, topbar, sidebar, main
+   6.  Login
+   7.  Tabla
+   8.  Encabezados de sección
+       → Añadido: .page-title--sm (modificador tamaño reducido)
+   9.  Filtros
+   10. Cards grid  (inspecciones / solicitudes / citas)
+   11. Perfil
+   12. Formularios multi-paso (lugar de producción)
+   13. Modal base  (.modal-base + modificadores)
+       13a. Modal agendar cita  (productor)
+       13b. Modal observación   (funcionario)
+       13c. Modal verificar cita (funcionario)
+   14. Toast
+   15. Animaciones
+   16. Vista de edición de lugar de producción
+   17. Modal detalle — tabs + accordion de lotes
+   18. Modal detalle — layout y contenido específico  [NUEVO — migrado de lugarProducción.html]
    ============================================================ */
 
 
 /* ============================================================
-   0. VARIABLES Y TOKENS DE DISEÑO
+   0. VARIABLES
    ============================================================ */
 :root {
-    /* -- Paleta verde (colores primarios) -- */
-    --color-primary:        #3d6b55;
-    --color-primary-dark:   #2f5444;
-    --color-primary-light:  #548375;
-    --color-primary-bg:     rgb(181 217 181 / 65%);
-    --green-dark:           #2d6a4f;
-    --green-mid:            #52b788;
-    --green-light:          #d8f3dc;
-    --green-xlight:         #f0faf3;
+    /* Paleta verde */
+    --color-primary:       #3d6b55;
+    --color-primary-dark:  #2f5444;
+    --green-dark:          #2d6a4f;
+    --green-mid:           #52b788;
+    --green-light:         #d8f3dc;
+    --green-xlight:        #f0faf3;
 
-    /* -- Acentos -- */
-    --accent-gold:          #f4a261;
-    --accent-red:           #e63946;
-    --accent-rose:          #f8c8cc;
+    /* Acentos */
+    --accent-gold:         #f4a261;
+    --accent-red:          #e63946;
+    --accent-rose:         #f8c8cc;
 
-    /* -- Texto -- */
-    --color-text:           #1a1a1a;
-    --color-text-muted:     #548375;
-    --text-dark:            #1b2e23;
-    --text-mid:             #4a6b57;
-    --text-light:           #8fb09a;
+    /* Texto */
+    --color-text:          #1a1a1a;
+    --color-text-muted:    #548375;
+    --text-dark:           #1b2e23;
+    --text-mid:            #4a6b57;
+    --text-light:          #8fb09a;
 
-    /* -- Peligro -- */
-    --color-danger:         #c0392b;
-    --color-danger-dark:    #922b21;
+    /* Peligro */
+    --color-danger:        #c0392b;
 
-    /* -- Layout -- */
-    --white:                #ffffff;
-    --border:               #c6e6cc;
-    --color-border:         rgba(83, 158, 101, 0.3);
-    --sidebar-bg:           linear-gradient(160deg, #3a7d5a 0%, #2d5a3d 100%);
+    /* Layout */
+    --white:               #ffffff;
+    --border:              #c6e6cc;
+    --color-border:        rgba(83, 158, 101, 0.3);
+    --sidebar-bg:          linear-gradient(160deg, #3a7d5a 0%, #2d5a3d 100%);
 
-    /* -- Sombras -- */
-    --shadow-sm:            0 2px 8px  rgba(45, 106, 79, 0.08);
-    --shadow-md:            0 6px 24px rgba(45, 106, 79, 0.13);
-    --shadow-lg:            0 16px 48px rgba(45, 106, 79, 0.18);
+    /* Sombras */
+    --shadow-sm:           0 2px 8px  rgba(45, 106, 79, 0.08);
+    --shadow-md:           0 6px 24px rgba(45, 106, 79, 0.13);
+    --shadow-lg:           0 16px 48px rgba(45, 106, 79, 0.18);
 
-    /* -- Radios -- */
-    --radius-sm:            6px;
-    --radius-md:            8px;
-    --radius-lg:            12px;
-    --radius-xl:            16px;
+    /* Radios */
+    --radius-sm:           6px;
+    --radius-md:           8px;
+    --radius-lg:           12px;
+    --radius-xl:           16px;
 
-    /* -- Tipografía -- */
-    --font-base:            "Segoe UI", sans-serif;
-    --font-dm:              "DM Sans", sans-serif;
-    --font-sora:            "Sora", sans-serif;
+    /* Tipografía */
+    --font-base:           "Segoe UI", sans-serif;
+    --font-dm:             "DM Sans", sans-serif;
+    --font-sora:           "Sora", sans-serif;
 
-    /* -- Transiciones -- */
-    --transition-fast:      0.15s ease;
-    --transition-base:      0.22s ease;
+    /* Transiciones */
+    --t-fast:              0.15s ease;
+    --t-base:              0.22s ease;
 }
 
 
 /* ============================================================
    1. RESET
    ============================================================ */
-*,
-*::before,
-*::after {
+*, *::before, *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -102,35 +98,21 @@
 
 
 /* ============================================================
-   2a. BOTONES — Clase base + modificadores BEM
-   ============================================================
-
-   Uso:
-     <button class="btn btn--primary">Guardar</button>
-     <button class="btn btn--danger">Eliminar</button>
-     <button class="btn btn--ghost">Cancelar</button>
-
-   Clases anteriores conservadas como alias para no romper HTML:
-     .btn-primary, .btn-secondary, .btn-danger, .btn-salir,
-     .btn-agregar, .btn-sec, .btn-back, .btn-hide-menu,
-     .btn-solicitar, .btn-save, .btn-cancel, .btn-generar,
-     .btn-detalles, .btn-edit, .btn-eliminar, .btn-aprobar
+   2. BOTONES
+   Base compartida → .btn
+   Modificadores   → .btn--primary  .btn--secondary  .btn--danger
+                     .btn--ghost    .btn--exit
+   Alias legacy    → nombres anteriores mapeados a la base
    ============================================================ */
 
-/* Base compartida */
 .btn,
-.btn-primary,
-.btn-secondary,
-.btn-danger,
+.btn-primary, .btn-agregar, .btn-save, .btn-solicitar, .btn-generar,
+.btn-secondary, .btn-sec,
+.btn-danger, .btn-eliminar,
+.btn-cancel,
 .btn-salir,
-.btn-agregar,
-.btn-sec,
-.btn-solicitar,
-.btn-save,
-.btn-generar,
 .btn-detalles,
 .btn-edit,
-.btn-eliminar,
 .btn-aprobar {
     display: inline-flex;
     align-items: center;
@@ -143,21 +125,18 @@
     font-size: 13.5px;
     font-weight: 600;
     cursor: pointer;
-    transition: background var(--transition-fast),
-                box-shadow  var(--transition-fast),
-                opacity     var(--transition-fast),
-                transform   var(--transition-fast);
     text-decoration: none;
     white-space: nowrap;
+    transition:
+        background  var(--t-fast),
+        box-shadow  var(--t-fast),
+        opacity     var(--t-fast),
+        transform   var(--t-fast);
 }
 
-/* -- Variante: primario (verde oscuro) -- */
+/* Primario — verde oscuro */
 .btn--primary,
-.btn-primary,
-.btn-agregar,
-.btn-generar,
-.btn-save,
-.btn-solicitar {
+.btn-primary, .btn-agregar, .btn-save, .btn-solicitar, .btn-generar {
     background: var(--green-dark);
     color: var(--white);
     box-shadow: var(--shadow-sm);
@@ -165,45 +144,35 @@
 
 .btn--primary:hover:not(:disabled),
 .btn-primary:hover:not(:disabled),
-.btn-agregar:hover,
-.btn-generar:hover,
-.btn-save:hover,
-.btn-solicitar:not(:disabled):hover {
+.btn-agregar:hover, .btn-save:hover,
+.btn-solicitar:not(:disabled):hover, .btn-generar:hover {
     background: #1e4d38;
     box-shadow: var(--shadow-md);
 }
 
-/* -- Variante: secundario (verde suave) -- */
+/* Secundario — borde verde */
 .btn--secondary,
-.btn-secondary,
-.btn-sec {
+.btn-secondary, .btn-sec {
     background: var(--white);
     color: var(--text-mid);
     border: 1.5px solid var(--border);
 }
 
-.btn--secondary:hover,
-.btn-secondary:hover,
-.btn-sec:hover {
+.btn--secondary:hover, .btn-secondary:hover, .btn-sec:hover {
     border-color: var(--green-mid);
     background: var(--green-xlight);
 }
 
-/* -- Variante: peligro (rojo) -- */
+/* Peligro — rojo suave */
 .btn--danger,
-.btn-danger,
-.btn-eliminar {
+.btn-danger, .btn-eliminar {
     background: #f8d7da;
     color: #721c24;
 }
 
-.btn--danger:hover,
-.btn-danger:hover,
-.btn-eliminar:hover {
-    background: #f1aeb5;
-}
+.btn--danger:hover, .btn-danger:hover, .btn-eliminar:hover { background: #f1aeb5; }
 
-/* -- Variante: ghost (solo borde) -- */
+/* Ghost — solo borde */
 .btn--ghost,
 .btn-cancel {
     background: transparent;
@@ -211,13 +180,12 @@
     color: var(--text-mid);
 }
 
-.btn--ghost:hover,
-.btn-cancel:hover {
+.btn--ghost:hover, .btn-cancel:hover {
     border-color: var(--green-mid);
     color: var(--green-dark);
 }
 
-/* -- Variante: salir (rojo sólido) -- */
+/* Salir — rojo sólido */
 .btn--exit,
 .btn-salir {
     background: var(--accent-red);
@@ -227,23 +195,17 @@
     font-size: 13px;
 }
 
-.btn--exit:hover,
-.btn-salir:hover { background: #c1121f; }
+.btn--exit:hover, .btn-salir:hover { background: #c1121f; }
 
-/* -- Variante: editar (dorado) -- */
-.btn-edit {
-    background: #e3bf3d;
-    color: var(--white);
-    padding: 8px 12px;
-}
-
+/* Editar — dorado */
+.btn-edit { background: #e3bf3d; color: var(--white); padding: 8px 12px; }
 .btn-edit:hover { background: #e79c56; }
 
-/* -- Variante: aprobar (azul claro) -- */
+/* Aprobar — azul */
 .btn-aprobar { background: #cce5ff; color: #004085; }
 .btn-aprobar:hover { background: #b8daff; }
 
-/* -- Variante: detalles (verde translúcido) -- */
+/* Detalles — translúcido */
 .btn-detalles {
     flex: 1;
     background: rgb(135 199 160 / 51%);
@@ -258,7 +220,7 @@
     border-color: var(--color-primary);
 }
 
-/* -- Estado: deshabilitado -- */
+/* Deshabilitado */
 .btn:disabled,
 .btn-primary:disabled,
 .btn-solicitar:disabled {
@@ -268,7 +230,7 @@
     pointer-events: none;
 }
 
-/* -- Acción: icono en tabla -- */
+/* Botones de acción en tabla */
 .action-btn {
     display: inline-flex;
     align-items: center;
@@ -279,40 +241,36 @@
     border-radius: var(--radius-sm);
     font-size: 15px;
     cursor: pointer;
-    transition: opacity var(--transition-fast), transform var(--transition-fast);
-    margin-left: 0;
+    transition: opacity var(--t-fast), transform var(--t-fast);
 }
 
 .action-btn:hover { opacity: .8; transform: scale(1.08); }
 
-.action-btn--edit,
 .action-edit { background: var(--green-dark); color: var(--white); margin-right: 4px; }
-
-.action-btn--delete,
-.action-del  { background: var(--accent-rose); color: #c0394a; margin-right: 4px; }
-
-.action-btn--view,
+.action-del  { background: var(--accent-rose); color: #c0394a;     margin-right: 4px; }
 .action-eye  { background: var(--accent-gold); color: var(--white); }
+/* Botón de lotes: fondo verde medio — [AÑADIDO] faltaba definición para .action-lote */
+.action-lote { background: var(--green-mid); color: var(--white); margin-left: 4px; }
 
-/* -- Barra / ocultar menú -- */
+/* Ocultar menú */
 .btn-hide-menu {
     display: block;
     width: 100%;
     padding: 8px 12px;
-    background: rgba(255, 255, 255, .12);
+    background: rgba(255,255,255,.12);
     border: none;
     border-radius: var(--radius-sm);
-    color: rgba(255, 255, 255, .7);
+    color: rgba(255,255,255,.7);
     font-family: var(--font-dm);
     font-size: 12px;
     text-align: left;
     cursor: pointer;
-    transition: background var(--transition-fast);
+    transition: background var(--t-fast);
 }
 
-.btn-hide-menu:hover { background: rgba(255, 255, 255, .2); }
+.btn-hide-menu:hover { background: rgba(255,255,255,.2); }
 
-/* -- Botón volver -- */
+/* Volver */
 .btn-back {
     display: flex;
     align-items: center;
@@ -325,14 +283,15 @@
     color: var(--text-mid);
     font-size: 18px;
     cursor: pointer;
-    transition: border-color var(--transition-fast), background var(--transition-fast);
+    transition: border-color var(--t-fast), background var(--t-fast);
 }
 
 .btn-back:hover { border-color: var(--green-mid); background: var(--green-xlight); }
 
 
 /* ============================================================
-   2b. BADGES
+   3. BADGES
+   Clase base .badge + modificadores
    ============================================================ */
 
 .badge {
@@ -345,66 +304,41 @@
     white-space: nowrap;
 }
 
-.badge--active,
-.badge-activo      { background: var(--green-light);              color: #1b4332; }
+.badge-activo, .badge--active       { background: var(--green-light); color: #1b4332; }
+.badge-pendiente, .badge--pending   { background: #fff3cd;             color: #856404; }
+.badge-calida, .badge--hot          { background: #fde8d0;             color: #c05e10; }
+.badge-fria, .badge--cold           { background: #d4eaf7;             color: #1a6496; }
+.badge-templada, .badge--warm       { background: #e3f4de;             color: #2d6a4f; }
 
-.badge--pending,
-.badge-pendiente   { background: #fff3cd;                         color: #856404; }
-
-.badge--hot,
-.badge-calida      { background: #fde8d0;                         color: #c05e10; }
-
-.badge--cold,
-.badge-fria        { background: #d4eaf7;                         color: #1a6496; }
-
-.badge--warm,
-.badge-templada    { background: #e3f4de;                         color: #2d6a4f; }
-
-.badge--approved,
-.badge-aprobado {
-    background: rgba(61, 107, 85, 0.15);
+.badge-aprobado, .badge--approved {
+    background: rgba(61,107,85,.15);
     color: var(--color-primary);
-    border: 1px solid rgba(61, 107, 85, 0.3);
+    border: 1px solid rgba(61,107,85,.3);
 }
 
-.badge--review,
-.badge-revision {
+.badge-revision, .badge--review {
     background: rgb(255 232 170 / 51%);
     color: #ffb900;
-    border: 1px solid rgba(212, 160, 23, 0.3);
+    border: 1px solid rgba(212,160,23,.3);
 }
 
-.badge--hot-zone,
-.badge-calido {
-    background: rgba(240, 104, 89, 0.558);
-    color: #ff240c;
-    border: 1px solid rgba(192, 57, 43, 0.3);
-}
-
-.badge--warm-zone,
-.badge-templado {
-    background: rgba(238, 167, 104, 0.582);
-    color: #ff9500;
-    border: 1px solid rgba(127, 29, 29, 0.3);
-}
-
-.badge--cold-zone,
-.badge-frio {
-    background: hsla(218, 73%, 60%, 0.519);
-    color: #0033ff;
-    border: 1px solid rgba(127, 29, 29, 0.3);
+/* Badge rechazado (usado en solicitudes.html) */
+.badge-rechazado, .badge--rejected {
+    background: rgba(230,57,70,.15);
+    color: var(--accent-red);
+    border: 1px solid rgba(230,57,70,.3);
 }
 
 
 /* ============================================================
-   2c. INPUTS / CAMPOS
+   4. INPUTS Y CAMPOS
    ============================================================ */
 
-/* Base de input reutilizable */
-.field__input,
+/* Input base compartido */
 .form-input,
 .form-select,
-.obs-textarea {
+.obs-textarea,
+.cita-fecha-input {
     width: 100%;
     padding: 9px 12px;
     border: 1.5px solid var(--border);
@@ -414,32 +348,51 @@
     color: var(--text-dark);
     background: var(--white);
     outline: none;
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    transition: border-color var(--t-fast), box-shadow var(--t-fast);
 }
 
-.field__input:focus,
-.form-input:focus,
-.form-select:focus,
-.obs-textarea:focus {
+.form-input:focus, .form-select:focus,
+.obs-textarea:focus, .cita-fecha-input:focus {
     border-color: var(--green-mid);
-    box-shadow: 0 0 0 3px rgba(82, 183, 136, .15);
+    box-shadow: 0 0 0 3px rgba(82,183,136,.15);
 }
 
-.field__input::placeholder,
 .form-input::placeholder { color: #b8cfc1; }
 
-.form-input--readonly,
 .form-input.readonly {
     background: var(--green-xlight);
     color: var(--text-mid);
     cursor: default;
 }
 
-.form-input--error,
+/*
+ * [NUEVO §4] Bloquea la apertura del selector nativo de fecha en inputs
+ * con atributo readonly (ej: fecha de siembra en view-edit).
+ * Sin esto Chrome/Firefox muestran el date-picker aunque readonly esté
+ * presente, lo que puede confundir al usuario.
+ * Se usa el selector de atributo para no interferir con disabled.
+ */
+.form-input[readonly] {
+    pointer-events: none;
+}
+
 .form-input.error { border-color: var(--accent-red); }
 
-/* Label */
-.field__label,
+/* Textarea observación */
+.obs-textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-size: 13px;
+}
+
+.obs-textarea:disabled,
+.cita-fecha-input:disabled {
+    background: #f7faf7;
+    color: var(--text-light);
+    cursor: not-allowed;
+}
+
+/* Label compartido */
 .form-label,
 .lote-field-label,
 .modal-obs-label {
@@ -452,134 +405,61 @@
     margin-bottom: 5px;
 }
 
-/* Textarea específico */
-.obs-textarea {
-    resize: vertical;
-    min-height: 80px;
-    font-size: 13px;
-}
-
-.obs-textarea:disabled {
-    background: #f7faf7;
+/*
+ * [NUEVO §4] Sufijo de aclaración junto a un label (ej: "solo lectura").
+ * Se aplica en un <span> dentro del <label> para heredar el bloque sin
+ * romper el flujo. Anula text-transform/letter-spacing del padre para
+ * leer en minúsculas normales y diferenciarse visualmente del label.
+ */
+.label-hint {
+    font-size: 10px;
+    font-weight: 400;
     color: var(--text-light);
-    cursor: not-allowed;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-left: 4px;
 }
 
-
-/* ============================================================
-   2d. TARJETAS (card base)
-   ============================================================ */
-
-.card--base,
-.contenido-principal .card {
-    background: var(--white);
-    border: 0.5px solid #c3deca;
-    border-radius: 14px;
-    padding: 20px 24px;
-}
-
-
-/* ============================================================
-   2e. MODAL — OVERLAY BASE (patrón reutilizado en 3 modales)
-   ============================================================ */
-
-.modal-overlay-base {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, .45);
-    z-index: 1055;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--transition-base);
-}
-
-.modal-overlay-base.show {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-/* Box interior base */
-.modal-box-base {
-    background: var(--white);
-    border-radius: var(--radius-xl);
-    width: 100%;
-    max-width: 480px;
-    max-height: 90vh;
+/* Campo perfil (fondo verde claro) */
+.field {
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    transform: translateY(12px);
-    transition: transform var(--transition-base);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, .18);
+    gap: 5px;
 }
 
-.modal-overlay-base.show .modal-box-base {
-    transform: translateY(0);
-}
-
-/* Secciones internas comunes */
-.modal__head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    padding: 18px 20px 14px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    position: relative;
-}
-
-.modal__title {
-    font-family: var(--font-sora);
-    font-size: 15px;
+.field label {
+    display: block;
+    font-size: 11px;
     font-weight: 600;
-    color: var(--text-dark);
+    color: #6b8c72;
+    letter-spacing: .4px;
+    text-transform: uppercase;
 }
 
-.modal__subtitle {
-    font-size: 12px;
-    color: var(--text-light);
-    margin-top: 2px;
+.field input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #c3deca;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    color: #1a2e1e;
+    background: #edf7f0;
+    font-family: inherit;
+    outline: none;
+    transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
 }
 
-.modal__close {
-    background: none;
-    border: none;
-    font-size: 18px;
-    color: var(--text-light);
-    cursor: pointer;
-    line-height: 1;
-    padding: 0;
-    transition: color var(--transition-fast);
-    margin-left: 0;
+.field input:focus {
+    border-color: #4caf6e;
+    box-shadow: 0 0 0 3px rgba(76,175,110,.12);
+    background: var(--white);
 }
 
-.modal__close:hover { color: var(--text-dark); }
-
-.modal__body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px 20px;
-}
-
-.modal__body::-webkit-scrollbar { width: 4px; }
-.modal__body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
-.modal__foot {
-    padding: 12px 20px;
-    border-top: 1px solid var(--border);
-    background: #f9fbf9;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-}
+.field input::placeholder { color: #b0c8b7; }
 
 
 /* ============================================================
-   3. LAYOUT: TOPBAR, SIDEBAR, MAIN
+   5. LAYOUT: BODY, TOPBAR, SIDEBAR, MAIN
    ============================================================ */
 
 body {
@@ -591,13 +471,18 @@ body {
     font-family: var(--font-dm);
 }
 
-.layout {
+/* Override login */
+body.login-page {
+    height: 100vh;
     display: flex;
-    flex: 1;
-    min-height: 0;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #0f3d2e, #4d9875);
 }
 
-/* ── Topbar ── */
+.layout { display: flex; flex: 1; min-height: 0; }
+
+/* Topbar */
 .topbar {
     display: flex;
     align-items: center;
@@ -612,24 +497,16 @@ body {
     z-index: 100;
 }
 
-.topbar__title {
+.topbar-title {
     font-family: var(--font-sora);
     font-size: 14px;
     font-weight: 600;
     color: var(--text-mid);
 }
 
-/* Alias para no romper HTML actual */
-.topbar-title { font-family: var(--font-sora); font-size: 14px; font-weight: 600; color: var(--text-mid); }
-.topbar-user  { margin-left: auto; font-size: 13px; color: var(--text-mid); }
+.topbar-user { margin-left: auto; font-size: 13px; color: var(--text-mid); }
 
-.user-area {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-/* ── Sidebar ── */
+/* Sidebar */
 .sidebar {
     width: 210px;
     display: flex;
@@ -640,8 +517,6 @@ body {
     flex-shrink: 0;
 }
 
-.sidebar.collapsed { width: 70px; }
-
 .sidebar-logo {
     display: flex;
     justify-content: center;
@@ -649,10 +524,8 @@ body {
     gap: 8px;
     padding: 0 20px 20px;
     margin-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, .15);
+    border-bottom: 1px solid rgba(255,255,255,.15);
 }
-
-.sidebar-logo svg { width: 28px; height: 28px; }
 
 .sidebar-logo span {
     font-family: var(--font-sora);
@@ -662,11 +535,7 @@ body {
     letter-spacing: .5px;
 }
 
-.sidebar__bottom,
-.sidebar-bottom {
-    margin-top: auto;
-    padding: 0 20px;
-}
+.sidebar-bottom { margin-top: auto; padding: 0 20px; }
 
 /* Nav items */
 .nav-item {
@@ -677,55 +546,30 @@ body {
     margin-right: 12px;
     border-radius: 0 8px 8px 0;
     font-size: 13.5px;
-    color: rgba(255, 255, 255, .82);
+    color: rgba(255,255,255,.82);
     cursor: pointer;
     text-decoration: none;
-    transition: background var(--transition-fast), color var(--transition-fast);
-    border-left: 3px solid transparent;  /* ← reserva el espacio siempre */
+    border-left: 3px solid transparent;
+    transition: background var(--t-fast), color var(--t-fast);
 }
 
 .nav-item:hover {
-    background: rgba(255, 255, 255, .10);
+    background: rgba(255,255,255,.10);
     color: var(--white);
-    border-left-color: rgba(255, 255, 255, .35);
+    border-left-color: rgba(255,255,255,.35);
 }
 
 .nav-item.active {
-    background: rgba(255, 255, 255, .15);
+    background: rgba(255,255,255,.15);
     color: var(--white);
-    border-left-color: var(--green-mid);   /* ← acento verde visible */
+    border-left-color: var(--green-mid);
     font-weight: 600;
 }
 
 .nav-item .icon { font-size: 16px; }
 
-/* Alias legacy admin */
-.menu-item {
-    list-style: none;
-    padding: 12px;
-    margin-bottom: 8px;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-.menu-item:hover { background: rgba(255, 255, 255, 0.1); }
-
-.logo {
-    font-weight: bold;
-    font-size: 30px;
-    margin-bottom: 30px;
-    display: flex;
-    justify-content: center;
-}
-
-/* ── Main ── */
-.main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-}
+/* Main */
+.main { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
 
 .contenido-principal {
     display: flex;
@@ -734,11 +578,7 @@ body {
     height: 100%;
 }
 
-#contenido {
-    width: 100%;
-    height: 100%;
-    padding: 25px;
-}
+#contenido { width: 100%; height: 100%; padding: 25px; }
 
 .bienvenida {
     display: flex;
@@ -752,39 +592,31 @@ body {
     text-align: center;
 }
 
-/* ── Sidebar toggle (admin) ── */
+/* Toggle sidebar (admin) */
 #toggleSidebar {
     width: 100%;
     padding: 10px;
     border: none;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255,255,255,0.1);
     color: var(--color-text);
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: background 0.3s;
 }
 
-#toggleSidebar:hover { background: rgba(255, 255, 255, 0.2); }
+#toggleSidebar:hover { background: rgba(255,255,255,0.2); }
 
 
 /* ============================================================
-   4. LOGIN
+   6. LOGIN
    ============================================================ */
-
-body.login-page {
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: linear-gradient(135deg, #0f3d2e, #4d9875);
-}
 
 .card-login {
     width: 380px;
     padding: 40px 30px;
     background: #f3f3f3;
     border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
     text-align: center;
 }
 
@@ -799,10 +631,10 @@ body.login-page {
     align-items: center;
     color: white;
     font-size: 24px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
 }
 
-.card-login h1   { font-size: 20px; color: #1f4f3a; }
+.card-login h1      { font-size: 20px; color: #1f4f3a; }
 .card-login .subtitle { font-size: 13px; color: #666; margin-bottom: 25px; }
 
 .input-group        { text-align: left; margin-bottom: 15px; }
@@ -820,7 +652,7 @@ body.login-page {
 
 .card-login input:focus {
     border-color: #2e7d32;
-    box-shadow: 0 0 5px rgba(46, 125, 50, 0.5);
+    box-shadow: 0 0 5px rgba(46,125,50,0.5);
 }
 
 .card-login button {
@@ -838,15 +670,15 @@ body.login-page {
 
 .card-login button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 }
 
-.forgot      { font-size: 12px; margin-top: 15px; color: #2e7d32; cursor: pointer; }
+.forgot       { font-size: 12px; margin-top: 15px; color: #2e7d32; cursor: pointer; }
 .footer-login { font-size: 11px; color: #888; margin-top: 20px; }
 
 
 /* ============================================================
-   5a. TABLA
+   7. TABLA
    ============================================================ */
 
 table {
@@ -872,7 +704,7 @@ th {
 
 tbody tr {
     border-top: 1px solid #eef5f0;
-    transition: background var(--transition-fast);
+    transition: background var(--t-fast);
 }
 
 tbody tr:hover { background: var(--green-xlight); }
@@ -887,29 +719,25 @@ td {
 
 tr:last-child td { border-bottom: none; }
 
-.empty-row td {
-    padding: 32px;
-    text-align: center;
-    font-size: 13.5px;
-    color: var(--text-light);
-}
+.empty-row td { padding: 32px; text-align: center; font-size: 13.5px; color: var(--text-light); }
 
 
 /* ============================================================
-   5b. HEADER DE SECCIÓN
+   8. ENCABEZADOS DE SECCIÓN
    ============================================================ */
 
-.section-header,
-.header {
+h1 { font-size: 28px; margin-bottom: 5px; }
+h2 { color: var(--green-dark); }
+
+/* Header de vista (título + botón) */
+.header, .section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 16px;
 }
 
-h1 { font-size: 28px; margin-bottom: 5px; }
-h2 { color: var(--green-dark); }
-
+/* Header de página con padding lateral */
 .page-header {
     display: flex;
     align-items: center;
@@ -926,9 +754,11 @@ h2 { color: var(--green-dark); }
     margin-bottom: 6px;
 }
 
-.page-meta,
-.page-user { font-size: 13px; color: var(--color-text-muted); margin-bottom: 4px; }
+/* Modificador: título de página en tamaño reducido (formularios y edición)
+   [MIGRADO] Reemplaza los tres style="font-size:22px;" inline de lugarProducción.html */
+.page-title--sm { font-size: 22px; }
 
+/* Toprow (perfil) */
 .toprow {
     display: flex;
     align-items: center;
@@ -936,6 +766,7 @@ h2 { color: var(--green-dark); }
     margin-bottom: 10px;
 }
 
+/* Etiqueta de sección pequeña con línea (usada en cards de perfil) */
 .toprow-title,
 .section-head {
     font-size: 11px;
@@ -959,6 +790,7 @@ h2 { color: var(--green-dark); }
     background: #c3deca;
 }
 
+/* Título de sección en formularios multi-paso */
 .section-title {
     font-family: var(--font-sora);
     font-size: 16px;
@@ -980,27 +812,24 @@ h2 { color: var(--green-dark); }
 
 
 /* ============================================================
-   5c. FILTROS
+   9. FILTROS
    ============================================================ */
 
 .filtros {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    padding: 0 25px;
 }
 
 .filtro {
     padding: 7px 16px;
-    border: 1px solid rgba(83, 158, 101, 0.4);
+    border: 1px solid rgba(83,158,101,0.4);
     border-radius: var(--radius-md);
     background: transparent;
     color: var(--color-text-muted);
     font-size: 13px;
     cursor: pointer;
-    transition: border-color var(--transition-fast),
-                background    var(--transition-fast),
-                color         var(--transition-fast);
+    transition: border-color var(--t-fast), background var(--t-fast), color var(--t-fast);
 }
 
 .filtro:hover {
@@ -1014,20 +843,20 @@ h2 { color: var(--green-dark); }
     color: var(--white);
 }
 
+
 /* ============================================================
-   5d. CARDS GRID (inspecciones / solicitudes)
+   10. CARDS GRID (inspecciones / solicitudes / citas)
    ============================================================ */
 
 .cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 16px;
     padding: 0 25px;
 }
 
-/* Cards dentro del grid de inspecciones */
-.cards-grid .card,
-.inspeccion-card {
+/* Card dentro del grid */
+.cards-grid .card {
     background: var(--white);
     border: 0.5px solid var(--color-border);
     border-radius: var(--radius-lg);
@@ -1035,19 +864,17 @@ h2 { color: var(--green-dark); }
     display: flex;
     flex-direction: column;
     padding: 0;
+    /* Anulamos hover heredado del .card de perfil */
+    transition: none;
 }
 
-/* Acento superior de estado */
-.card__accent {
-    height: 4px;
-    width: 100%;
-    flex-shrink: 0;
-}
-.card__accent--pendiente  { background: #e0931f; }
-.card__accent--aprobado   { background: var(--green-mid); }
-.card__accent--rechazado  { background: var(--accent-red); }
+/* Acento de estado (franja superior) */
+.card__accent               { height: 4px; width: 100%; flex-shrink: 0; }
+.card__accent--pendiente    { background: #e0931f; }
+.card__accent--aprobado     { background: var(--green-mid); }
+.card__accent--rechazado    { background: var(--accent-red); }
 
-/* Cuerpo interior de la card */
+/* Interior de la card */
 .card__inner {
     padding: 16px 18px;
     display: flex;
@@ -1062,15 +889,9 @@ h2 { color: var(--green-dark); }
     align-items: center;
 }
 
-.card-footer  { margin-top: 15px; }
-.card-codigo  { font-weight: 600; font-size: 15px; color: var(--text-dark); }
-.card-lugar   { font-size: 13px; color: var(--color-primary); }
+.card-codigo { font-weight: 600; font-size: 15px; color: var(--text-dark); }
 
-.card-coords {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
+.card-coords { display: flex; flex-direction: column; gap: 8px; }
 
 .card-coords .coord-row {
     display: flex;
@@ -1090,33 +911,12 @@ h2 { color: var(--green-dark); }
     font-size: 13px;
 }
 
-.coord-text {
-    font-size: 12.5px;
-    color: var(--text-mid);
-}
+.coord-text { font-size: 12.5px; color: var(--text-mid); }
 
-.card-actions {
-    display: flex;
-    gap: 10px;
-    padding: 0 18px 16px;
-}
+.card-actions { display: flex; gap: 10px; padding: 0 18px 16px; }
 
-/* Admin cards grid */
-.cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-    padding: 20px;
-}
-
-.summary { margin-bottom: 8px; }
-
-/* Barra de progreso en cards */
-.prog-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
+/* Barra de progreso en cards de inspección */
+.prog-wrap { display: flex; flex-direction: column; gap: 5px; }
 
 .prog-label {
     display: flex;
@@ -1132,9 +932,9 @@ h2 { color: var(--green-dark); }
     letter-spacing: .05em;
 }
 
-.prog-val            { font-size: 11px; font-weight: 600; }
-.prog-val--pend      { color: #a05e00; }
-.prog-val--comp      { color: var(--green-dark); }
+.prog-val           { font-size: 11px; font-weight: 600; }
+.prog-val--pend     { color: #a05e00; }
+.prog-val--comp     { color: var(--green-dark); }
 
 .prog-track {
     height: 6px;
@@ -1143,159 +943,26 @@ h2 { color: var(--green-dark); }
     overflow: hidden;
 }
 
-.prog-bar {
-    height: 100%;
-    border-radius: 20px;
-    transition: width .4s ease;
-}
-
+.prog-bar { height: 100%; border-radius: 20px; transition: width .4s ease; }
 .prog-bar--pend { background: #e0931f; }
 .prog-bar--comp { background: var(--green-mid); }
 
 
 /* ============================================================
-   5e. PERFIL
+   11. PERFIL
    ============================================================ */
 
-/* Hero banner */
-.profile-hero {
-    background: var(--white);
-    border: 0.5px solid #c3deca;
-    border-radius: 14px;
-    overflow: hidden;
-}
-
-.profile-hero__banner {
-    height: 76px;
-    background: #1e4d2b;
-    position: relative;
-    overflow: hidden;
-}
-
-/* Alias HTML existente */
-.hero-banner { height: 76px; background: #1e4d2b; position: relative; overflow: hidden; }
-
-.profile-hero__banner::after,
-.hero-banner::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-        45deg,
-        rgba(255,255,255,.03) 0,
-        rgba(255,255,255,.03) 1px,
-        transparent 1px,
-        transparent 9px
-    );
-}
-
-.profile-hero__body,
-.hero-body {
-    display: flex;
-    align-items: flex-end;
-    gap: 16px;
-    padding: 0 24px 20px;
-    margin-top: -28px;
-}
-
-.profile-hero__avatar,
-.avatar {
-    width: 56px;
-    height: 56px;
-    flex-shrink: 0;
-    border-radius: 50%;
-    border: 3px solid var(--white);
-    overflow: hidden;
-    background: #2d6a3f;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    box-shadow: 0 2px 8px rgba(30, 77, 43, .2);
-}
-
-.profile-hero__avatar img,
-.avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-.hero-info      { padding-bottom: 4px; }
-.hero-name      { font-size: 15px; font-weight: 600; color: #1a2e1e; }
-.hero-role      { font-size: 12px; color: #6b8c72; margin-top: 2px; }
-
-/* Contenedor perfil legacy */
-.contenedor-perfil {
-    background: var(--color-primary-bg);
-    padding: 24px 32px;
-    margin: 24px 32px;
-    border-radius: var(--radius-md);
-    box-shadow: 0 4px 500px rgba(0, 0, 0, 0.15);
-}
-
-/* Grids de campos */
-.grid2 { display: grid; grid-template-columns: 1fr 1fr;     gap: 13px 22px; }
-.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 13px 22px; }
-.grid-form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px 24px;
-    margin-bottom: 16px;
-}
-
-.span2 { grid-column: 1 / -1; }
-
-/* Campo (field BEM) */
-.field {
+/* Contenedor principal con dos columnas */
+.content {
+    flex: 1;
+    padding: 28px 32px;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 14px;
+    overflow-y: auto;
 }
 
-.field label {
-    display: block;
-    font-size: 11px;
-    font-weight: 600;
-    color: #6b8c72;
-    letter-spacing: .4px;
-    text-transform: uppercase;
-    margin-bottom: 0;
-}
-
-.field input,
-.grid-form input,
-.grid-form select {
-    width: 100%;
-    padding: 9px 12px;
-    border: 1px solid #c3deca;
-    border-radius: var(--radius-md);
-    font-size: 13px;
-    color: #1a2e1e;
-    background: #edf7f0;
-    font-family: inherit;
-    outline: none;
-    transition: border-color var(--transition-fast),
-                box-shadow   var(--transition-fast),
-                background   var(--transition-fast);
-}
-
-.field input:focus,
-.grid-form input:focus,
-.grid-form select:focus {
-    border-color: #4caf6e;
-    box-shadow: 0 0 0 3px rgba(76, 175, 110, .12);
-    background: var(--white);
-}
-
-.field input::placeholder { color: #b0c8b7; }
-
-
-/* Contenedor de acciones del perfil */
-.actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    padding-top: 4px;
-}
-
-/* ── Nuevo layout perfil: sidebar + formulario ── */
+/* Layout lateral: avatar | formulario */
 .profile-layout {
     display: flex;
     gap: 24px;
@@ -1331,29 +998,22 @@ h2 { color: var(--green-dark); }
     background: var(--green-xlight);
 }
 
-.profile-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
+.profile-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 .avatar-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(30, 77, 43, 0.45);
+    background: rgba(30,77,43,0.45);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--white);
     opacity: 0;
     cursor: pointer;
-    transition: opacity var(--transition-base);
+    transition: opacity var(--t-base);
 }
 
-.profile-avatar:hover .avatar-overlay {
-    opacity: 1;
-}
+.profile-avatar:hover .avatar-overlay { opacity: 1; }
 
 .profile-avatar-hint {
     font-size: 12px;
@@ -1398,7 +1058,28 @@ h2 { color: var(--green-dark); }
     gap: 16px;
 }
 
-/* Responsivo */
+/* Card de sección del perfil */
+.card {
+    background: var(--white);
+    border: 0.5px solid #c3deca;
+    border-radius: 14px;
+    padding: 20px 24px;
+}
+
+/* Grids de campos */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr;     gap: 13px 22px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 13px 22px; }
+.span2 { grid-column: 1 / -1; }
+
+/* Fila de acciones (Cancelar / Guardar) */
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 4px;
+}
+
+/* Responsivo perfil */
 @media (max-width: 700px) {
     .profile-layout {
         flex-direction: column;
@@ -1417,30 +1098,19 @@ h2 { color: var(--green-dark); }
         border-radius: 14px;
     }
 
-    .profile-avatar {
-        width: 72px;
-        height: 72px;
-        flex-shrink: 0;
-    }
-
+    .profile-avatar { width: 72px; height: 72px; flex-shrink: 0; }
     .profile-avatar-hint { display: none; }
-
-    .profile-sidebar-info {
-        align-items: flex-start;
-        text-align: left;
-    }
+    .profile-sidebar-info { align-items: flex-start; text-align: left; }
 }
 
 
 /* ============================================================
-   5f. FORMULARIOS MULTI-PASO (Lugar de producción)
+   12. FORMULARIOS MULTI-PASO (lugar de producción)
    ============================================================ */
 
-/* Vistas */
 .view        { display: none; }
 .view.active { display: block; }
 
-/* Tabla card */
 .table-card {
     background: var(--white);
     border-radius: var(--radius-lg);
@@ -1448,7 +1118,6 @@ h2 { color: var(--green-dark); }
     box-shadow: var(--shadow-sm);
 }
 
-/* Cabecera del formulario */
 .form-header {
     display: flex;
     align-items: center;
@@ -1456,7 +1125,7 @@ h2 { color: var(--green-dark); }
     margin-bottom: 28px;
 }
 
-/* Steps indicador */
+/* Indicador de pasos */
 .steps-indicator { display: flex; align-items: center; margin-bottom: 28px; }
 
 .step {
@@ -1468,13 +1137,9 @@ h2 { color: var(--green-dark); }
     color: var(--text-light);
 }
 
-.step--active,
 .step.active { color: var(--green-dark); }
-
-.step--done,
 .step.done   { color: var(--green-mid); }
 
-.step__num,
 .step-num {
     display: flex;
     align-items: center;
@@ -1485,22 +1150,11 @@ h2 { color: var(--green-dark); }
     border: 2px solid var(--border);
     font-size: 12px;
     font-weight: 700;
-    transition: background var(--transition-base), border-color var(--transition-base);
+    transition: background var(--t-base), border-color var(--t-base);
 }
 
-.step--active .step__num,
-.step.active .step-num {
-    background: var(--green-dark);
-    border-color: var(--green-dark);
-    color: var(--white);
-}
-
-.step--done .step__num,
-.step.done .step-num {
-    background: var(--green-mid);
-    border-color: var(--green-mid);
-    color: var(--white);
-}
+.step.active .step-num { background: var(--green-dark); border-color: var(--green-dark); color: var(--white); }
+.step.done   .step-num { background: var(--green-mid);  border-color: var(--green-mid);  color: var(--white); }
 
 .step-connector {
     flex: 1;
@@ -1510,7 +1164,6 @@ h2 { color: var(--green-dark); }
     background: var(--border);
 }
 
-.step-connector--done,
 .step-connector.done { background: var(--green-mid); }
 
 /* Tarjeta de sección del formulario */
@@ -1524,10 +1177,9 @@ h2 { color: var(--green-dark); }
     animation: slideUp .3s ease;
 }
 
-/* Layout de fila */
 .form-row        { display: grid; grid-template-columns: 1fr 1fr;     gap: 16px; margin-bottom: 16px; }
-.form-row.single { display: grid; grid-template-columns: 1fr;         gap: 16px; margin-bottom: 16px; }
-.form-row.triple { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.form-row.single { grid-template-columns: 1fr; }
+.form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
 
 .form-group { display: flex; flex-direction: column; gap: 5px; }
 
@@ -1539,8 +1191,7 @@ h2 { color: var(--green-dark); }
 }
 
 /* Predio dinámico */
-.predio-fields,
-.lote-cards {
+.predio-fields, .lote-cards {
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -1562,19 +1213,17 @@ h2 { color: var(--green-dark); }
     white-space: nowrap;
 }
 
-/* Lote cards (lugar de producción) */
+/* Lote cards */
 .lote-card {
     border: 1.5px solid var(--border);
     border-radius: 10px;
     overflow: hidden;
-    transition: border-color var(--transition-fast);
+    transition: border-color var(--t-fast);
     animation: fadeIn .25s ease;
 }
 
-.lote-card--open,
 .lote-card.open { border-color: var(--green-mid); }
 
-.lote-card__header,
 .lote-card-header {
     display: flex;
     align-items: center;
@@ -1583,15 +1232,12 @@ h2 { color: var(--green-dark); }
     background: var(--green-xlight);
     cursor: pointer;
     user-select: none;
-    transition: background var(--transition-fast);
+    transition: background var(--t-fast);
 }
 
-.lote-card--open .lote-card__header,
-.lote-card.open  .lote-card-header,
-.lote-card__header:hover,
+.lote-card.open .lote-card-header,
 .lote-card-header:hover { background: var(--green-light); }
 
-.lote-card__title,
 .lote-card-title {
     display: flex;
     align-items: center;
@@ -1601,88 +1247,179 @@ h2 { color: var(--green-dark); }
     color: var(--green-dark);
 }
 
-.lote-card__body,
 .lote-card-body { display: none; padding: 16px; background: var(--white); }
+.lote-card.open .lote-card-body { display: block; animation: slideUp .2s ease; }
 
-.lote-card--open .lote-card__body,
-.lote-card.open  .lote-card-body { display: block; animation: slideUp .2s ease; }
-
-/* Indicadores de estado */
 .lote-status-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background: var(--border);
-    transition: background var(--transition-fast);
+    transition: background var(--t-fast);
 }
 
-.lote-card--complete .lote-status-dot,
-.lote-card.complete  .lote-status-dot { background: var(--green-mid); }
+.lote-card.complete .lote-status-dot { background: var(--green-mid); }
 
 .lote-chevron {
     font-size: 13px;
     color: var(--text-light);
-    transition: transform var(--transition-fast);
+    transition: transform var(--t-fast);
 }
 
-.lote-card--open .lote-chevron,
-.lote-card.open  .lote-chevron { transform: rotate(180deg); }
+.lote-card.open .lote-chevron { transform: rotate(180deg); }
 
 
 /* ============================================================
-   6a. MODAL — AGENDAR CITA
+   13. MODALES
+   Base: .modal-base (overlay) + .modal-base__box
+   Usada en: agendar cita, observación, verificar cita
    ============================================================ */
 
-/* Hereda .modal-overlay-base y .modal-box-base */
-.modal-overlay {
+/* Overlay base (compartido por los 3 modales) */
+.modal-base,
+.modal-overlay,
+.modal-obs-overlay,
+.modal-cita-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, .35);
-    backdrop-filter: blur(3px);
-    z-index: 1050;
+    background: rgba(0,0,0,.45);
+    z-index: 1055;
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
     pointer-events: none;
-    transition: opacity var(--transition-base);
+    transition: opacity var(--t-base);
 }
 
-.modal-overlay.show { opacity: 1; pointer-events: auto; }
+.modal-base.show,
+.modal-overlay.show,
+.modal-obs-overlay.show,
+.modal-cita-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
 
-.modal-box {
+/* Box interior base */
+.modal-base__box,
+.modal-box,
+.modal-obs-box,
+.modal-cita-box {
     background: var(--white);
     border-radius: var(--radius-xl);
-    padding: 32px;
     width: 100%;
     max-width: 480px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, .18);
-    transform: translateY(16px);
-    transition: transform var(--transition-base);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(12px);
+    transition: transform var(--t-base);
+    box-shadow: 0 20px 60px rgba(0,0,0,.18);
 }
 
-.modal-overlay.show .modal-box { transform: translateY(0); }
+.modal-base.show   .modal-base__box,
+.modal-overlay.show .modal-box,
+.modal-obs-overlay.show .modal-obs-box,
+.modal-cita-overlay.show .modal-cita-box {
+    transform: translateY(0);
+}
 
-.modal-title    { font-size: 18px; font-weight: 700; color: var(--green-dark); margin-bottom: 6px; }
-.modal-subtitle { font-size: 13px; color: var(--text-light); margin-bottom: 20px; }
+/* Cabecera modal */
+.modal__head,
+.modal-obs-head,
+.modal-cita-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    position: relative;
+}
 
-.modal-close {
-    position: absolute;
-    top: 16px;
-    right: 20px;
+/* Títulos del modal */
+.modal__title, .modal-title,
+.modal-obs-titulo, .modal-cita-titulo {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.modal__subtitle, .modal-subtitle,
+.modal-obs-sub, .modal-cita-sub {
+    font-size: 12px;
+    color: var(--text-light);
+    margin-top: 2px;
+}
+
+/* Botón cerrar */
+.modal__close, .modal-close,
+.modal-obs-close, .modal-cita-close {
     background: none;
     border: none;
-    font-size: 20px;
+    font-size: 18px;
     color: var(--text-light);
     cursor: pointer;
     line-height: 1;
-    margin-left: 0;
-    transition: color var(--transition-fast);
+    padding: 0;
+    transition: color var(--t-fast);
 }
 
-.modal-close:hover { color: var(--green-dark); }
+.modal__close:hover, .modal-close:hover,
+.modal-obs-close:hover, .modal-cita-close:hover { color: var(--text-dark); }
 
-/* Opciones de lugar (checkboxes visuales) */
+/* Cuerpo modal */
+.modal__body, .modal-obs-body, .modal-cita-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+}
+
+.modal__body::-webkit-scrollbar,
+.modal-obs-body::-webkit-scrollbar,
+.modal-cita-body::-webkit-scrollbar { width: 4px; }
+
+.modal__body::-webkit-scrollbar-thumb,
+.modal-obs-body::-webkit-scrollbar-thumb,
+.modal-cita-body::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+/* Pie modal */
+.modal__foot, .modal-obs-foot, .modal-cita-foot, .modal-footer-custom {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    background: #f9fbf9;
+    flex-shrink: 0;
+}
+
+/* Mensaje de éxito dentro del modal */
+.modal-success, .cita-success-msg {
+    display: none;
+    margin-top: 14px;
+    padding: 12px 16px;
+    background: #e8f5ee;
+    border: 1.5px solid var(--green-mid);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--green-dark);
+    line-height: 1.6;
+}
+
+.modal-success.show  { display: flex; align-items: center; gap: 10px; }
+.cita-success-msg.show { display: block; }
+
+
+/* ── 13a. Modal agendar cita (productor) ── */
+
+/* Opciones de lugar seleccionable */
 .lugar-option {
     display: flex;
     align-items: center;
@@ -1693,11 +1430,11 @@ h2 { color: var(--green-dark); }
     border-radius: 10px;
     cursor: pointer;
     user-select: none;
-    transition: border-color var(--transition-fast), background var(--transition-fast);
+    transition: border-color var(--t-fast), background var(--t-fast);
 }
 
-.lugar-option:hover           { background: var(--green-xlight); }
-.lugar-option.selected        { border-color: var(--green-dark); background: #e8f5ee; }
+.lugar-option:hover    { background: var(--green-xlight); }
+.lugar-option.selected { border-color: var(--green-dark); background: #e8f5ee; }
 .lugar-option input[type="checkbox"] { display: none; }
 
 .lugar-check {
@@ -1711,7 +1448,7 @@ h2 { color: var(--green-dark); }
     border-radius: 5px;
     font-size: 12px;
     color: transparent;
-    transition: background var(--transition-fast), border-color var(--transition-fast);
+    transition: background var(--t-fast), border-color var(--t-fast);
 }
 
 .lugar-option.selected .lugar-check {
@@ -1720,99 +1457,12 @@ h2 { color: var(--green-dark); }
     color: var(--white);
 }
 
-.lugar-info    { flex: 1; }
-.lugar-id      { font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: .4px; }
-.lugar-nombre  { font-size: 14px; font-weight: 600; color: var(--text-dark); }
-
-.modal-footer-custom { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-
-.modal-success {
-    display: none;
-    align-items: center;
-    gap: 10px;
-    margin-top: 14px;
-    padding: 14px 16px;
-    background: #e8f5ee;
-    border: 1.5px solid var(--green-mid);
-    border-radius: 10px;
-    font-size: 13.5px;
-    font-weight: 500;
-    color: var(--green-dark);
-}
-
-.modal-success.show { display: flex; }
+.lugar-info   { flex: 1; }
+.lugar-id     { font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: .4px; }
+.lugar-nombre { font-size: 14px; font-weight: 600; color: var(--text-dark); }
 
 
-/* ============================================================
-   6b. MODAL — INSPECCIÓN (LOTES)
-   ============================================================ */
-
-
-
-
-/* ============================================================
-   6c. MODAL — AGREGAR OBSERVACIÓN
-   ============================================================ */
-
-.modal-obs-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, .45);
-    z-index: 1055;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--transition-base);
-}
-
-.modal-obs-overlay.show { opacity: 1; pointer-events: auto; }
-
-.modal-obs-box {
-    background: var(--white);
-    border-radius: var(--radius-xl);
-    width: 100%;
-    max-width: 480px;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    transform: translateY(12px);
-    transition: transform var(--transition-base);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, .18);
-}
-
-.modal-obs-overlay.show .modal-obs-box { transform: translateY(0); }
-
-.modal-obs-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    padding: 18px 20px 14px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-}
-
-.modal-obs-titulo { font-size: 15px; font-weight: 600; color: var(--text-dark); }
-.modal-obs-sub    { font-size: 12px; color: var(--text-light); margin-top: 2px; }
-
-.modal-obs-close {
-    background: none;
-    border: none;
-    font-size: 18px;
-    color: var(--text-light);
-    cursor: pointer;
-    line-height: 1;
-    padding: 0;
-    transition: color var(--transition-fast);
-}
-
-.modal-obs-close:hover { color: var(--text-dark); }
-
-.modal-obs-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
-.modal-obs-body::-webkit-scrollbar       { width: 4px; }
-.modal-obs-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+/* ── 13b. Modal observación (funcionario) ── */
 
 /* Grid de lugares completados */
 .lugares-obs-grid {
@@ -1828,12 +1478,11 @@ h2 { color: var(--green-dark); }
     border: 1px solid #d4eadb;
     border-radius: 10px;
     cursor: pointer;
-    transition: border-color var(--transition-fast), background var(--transition-fast);
+    transition: border-color var(--t-fast), background var(--t-fast);
 }
 
-.lugar-obs-card:hover          { background: var(--green-xlight); border-color: #7ab88a; }
-.lugar-obs-card--selected,
-.lugar-obs-card.sel            { border-color: var(--green-dark); background: #e6f5ea; }
+.lugar-obs-card:hover         { background: var(--green-xlight); border-color: #7ab88a; }
+.lugar-obs-card.sel           { border-color: var(--green-dark); background: #e6f5ea; }
 
 .lugar-obs-chk {
     position: absolute;
@@ -1843,10 +1492,9 @@ h2 { color: var(--green-dark); }
     height: 14px;
     border-radius: 50%;
     border: 1.5px solid var(--border);
-    transition: all var(--transition-fast);
+    transition: all var(--t-fast);
 }
 
-.lugar-obs-card--selected .lugar-obs-chk,
 .lugar-obs-card.sel .lugar-obs-chk {
     background: var(--green-dark);
     border-color: var(--green-dark);
@@ -1855,153 +1503,12 @@ h2 { color: var(--green-dark); }
 .lugar-obs-nombre { font-size: 13px; font-weight: 600; color: var(--text-dark); margin-bottom: 2px; padding-right: 18px; }
 .lugar-obs-meta   { font-size: 11px; color: #7a9e82; }
 
-.modal-obs-foot {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 20px;
-    border-top: 1px solid var(--border);
-    background: #f9fbf9;
-    flex-shrink: 0;
-}
-
-.obs-counter { font-size: 11px; color: var(--text-light); }
+.obs-counter { font-size: 11px; color: var(--text-light); margin-right: auto; }
 
 
-/* ============================================================
-   7. TOAST
-   ============================================================ */
+/* ── 13c. Modal verificar cita (funcionario) ── */
 
-.toast {
-    position: fixed;
-    bottom: 28px;
-    right: 28px;
-    z-index: 9999;
-    padding: 13px 22px;
-    background: var(--green-dark);
-    color: var(--white);
-    border-radius: 10px;
-    font-size: 13.5px;
-    font-weight: 500;
-    box-shadow: var(--shadow-lg);
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(12px);
-    transition: opacity var(--transition-base), transform var(--transition-base);
-}
-
-.toast.show { opacity: 1; transform: translateY(0); }
-
-
-/* ============================================================
-   8. ANIMACIONES
-   ============================================================ */
-
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(14px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateX(-6px); }
-    to   { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes obsRowIn {
-    from { opacity: 0; background-color: #e6f5ea; }
-    to   { opacity: 1; background-color: transparent; }
-}
-
-/* ════════════════════════════════════════════════════════════
-   MODAL — VERIFICAR CITA
-   Pegar al final de main.css (o main_refactored.css)
-════════════════════════════════════════════════════════════ */
-
-/* ── Overlay ── */
-.modal-cita-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-    z-index: 1055;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.22s ease;
-}
-
-.modal-cita-overlay.show {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-/* ── Box ── */
-.modal-cita-box {
-    background: #fff;
-    border-radius: 16px;
-    width: 100%;
-    max-width: 500px;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    transform: translateY(12px);
-    transition: transform 0.22s ease;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
-}
-
-.modal-cita-overlay.show .modal-cita-box {
-    transform: translateY(0);
-}
-
-/* ── Cabecera ── */
-.modal-cita-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    padding: 18px 20px 14px;
-    border-bottom: 1px solid #e5ece6;
-    flex-shrink: 0;
-}
-
-.modal-cita-titulo {
-    font-size: 15px;
-    font-weight: 600;
-    color: #1e3222;
-}
-
-.modal-cita-sub {
-    font-size: 12px;
-    color: #7a9e82;
-    margin-top: 3px;
-}
-
-.modal-cita-close {
-    background: none;
-    border: none;
-    font-size: 18px;
-    color: #9ab8a0;
-    cursor: pointer;
-    line-height: 1;
-    padding: 0;
-    transition: color 0.15s;
-    margin-left: 0;
-}
-
-.modal-cita-close:hover { color: #1e3222; }
-
-/* ── Cuerpo ── */
-.modal-cita-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px 20px;
-}
-
-.modal-cita-body::-webkit-scrollbar       { width: 4px; }
-.modal-cita-body::-webkit-scrollbar-thumb { background: #c5dcc9; border-radius: 4px; }
-
-/* ── Label con paso numerado ── */
+/* Label con paso numerado */
 .modal-cita-label {
     display: flex;
     align-items: center;
@@ -2021,19 +1528,15 @@ h2 { color: var(--green-dark); }
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #2d6a4f;
-    color: #fff;
+    background: var(--green-dark);
+    color: var(--white);
     font-size: 10px;
     font-weight: 700;
     flex-shrink: 0;
 }
 
-/* ── Lista de técnicos ── */
-.cita-tecnicos-lista {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
+/* Lista de técnicos */
+.cita-tecnicos-lista { display: flex; flex-direction: column; gap: 8px; }
 
 .cita-tecnico-item {
     display: flex;
@@ -2046,17 +1549,9 @@ h2 { color: var(--green-dark); }
     transition: border-color 0.15s, background 0.15s;
 }
 
-.cita-tecnico-item:hover {
-    background: #f0faf2;
-    border-color: #7ab88a;
-}
+.cita-tecnico-item:hover { background: #f0faf2; border-color: #7ab88a; }
+.cita-tecnico-item.sel   { border-color: var(--green-dark); background: #e6f5ea; }
 
-.cita-tecnico-item.sel {
-    border-color: #2d6a4f;
-    background: #e6f5ea;
-}
-
-/* Círculo indicador de selección */
 .cita-tecnico-chk {
     width: 16px;
     height: 16px;
@@ -2067,17 +1562,12 @@ h2 { color: var(--green-dark); }
 }
 
 .cita-tecnico-item.sel .cita-tecnico-chk {
-    background: #2d6a4f;
-    border-color: #2d6a4f;
+    background: var(--green-dark);
+    border-color: var(--green-dark);
 }
 
-.cita-tecnico-info { flex: 1; min-width: 0; }
-
-.cita-tecnico-nombre {
-    font-size: 13.5px;
-    font-weight: 600;
-    color: #1e3222;
-}
+.cita-tecnico-info  { flex: 1; min-width: 0; }
+.cita-tecnico-nombre { font-size: 13.5px; font-weight: 600; color: #1e3222; }
 
 .cita-tecnico-meta {
     display: flex;
@@ -2089,70 +1579,593 @@ h2 { color: var(--green-dark); }
     margin-top: 2px;
 }
 
-/* Tags de municipio */
 .cita-tecnico-tag {
     display: inline-block;
     padding: 1px 8px;
     border-radius: 20px;
     font-size: 10px;
     font-weight: 600;
-    background: #d8f3dc;
-    color: #2d6a4f;
+    background: var(--green-light);
+    color: var(--green-dark);
 }
 
-.cita-tecnico-tag--cercano {
-    background: #fff4e0;
-    color: #b45e00;
-}
+.cita-tecnico-tag--cercano { background: #fff4e0; color: #b45e00; }
 
-/* ── Input de fecha ── */
-.cita-fecha-input {
-    width: 100%;
-    padding: 9px 12px;
-    border: 1px solid #c5dcc9;
-    border-radius: 8px;
-    font-size: 13px;
-    font-family: inherit;
-    color: #1e3222;
-    background: #fff;
-    outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-}
 
-.cita-fecha-input:focus {
-    border-color: #2d6a4f;
-    box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.1);
-}
+/* ============================================================
+   14. TOAST
+   ============================================================ */
 
-.cita-fecha-input:disabled {
-    background: #f7faf7;
-    color: #9ab8a0;
-    cursor: not-allowed;
-}
-
-/* ── Mensaje de éxito ── */
-.cita-success-msg {
-    display: none;
-    margin-top: 14px;
-    padding: 12px 16px;
-    background: #e8f5ee;
-    border: 1px solid #52b788;
+.toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 9999;
+    padding: 13px 22px;
+    background: var(--green-dark);
+    color: var(--white);
     border-radius: 10px;
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 500;
-    color: #2d6a4f;
-    line-height: 1.6;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(12px);
+    transition: opacity var(--t-base), transform var(--t-base);
 }
 
-.cita-success-msg.show { display: block; }
+.toast.show { opacity: 1; transform: translateY(0); }
 
-/* ── Footer ── */
-.modal-cita-foot {
+
+/* ============================================================
+   15. ANIMACIONES
+   ============================================================ */
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-6px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes obsRowIn {
+    from { opacity: 0; background-color: #e6f5ea; }
+    to   { opacity: 1; background-color: transparent; }
+}
+
+/* ============================================================
+   16. VISTA DE EDICIÓN DE LUGAR DE PRODUCCIÓN
+   Clases usadas por view-edit: lista de predios editables
+   y tarjetas accordion de lotes.
+   ============================================================ */
+
+/* ── Lista de predios editables ── */
+.predios-edit-list {
     display: flex;
-    justify-content: flex-end;
+    flex-direction: column;
     gap: 8px;
-    padding: 12px 20px;
-    border-top: 1px solid #e5ece6;
-    background: #f9fbf9;
+    margin-bottom: 14px;
+}
+
+/* Fila individual de predio: etiqueta + código + botón eliminar */
+.predio-edit-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--green-xlight);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    animation: fadeIn .2s ease;
+}
+
+/* Etiqueta "Predio N" */
+.predio-edit-label {
+    min-width: 70px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--green-dark);
+    white-space: nowrap;
+}
+
+/* Código del predio (texto de solo lectura) */
+.predio-edit-code {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-dark);
+}
+
+/* Botón eliminar predio — reutiliza colores del sistema */
+.btn-del-predio {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--accent-rose);
+    border: none;
+    color: var(--color-danger);
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    cursor: pointer;
+    transition: opacity var(--t-fast), transform var(--t-fast);
+}
+
+.btn-del-predio:hover { opacity: .8; transform: scale(1.08); }
+
+/* ── Fila para agregar nuevo predio ── */
+.predio-add-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 6px;
+}
+
+/* El input ocupa el espacio disponible */
+.predio-add-row .form-input { flex: 1; }
+
+/* ── Tarjetas accordion de lotes en la vista de edición ──
+   Reutilizan la misma lógica visual que .lote-card pero con
+   clases propias para no interferir con la vista de creación. */
+.lote-edit-card {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 10px;
+    background: var(--white);
+    transition: border-color var(--t-fast);
+    animation: fadeIn .25s ease;
+}
+
+.lote-edit-card.open { border-color: var(--green-mid); }
+
+/* Cabecera de la tarjeta (clickable para expand/collapse) */
+.lote-edit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--green-xlight);
+    cursor: pointer;
+    user-select: none;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--green-dark);
+    transition: background var(--t-fast);
+}
+
+.lote-edit-card.open .lote-edit-header,
+.lote-edit-header:hover { background: var(--green-light); }
+
+/* Chevron que rota al expandir */
+.lote-edit-chevron {
+    font-size: 13px;
+    color: var(--text-light);
+    transition: transform var(--t-fast);
+}
+
+.lote-edit-card.open .lote-edit-chevron { transform: rotate(180deg); }
+
+/* Cuerpo de la tarjeta (oculto cuando collapsed) */
+.lote-edit-body {
+    display: none;
+    padding: 16px;
+    background: var(--white);
+    border-top: 1px solid var(--border);
+}
+
+.lote-edit-card.open .lote-edit-body {
+    display: block;
+    animation: slideUp .2s ease;
+}
+
+/* ── Mensaje vacío (sin predios / sin lotes) ── */
+.edit-empty-msg {
+    font-size: 13px;
+    color: var(--text-light);
+    font-style: italic;
+    margin: 4px 0 10px;
+}
+
+/* ── Nota informativa dentro de tarjeta de lote ── */
+.lote-edit-note {
+    font-size: 11px;
+    color: var(--text-light);
+    margin-top: 6px;
+}
+
+/* ============================================================
+   16. PAGINACIÓN DE LOTES EN INSPECCION
+   ============================================================ */
+
+   #lotes-paginacion {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.5rem 0 0.5rem;
+}
+
+.pag-btn {
+    border: 1px solid #2d6a4f;
+    background: #fff;
+    color: #2d6a4f;
+    border-radius: 6px;
+    padding: 0.4rem 0.9rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: background 0.15s, color 0.15s;
+}
+.pag-btn:hover:not(:disabled) { background: #2d6a4f; color: #fff; }
+.pag-btn:disabled              { opacity: 0.45; cursor: default; }
+.pag-btn--activa               { background: #2d6a4f; color: #fff; font-weight: 600; }
+
+/* ============================================================
+   17. MODAL DETALLE — TABS + ACCORDION DE LOTES
+   Clases exclusivas del modal de detalle de lugar de producción.
+   No interfieren con otros modales ni con las lote-card de edición.
+   ============================================================ */
+
+/* ── Navegación por pestañas ── */
+
+/* Contenedor de los dos tabs (Lotes / Predios) */
+.detalle-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border);
+    margin: 16px 0 20px;
+}
+
+/* Cada pestaña individual */
+.detalle-tab {
+    flex: 1;
+    padding: 10px 0;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;          /* solapa el border-bottom del contenedor */
+    font-family: var(--font-dm);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-light);
+    cursor: pointer;
+    text-align: center;
+    transition: color var(--t-fast), border-color var(--t-fast);
+    letter-spacing: 0.02em;
+}
+
+.detalle-tab:hover { color: var(--green-dark); }
+
+/* Pestaña activa resaltada con línea verde */
+.detalle-tab.active {
+    color: var(--green-dark);
+    border-bottom-color: var(--green-dark);
+}
+
+/* Panel de cada sección (visible / oculto) */
+.detalle-panel       { display: none; }
+.detalle-panel.active { display: block; animation: slideUp .2s ease; }
+
+/* ── Accordion de lotes en el modal detalle ──
+   Clases propias (.dl-card) para no colisionar con .lote-card ni .lote-edit-card */
+
+.dl-card {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 8px;
+    background: var(--white);
+    transition: border-color var(--t-fast);
+    animation: fadeIn .2s ease;
+}
+
+/* Borde verde cuando está abierto */
+.dl-card.open { border-color: var(--green-mid); }
+
+/* Cabecera clickeable del accordion */
+.dl-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 14px;
+    background: var(--green-xlight);
+    cursor: pointer;
+    user-select: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--green-dark);
+    transition: background var(--t-fast);
+}
+
+.dl-card.open .dl-card-header,
+.dl-card-header:hover { background: var(--green-light); }
+
+/* Chevron que rota al expandir */
+.dl-card-chevron {
+    font-size: 12px;
+    color: var(--text-light);
+    transition: transform var(--t-fast);
+}
+
+.dl-card.open .dl-card-chevron { transform: rotate(180deg); }
+
+/* Cuerpo oculto por defecto; visible con .open */
+.dl-card-body {
+    display: none;
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--white);
+}
+
+.dl-card.open .dl-card-body {
+    display: block;
+    animation: slideUp .18s ease;
+}
+
+/* Filas de dato dentro del cuerpo del accordion */
+.dl-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    padding: 4px 0;
+    border-bottom: 1px solid #f0f4f2;
+    color: var(--text-dark);
+}
+
+.dl-row:last-child { border-bottom: none; }
+.dl-row span:first-child { color: var(--text-mid); font-size: 12px; }
+.dl-row span:last-child  { font-weight: 600; }
+
+/* ── Paginación dentro del modal detalle ──
+   Reutiliza .pag-btn ya definido en sección 16; solo añade el contenedor. */
+.detalle-paginacion {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 0 4px;
+    flex-wrap: wrap;
+}
+
+
+/* ============================================================
+   18. MODAL DETALLE — LAYOUT Y CONTENIDO ESPECÍFICO
+   [MIGRADO] Todos estos estilos estaban embebidos en el <style>
+   de lugarProducción.html. Se trasladan aquí para centralizar
+   la hoja de estilos y eliminar la etiqueta <style> del HTML.
+
+   Nota de reutilización:
+     • .detalle-item-row  reutiliza los mismos valores visuales
+       que .dl-row (§17), pero se mantiene separada porque
+       pertenece a la lista de predios (no al accordion de lotes)
+       y puede evolucionar de forma independiente.
+     • .detalle-empty     es semánticamente equivalente a
+       .edit-empty-msg (§16); se añade como alias para que el
+       JS que genera el HTML del modal no dependa de nombres
+       internos de la vista de edición.
+   ============================================================ */
+
+/* ── Caja del modal con scroll ── */
+.modal-detalle-box {
+    max-width: 680px;
+    width: 95vw;
+    max-height: 82vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+}
+
+/* ── Cabecera fija del modal (título + nombre + botón cerrar) ── */
+.detalle-head {
+    padding: 22px 28px 0;
     flex-shrink: 0;
+}
+
+/* ── Cuerpo scrolleable del modal (tabs + paneles) ── */
+.detalle-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 28px 20px;
+}
+
+.detalle-body::-webkit-scrollbar { width: 4px; }
+.detalle-body::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+/* ── Fila de estadísticas de resumen ── */
+.detalle-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.detalle-stat {
+    flex: 1;
+    min-width: 130px;
+    background: var(--green-xlight);
+    border: 1px solid #b7e4c7;
+    border-radius: var(--radius-lg);
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Etiqueta de la estadística (texto secundario pequeño) */
+.stat-label {
+    font-size: 11px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+/* Valor numérico principal de la estadística */
+.stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+/* ── Lista de predios (sección Predios dentro del modal detalle) ── */
+.detalle-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Tarjeta individual de predio */
+.detalle-item {
+    background: var(--white);
+    border: 1px solid #d8e8df;
+    border-radius: var(--radius-lg);
+    padding: 12px 16px;
+}
+
+/* Título del predio dentro del modal detalle */
+.detalle-item-title {
+    font-weight: 700;
+    color: var(--green-dark);
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+/* Fila de dato de un predio — estructura idéntica a .dl-row
+   pero semánticamente pertenece al listado de predios, no a
+   los lotes del accordion. Se mantiene separada por claridad. */
+.detalle-item-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 3px 0;
+    border-bottom: 1px solid #f0f4f2;
+    color: var(--text-dark);
+}
+
+.detalle-item-row:last-child       { border-bottom: none; }
+.detalle-item-row span:first-child { color: #666; }
+.detalle-item-row span:last-child  { font-weight: 600; }
+
+/* ── Mensaje cuando no hay datos (alias de .edit-empty-msg §16) ──
+   Permite que el JS del modal use un nombre semántico propio
+   sin acoplarse a la clase de la vista de edición. */
+.detalle-empty {
+    font-size: 13px;
+    color: var(--text-light);
+    font-style: italic;
+    margin: 4px 0 10px;
+}
+
+/* ── Fieldset extendido de predio en el formulario de creación ── */
+.predio-extended {
+    background: #f8fdf9;
+    border: 1px solid #c8e6d0;
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+}
+
+/* Encabezado del bloque de predio extendido */
+.predio-header {
+    font-weight: 700;
+    color: var(--green-dark);
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+/*----------------------------------------------------*/
+
+/* Colores SIFEX */
+:root {
+  --sifex-green-dark: #2d5a4c;
+  --sifex-green-light: #f1f8f5;
+  --sifex-green-border: #c2e0d6;
+  --sifex-text-muted: #6c757d;
+}
+
+.custom-modal {
+  border-radius: 20px;
+}
+
+.modal-title {
+  color: var(--sifex-green-dark);
+  font-weight: 600;
+}
+
+/* Tabs Personalizados */
+.custom-tabs .nav-link {
+  color: var(--sifex-text-muted);
+  font-weight: bold;
+  border: none;
+  background: transparent;
+  width: 50%; /* Divide el espacio entre Lotes y Predios */
+  text-align: center;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.custom-tabs .nav-link.active {
+  color: var(--sifex-green-dark) !important;
+  border-bottom: 3px solid var(--sifex-green-dark) !important;
+}
+
+/* Tarjetas de estadísticas superiores */
+.stat-card {
+  background-color: var(--sifex-green-light);
+  border: 1px solid var(--sifex-green-border);
+  border-radius: 12px;
+  padding: 15px;
+}
+
+.stat-card label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--sifex-text-muted);
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.stat-card .value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--sifex-green-dark);
+}
+
+/* Contenedor del Lote (Verde suave) */
+.lote-container {
+  border: 1px solid var(--sifex-green-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.lote-header {
+  background-color: #dcf1e9;
+  padding: 10px 20px;
+  color: var(--sifex-green-dark);
+  font-weight: bold;
+}
+
+.lote-body {
+  padding: 15px 20px;
+  background-color: #fff;
+  font-size: 0.9rem;
+}
+
+/* Botón cerrar estilo SIFEX */
+.btn-cerrar {
+  background-color: var(--sifex-green-dark);
+  color: white;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+.btn-cerrar:hover {
+  background-color: #23473c;
+  color: white;
 }
