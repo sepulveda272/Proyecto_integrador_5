@@ -61,8 +61,7 @@ function renderizarTabla(lugares) {
                 <button class="action-btn action-edit" onclick="editarLugar(${lugar.Id_lugar})" title="Editar">✏️</button>
                 <button class="action-btn action-del" onclick="eliminarLugar(${lugar.Id_lugar})" title="Eliminar">🗑</button>
                 <button type="button" class="action-btn action-eye" data-bs-toggle="modal" data-bs-target="#modalDetalleLugar" onclick="verDetalle(${lugar.Id_lugar})">👁</button>
-                <button class="action-btn action-lote" title="Agregar lotes"
-    onclick="goToLotesView(${lugar.Id_lugar})">🌾</button>
+                <button class="action-btn action-lote" title="Agregar lotes" onclick="goToLotesView(${lugar.Id_lugar})">🌾</button>
             </td>
             `;
         tableBody.appendChild(row);
@@ -238,6 +237,7 @@ async function goToLotesView(lugarOrId) {
     }
 
     lugarActual = lugar; // Guardamos para el POST posterior
+    console.log("Lugar cargado para lotes:", lugarActual);
 
     // 1. Título dinámico
     document.getElementById("lotes-lugar-nombre").innerText = lugar.Nombre_LugarProduccion;
@@ -370,53 +370,45 @@ async function guardarLotes() {
     const container = document.getElementById("lotes-container");
     const lotesCards = container.querySelectorAll('.form-card');
     
-    // Bloqueamos el botón para evitar múltiples clics
     btnGuardar.disabled = true;
     btnGuardar.innerHTML = "⌛ Guardando...";
 
     try {
-        // Recorremos cada tarjeta de lote para extraer la información
         for (const card of lotesCards) {
             const dataLote = {
-                // El ID del lugar actual que guardamos al abrir la vista
-                Id_LugarProduccion: lugarActual.Id_LugarProduccion,
+                // CAMBIO AQUÍ: El backend espera 'Id_lugar' (minúscula la 'l')
+                // Y asegúrate de que lugarActual tenga el ID correcto
+                Id_lugar: lugarActual.Id_lugar || lugarActual.Id_LugarProduccion,
                 
-                // Extraemos valores de los inputs dentro de esta tarjeta específica
                 Area_total: parseFloat(card.querySelector('.lote-area-total').value),
                 Area_siembra: parseFloat(card.querySelector('.lote-area-siembra').value),
-                Id_cultivo: parseInt(card.querySelector('.lote-cultivo-id').value), // ID numérico
+                Id_cultivo: parseInt(card.querySelector('.lote-cultivo-id').value),
                 Estado_fenologico: card.querySelector('.lote-estado').value,
                 Fecha_siembra: card.querySelector('.lote-fecha').value
             };
 
-            // Enviamos un POST por cada lote
+            console.log("Enviando al backend:", dataLote); // Para depurar
+
             const response = await fetch(API_URL_ADD_LOTE, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    // Si usas JWT, aquí deberías incluir el token:
-                    // 'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dataLote)
             });
 
             const result = await response.json();
 
             if (!response.ok) {
-                throw new Error(result.message || "Error al guardar uno de los lotes");
+                // Esto te mostrará el error real (ej: "Cultivo no existe")
+                throw new Error(result.message || "Error al guardar");
             }
         }
 
-        // Si todo sale bien
-        mostrarToast("✅ Todos los lotes se guardaron correctamente", "success");
-        
-        // Refrescamos la tabla principal y volvemos
-        if (typeof cargarLugares === "function") cargarLugares(); 
+        mostrarToast("✅ Lotes guardados correctamente", "success");
         setTimeout(goToTable, 1500);
 
     } catch (error) {
         console.error("Error en guardarLotes:", error);
-        mostrarToast("❌ Error: " + error.message, "danger");
+        mostrarToast("❌ " + error.message, "danger");
         btnGuardar.disabled = false;
         btnGuardar.innerHTML = "✔ Guardar lotes";
     }
