@@ -162,6 +162,9 @@ function llenarModalDinamico(lugar, lotes) {
                                 <span>Área de siembra</span> <strong>${lote.Area_siembra} ha</strong>
                             </div>
                             <div class="d-flex justify-content-between border-bottom py-2">
+                                <span>Cultivo</span> <strong>${lote.datos_cultivo.Nombre_especie}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between border-bottom py-2">
                                 <span>Estado fenológico</span> <strong>${lote.Estado_fenologico}</strong>
                             </div>
                             <div class="d-flex justify-content-between py-2">
