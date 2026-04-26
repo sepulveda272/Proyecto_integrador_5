@@ -1108,8 +1108,13 @@ h2 { color: var(--green-dark); }
    12. FORMULARIOS MULTI-PASO (lugar de producción)
    ============================================================ */
 
-.view        { display: none; }
-.view.active { display: block; }
+.view {
+    display: none;
+}
+
+.view.active {
+    display: block;
+}
 
 .table-card {
     background: var(--white);
