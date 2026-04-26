@@ -320,51 +320,41 @@ async function onNumLotesChange() {
     loteCard.style.borderLeft = "5px solid #28a745";
 
     loteCard.innerHTML = `
-            <div class="section-title" style="font-size: 0.9rem;">🟢 Lote ${i}</div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label">Área total lote (ha) *</label>
-                    <input type="number" class="form-input lote-area-total" step="0.1" 
-                        placeholder="Ej. 2.0" oninput="onLotesDetailChange()">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Área de siembra (ha) *</label>
-                    <input type="number" class="form-input lote-area-siembra" step="0.1" 
-                        placeholder="Ej. 1.5" oninput="onLotesDetailChange()">
-                </div>
-            </div>
-            <div class="form-row mt-2">
-                <div class="form-group">
-                    <label class="form-label">Estado fenológico *</label>
-                    <select class="form-input lote-estado" onchange="onLotesDetailChange()">
-                        <option value="">Seleccionar...</option>
-                        <option value="Siembra">Siembra</option>
-                        <option value="Germinación">Germinación</option>
-                        <option value="Crecimiento">Crecimiento</option>
-                        <option value="Floración">Floración</option>
-                        <option value="Maduración">Maduración</option>
-                        <option value="Cosecha">Cosecha</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Cultivo *</label>
-                    <select class="form-input lote-cultivo-id" required onchange="onLotesDetailChange()">
-                        <option value="">Seleccionar cultivo...</option>
-                        ${cultivosCache
-                          .map(
-                            (c) => `
-                            <option value="${c.Id_cultivo}">${c.Nombre_especie} - ${c.Variedad}</option>
-                        `,
-                          )
-                          .join("")}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Fecha de siembra *</label>
-                    <input type="date" class="form-input lote-fecha" onchange="onLotesDetailChange()">
-                </div>
-            </div>
-        `;
+    <div class="section-title" style="font-size: 0.9rem; display: flex; justify-content: space-between;">
+        <span>🟢 Lote ${i}</span>
+        <span style="color: #666; font-weight: normal;">Estado: <b>Siembra</b></span>
+    </div>
+    
+    <input type="hidden" class="lote-estado" value="Siembra">
+
+    <div class="form-row">
+        <div class="form-group">
+            <label class="form-label">Área total lote (ha) *</label>
+            <input type="number" class="form-input lote-area-total" step="0.1" 
+                placeholder="Ej. 2.0" oninput="onLotesDetailChange()">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Área de siembra (ha) *</label>
+            <input type="number" class="form-input lote-area-siembra" step="0.1" 
+                placeholder="Ej. 1.5" oninput="onLotesDetailChange()">
+        </div>
+    </div>
+    <div class="form-row mt-2">
+        <div class="form-group">
+            <label class="form-label">Fecha de siembra *</label>
+            <input type="date" class="form-input lote-fecha" onchange="onLotesDetailChange()">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Cultivo *</label>
+            <select class="form-input lote-cultivo-id" required onchange="onLotesDetailChange()">
+                <option value="">Seleccionar cultivo...</option>
+                ${cultivosCache.map(c => `
+                    <option value="${c.Id_cultivo}">${c.Nombre_especie} - ${c.Variedad}</option>
+                `).join("")}
+            </select>
+        </div>
+    </div>
+`;
     container.appendChild(loteCard);
   }
   onLotesDetailChange();

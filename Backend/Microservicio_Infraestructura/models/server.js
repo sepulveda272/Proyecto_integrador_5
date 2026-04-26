@@ -8,6 +8,7 @@ import loginRouter from '../routes/login.routes.js';
 import lugarProduccionRouter from "../routes/lugarProduccion.routes.js";
 import predioRouter from "../routes/predio.routes.js";
 import loteRouter from '../routes/lote.routes.js'
+import citaRouter from '../routes/cita.routes.js'
 
 dotenv.config()
 
@@ -36,6 +37,7 @@ class Server{
         this.app.use("/lugarPro", lugarProduccionRouter);
         this.app.use("/predio", predioRouter);
         this.app.use("/lote", loteRouter);
+        this.app.use("/cita", citaRouter);
     }
 
     listen(){
