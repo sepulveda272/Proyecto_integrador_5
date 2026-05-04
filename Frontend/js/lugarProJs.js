@@ -165,6 +165,9 @@ function llenarModalDinamico(lugar, lotes) {
                                 <span>Área de siembra</span> <strong>${lote.Area_siembra} ha</strong>
                             </div>
                             <div class="d-flex justify-content-between border-bottom py-2">
+                                <span>Total de platas</span> <strong>${lote.Total_plantas}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between border-bottom py-2">
                                 <span>Cultivo</span> <strong>${lote.datos_cultivo.Nombre_especie}</strong>
                             </div>
                             <div class="d-flex justify-content-between border-bottom py-2">
@@ -341,8 +344,8 @@ async function onNumLotesChange() {
     </div>
     <div class="form-row mt-2">
         <div class="form-group">
-            <label class="form-label">Fecha de siembra *</label>
-            <input type="date" class="form-input lote-fecha" onchange="onLotesDetailChange()">
+            <label class="form-label">Numero de platas *</label>
+            <input type="number" class="form-input lote-total-plantas" placeholder="Ej. 1" onchange="onLotesDetailChange()">
         </div>
         <div class="form-group">
             <label class="form-label">Cultivo *</label>
@@ -352,6 +355,12 @@ async function onNumLotesChange() {
                     <option value="${c.Id_cultivo}">${c.Nombre_especie} - ${c.Variedad}</option>
                 `).join("")}
             </select>
+        </div>
+    </div>
+    <div class="form-row mt-2">
+        <div class="form-group">
+            <label class="form-label">Fecha de siembra *</label>
+            <input type="date" class="form-input lote-fecha" onchange="onLotesDetailChange()">
         </div>
     </div>
 `;
@@ -366,6 +375,7 @@ async function onNumLotesChange() {
 function onLotesDetailChange() {
   const areasNuevas = document.querySelectorAll(".lote-area-total");
   const areasSiembra = document.querySelectorAll(".lote-area-siembra");
+  const totalPlantas = document.querySelectorAll("lote-total-plantas");
   const cultivos = document.querySelectorAll(".lote-cultivo-id");
   const estados = document.querySelectorAll(".lote-estado");
   const fechas = document.querySelectorAll(".lote-fecha");
@@ -464,6 +474,7 @@ async function guardarLotes() {
           card.querySelector(".lote-area-siembra").value,
         ),
         Id_cultivo: parseInt(card.querySelector(".lote-cultivo-id").value),
+        Total_plantas: card.querySelector(".lote-total-plantas").value,
         Estado_fenologico: card.querySelector(".lote-estado").value,
         Fecha_siembra: card.querySelector(".lote-fecha").value,
       };
@@ -830,6 +841,10 @@ async function renderLotesEdit(lugar) {
                         <input class="form-input edit-lote-area-siembra" type="number" step="0.1" value="${lote.Area_siembra}" style="width:100%;">
                     </div>
                     <div>
+                        <label style="font-size: 12px; color: #666;">Numero de platas</label>
+                        <input class="form-input edit-lote-total-plantas" type="number" step="0.1" value="${lote.Total_plantas}" style="width:100%;">
+                    </div>
+                    <div>
                         <label style="font-size: 12px; color: #666;">Cultivo</label>
                         <select class="form-input edit-lote-cultivo" style="width:100%;">
                             ${cultivosCache.map(c => `<option value="${c.Id_cultivo}" ${c.Id_cultivo === lote.Id_cultivo ? 'selected' : ''}>${c.Nombre_especie}</option>`).join('')}
@@ -924,6 +939,7 @@ async function guardarEdicion() {
                     "Fecha_eliminacion": card.querySelector('.edit-lote-fecha-eliminacion').value || null,
                     "Area_total": areaTotalLote,
                     "Fecha_siembra": card.querySelector('.edit-lote-fecha-siembra').value,
+                    "Total_plantas": card.querySelector('.edit-lote-total-plantas').value,
                     "Area_siembra": areaSiembraLote,
                     "Id_lugar": idLugarActual,
                     "Id_cultivo": parseInt(card.querySelector('.edit-lote-cultivo').value)

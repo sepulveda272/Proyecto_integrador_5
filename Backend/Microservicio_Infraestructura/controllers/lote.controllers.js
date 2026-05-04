@@ -82,7 +82,7 @@ export const getLoteConCultivo = async (req, res) => {
 
 export const addLote = async (req, res) => {
     try {
-        const { Area_total, Fecha_siembra, Area_siembra, Estado_fenologico, Id_lugar, Id_cultivo } = req.body;
+        const { Area_total, Fecha_siembra, Area_siembra, Estado_fenologico, Total_plantas, Id_lugar, Id_cultivo } = req.body;
 
         // 1. VALIDACIÓN EXTERNA: Verificar existencia del cultivo
         try {
@@ -122,7 +122,7 @@ export const addLote = async (req, res) => {
         // 3. Proceder con el registro
         const nuevoLote = { 
             Area_total, Fecha_siembra, Area_siembra, 
-            Estado_fenologico, Id_lugar, Id_cultivo,
+            Estado_fenologico, Total_plantas, Id_lugar, Id_cultivo,
             Fecha_eliminacion: null 
         };
 
@@ -148,7 +148,7 @@ export const updateLote = async (req, res) => {
         const { id } = req.params; // Numero_Lote
         const { 
             Area_total, Fecha_siembra, Fecha_eliminacion, 
-            Area_siembra, Estado_fenologico, Id_lugar, Id_cultivo 
+            Area_siembra, Estado_fenologico, Total_plantas, Id_lugar, Id_cultivo 
         } = req.body;
 
         const connection = await getConnection();
@@ -174,7 +174,7 @@ export const updateLote = async (req, res) => {
         // 2. ACTUALIZACIÓN EN BD
         const datosActualizar = { 
             Area_total, Fecha_siembra, Fecha_eliminacion, 
-            Area_siembra, Estado_fenologico, Id_lugar, Id_cultivo 
+            Area_siembra, Estado_fenologico, Total_plantas, Id_lugar, Id_cultivo 
         };
 
         const result = await connection.query(
