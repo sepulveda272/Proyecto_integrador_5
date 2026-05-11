@@ -1,0 +1,406 @@
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Servidor: 127.0.0.1
+-- Tiempo de generación: 11-05-2026 a las 10:09:37
+-- Versión del servidor: 10.4.32-MariaDB
+-- Versión de PHP: 8.2.12
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Base de datos: `db_ubicaciones`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `citas`
+--
+
+CREATE TABLE `citas` (
+  `Id_cita` int(11) NOT NULL,
+  `Hora_inspeccion` time DEFAULT NULL,
+  `Fecha_inspeccion` date DEFAULT NULL,
+  `Id_productor` int(11) NOT NULL,
+  `Id_lugar` int(11) NOT NULL,
+  `Id_tecnico` int(11) DEFAULT NULL COMMENT 'Referencia externa al microservicio de Inspecciones',
+  `Estado` varchar(20) NOT NULL DEFAULT 'Pendiente',
+  `Observaciones` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `citas`
+--
+
+INSERT INTO `citas` (`Id_cita`, `Hora_inspeccion`, `Fecha_inspeccion`, `Id_productor`, `Id_lugar`, `Id_tecnico`, `Estado`, `Observaciones`) VALUES
+(2, NULL, NULL, 1, 2, NULL, 'Pendiente', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
+(4, NULL, NULL, 1, 4, NULL, 'Pendiente', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
+(5, NULL, NULL, 1, 12, NULL, 'Rechazado', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
+(6, NULL, NULL, 1, 4, NULL, 'Aceptado', 'El productor solicita revisión urgente en el lote principal por posible plaga.');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `departamento`
+--
+
+CREATE TABLE `departamento` (
+  `Id_Departamento` int(11) NOT NULL,
+  `Nombre_Depart` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `departamento`
+--
+
+INSERT INTO `departamento` (`Id_Departamento`, `Nombre_Depart`) VALUES
+(1, 'Santander'),
+(2, 'Antioquia');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `lote`
+--
+
+CREATE TABLE `lote` (
+  `Numero_Lote` int(11) NOT NULL,
+  `Area_total` decimal(12,2) NOT NULL,
+  `Fecha_siembra` date NOT NULL,
+  `Fecha_eliminacion` date DEFAULT NULL,
+  `Area_siembra` decimal(12,2) NOT NULL,
+  `Estado_fenologico` varchar(50) NOT NULL,
+  `Total_plantas` int(11) NOT NULL,
+  `Id_lugar` int(11) NOT NULL,
+  `Id_cultivo` int(11) NOT NULL COMMENT 'Referencia externa al microservicio de Cultivos'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `lote`
+--
+
+INSERT INTO `lote` (`Numero_Lote`, `Area_total`, `Fecha_siembra`, `Fecha_eliminacion`, `Area_siembra`, `Estado_fenologico`, `Total_plantas`, `Id_lugar`, `Id_cultivo`) VALUES
+(2, 10.50, '2024-04-17', NULL, 8.20, 'Crecimiento', 200, 2, 2),
+(4, 2.50, '2026-04-25', NULL, 1.50, 'Cosecha', 200, 4, 1),
+(5, 6.00, '2026-04-22', NULL, 5.40, 'Siembra', 300, 4, 4),
+(6, 2.40, '2026-04-26', NULL, 2.00, 'Germinación', 212, 2, 2),
+(7, 3.20, '2026-04-26', NULL, 2.20, 'Germinación', 120, 2, 3),
+(8, 1.50, '2026-04-26', NULL, 1.00, 'Crecimiento', 500, 2, 3),
+(9, 1.00, '2026-04-26', NULL, 1.00, 'Crecimiento', 320, 2, 3),
+(10, 5.30, '2026-04-26', NULL, 2.20, 'Siembra', 201, 4, 3),
+(11, 10.50, '2026-04-26', NULL, 8.50, 'Crecimiento', 600, 12, 3),
+(12, 8.50, '2026-04-14', NULL, 8.40, 'Floración', 456, 12, 5),
+(13, 10.40, '2026-04-15', NULL, 9.80, 'Maduración', 502, 12, 7),
+(14, 5.20, '2026-04-12', NULL, 5.00, 'Germinación', 619, 12, 6),
+(20, 2.00, '2026-04-26', NULL, 1.50, 'Siembra', 420, 4, 3),
+(21, 3.40, '2026-04-26', NULL, 3.10, 'Crecimiento', 321, 4, 4),
+(22, 2.00, '2026-04-26', NULL, 1.50, 'Siembra', 150, 4, 3),
+(23, 2.00, '2026-05-03', NULL, 1.50, 'Siembra', 101, 4, 3);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `lugar_produccion`
+--
+
+CREATE TABLE `lugar_produccion` (
+  `Id_lugar` int(11) NOT NULL,
+  `Nombre_LugarProduccion` varchar(255) NOT NULL,
+  `Id_productor` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `lugar_produccion`
+--
+
+INSERT INTO `lugar_produccion` (`Id_lugar`, `Nombre_LugarProduccion`, `Id_productor`) VALUES
+(2, 'Unidad Productiva Antioquia Norte', 1),
+(4, 'Unidad Productiva Antioquia Sur', 1),
+(12, 'Unidad Productiva', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `municipio`
+--
+
+CREATE TABLE `municipio` (
+  `Id_Municipio` int(11) NOT NULL,
+  `Nombre_Municipio` varchar(255) NOT NULL,
+  `Id_Departamento` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `municipio`
+--
+
+INSERT INTO `municipio` (`Id_Municipio`, `Nombre_Municipio`, `Id_Departamento`) VALUES
+(1, 'Floridablanca', 1),
+(2, 'Piedecuesta', 1),
+(3, 'Girón', 1),
+(4, 'Apartadó', 2),
+(5, 'Marinilla', 2),
+(6, 'Urrao', 2),
+(7, 'Sonsón', 2);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `predio`
+--
+
+CREATE TABLE `predio` (
+  `Id_predio` int(11) NOT NULL,
+  `Nombre_predio` varchar(255) NOT NULL,
+  `Area_total` decimal(12,2) NOT NULL,
+  `Nombre_propietario` varchar(255) NOT NULL,
+  `Coordenadas_lat` decimal(10,8) NOT NULL,
+  `Coordenadas_lon` decimal(11,8) NOT NULL,
+  `Estado` varchar(255) NOT NULL,
+  `Id_vereda` int(11) NOT NULL,
+  `Id_lugar` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `predio`
+--
+
+INSERT INTO `predio` (`Id_predio`, `Nombre_predio`, `Area_total`, `Nombre_propietario`, `Coordenadas_lat`, `Coordenadas_lon`, `Estado`, `Id_vereda`, `Id_lugar`) VALUES
+(1, 'Finca La Cruz', 15.50, 'Juan David', 7.12539000, -73.11980000, 'Ocupado', 10, 4),
+(2, 'Finca El Paraíso', 12.30, 'Carlos Pérez', 7.12845000, -73.11560000, 'Ocupado', 10, 4),
+(3, 'Finca Los Naranjos', 18.75, 'María Gómez', 7.13012000, -73.11890000, 'Ocupado', 11, 2),
+(4, 'Finca La Esperanza', 9.80, 'Luis Rodríguez', 7.12230000, -73.12150000, 'Desocupado', 9, NULL),
+(5, 'Finca El Progreso', 20.10, 'Ana Martínez', 7.12789000, -73.11720000, 'Ocupado', 12, 12),
+(6, 'Finca San José', 14.60, 'Pedro Sánchez', 7.12456000, -73.12030000, 'Desocupado', 3, NULL),
+(7, 'Finca San Manuel', 14.60, 'Pedro Sánchez', 7.12456000, -73.12030000, 'Ocupado', 11, 12);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `productor`
+--
+
+CREATE TABLE `productor` (
+  `Id_productor` int(11) NOT NULL,
+  `Numero_identificacion` varchar(20) NOT NULL,
+  `Tipo_identificacion` varchar(50) NOT NULL,
+  `Primer_nombre` varchar(100) NOT NULL,
+  `Segundo_nombre` varchar(100) DEFAULT NULL COMMENT 'Opcional',
+  `Primer_apellido` varchar(100) NOT NULL,
+  `Segundo_apellido` varchar(100) DEFAULT NULL COMMENT 'Opcional',
+  `Imagen` varchar(255) NOT NULL COMMENT 'Ruta o URL de la imagen',
+  `Celular` varchar(20) NOT NULL,
+  `Correo` varchar(255) NOT NULL,
+  `Password` varchar(255) NOT NULL COMMENT 'Debe almacenarse hasheada',
+  `Estado` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `productor`
+--
+
+INSERT INTO `productor` (`Id_productor`, `Numero_identificacion`, `Tipo_identificacion`, `Primer_nombre`, `Segundo_nombre`, `Primer_apellido`, `Segundo_apellido`, `Imagen`, `Celular`, `Correo`, `Password`, `Estado`) VALUES
+(1, '987654321', 'C.C', 'PRUEBA2', '', 'PRUEBA2', '', 'PRUEBA2', 'PRUEBA2', 'prueba2@gmail.com', '$2b$10$ySGNEoJ3H9fEaZVVnG8Ra.NeVn4D5Au1fRNi2XezExFpkGq8lk5Q2', 'Activo');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `vereda`
+--
+
+CREATE TABLE `vereda` (
+  `Id_Vereda` int(11) NOT NULL,
+  `Nombre_Vereda` varchar(255) NOT NULL,
+  `Id_Municipio` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `vereda`
+--
+
+INSERT INTO `vereda` (`Id_Vereda`, `Nombre_Vereda`, `Id_Municipio`) VALUES
+(1, 'Casiano Bajo', 1),
+(2, 'Helechales', 1),
+(3, 'Plan de la Libertad', 2),
+(4, 'Sevilla', 2),
+(5, 'Marta', 3),
+(6, 'Sogamoso', 3),
+(7, 'Salsipuedes', 4),
+(8, 'La Balsa', 4),
+(9, 'La Esmeralda', 5),
+(10, 'Cascajo Abajo', 5),
+(11, 'Pavarandó', 6),
+(12, 'La Encarnación', 6),
+(13, 'Río Arriba', 7),
+(14, 'La Holanda', 7);
+
+--
+-- Índices para tablas volcadas
+--
+
+--
+-- Indices de la tabla `citas`
+--
+ALTER TABLE `citas`
+  ADD PRIMARY KEY (`Id_cita`),
+  ADD KEY `fk_cita_productor` (`Id_productor`),
+  ADD KEY `fk_cita_lugar` (`Id_lugar`);
+
+--
+-- Indices de la tabla `departamento`
+--
+ALTER TABLE `departamento`
+  ADD PRIMARY KEY (`Id_Departamento`);
+
+--
+-- Indices de la tabla `lote`
+--
+ALTER TABLE `lote`
+  ADD PRIMARY KEY (`Numero_Lote`),
+  ADD KEY `fk_lote_lugar` (`Id_lugar`);
+
+--
+-- Indices de la tabla `lugar_produccion`
+--
+ALTER TABLE `lugar_produccion`
+  ADD PRIMARY KEY (`Id_lugar`),
+  ADD KEY `fk_lugar_productor` (`Id_productor`);
+
+--
+-- Indices de la tabla `municipio`
+--
+ALTER TABLE `municipio`
+  ADD PRIMARY KEY (`Id_Municipio`),
+  ADD KEY `fk_municipio_departamento` (`Id_Departamento`);
+
+--
+-- Indices de la tabla `predio`
+--
+ALTER TABLE `predio`
+  ADD PRIMARY KEY (`Id_predio`),
+  ADD KEY `fk_predio_vereda` (`Id_vereda`),
+  ADD KEY `fk_predio_lugar` (`Id_lugar`);
+
+--
+-- Indices de la tabla `productor`
+--
+ALTER TABLE `productor`
+  ADD PRIMARY KEY (`Id_productor`),
+  ADD UNIQUE KEY `Numero_identificacion` (`Numero_identificacion`),
+  ADD UNIQUE KEY `Correo` (`Correo`);
+
+--
+-- Indices de la tabla `vereda`
+--
+ALTER TABLE `vereda`
+  ADD PRIMARY KEY (`Id_Vereda`),
+  ADD KEY `fk_vereda_municipio` (`Id_Municipio`);
+
+--
+-- AUTO_INCREMENT de las tablas volcadas
+--
+
+--
+-- AUTO_INCREMENT de la tabla `citas`
+--
+ALTER TABLE `citas`
+  MODIFY `Id_cita` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
+-- AUTO_INCREMENT de la tabla `departamento`
+--
+ALTER TABLE `departamento`
+  MODIFY `Id_Departamento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT de la tabla `lote`
+--
+ALTER TABLE `lote`
+  MODIFY `Numero_Lote` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+
+--
+-- AUTO_INCREMENT de la tabla `lugar_produccion`
+--
+ALTER TABLE `lugar_produccion`
+  MODIFY `Id_lugar` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+
+--
+-- AUTO_INCREMENT de la tabla `municipio`
+--
+ALTER TABLE `municipio`
+  MODIFY `Id_Municipio` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT de la tabla `predio`
+--
+ALTER TABLE `predio`
+  MODIFY `Id_predio` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT de la tabla `productor`
+--
+ALTER TABLE `productor`
+  MODIFY `Id_productor` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de la tabla `vereda`
+--
+ALTER TABLE `vereda`
+  MODIFY `Id_Vereda` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- Restricciones para tablas volcadas
+--
+
+--
+-- Filtros para la tabla `citas`
+--
+ALTER TABLE `citas`
+  ADD CONSTRAINT `fk_cita_lugar` FOREIGN KEY (`Id_lugar`) REFERENCES `lugar_produccion` (`Id_lugar`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_cita_productor` FOREIGN KEY (`Id_productor`) REFERENCES `productor` (`Id_productor`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `lote`
+--
+ALTER TABLE `lote`
+  ADD CONSTRAINT `fk_lote_lugar` FOREIGN KEY (`Id_lugar`) REFERENCES `lugar_produccion` (`Id_lugar`);
+
+--
+-- Filtros para la tabla `lugar_produccion`
+--
+ALTER TABLE `lugar_produccion`
+  ADD CONSTRAINT `fk_lugar_productor` FOREIGN KEY (`Id_productor`) REFERENCES `productor` (`Id_productor`);
+
+--
+-- Filtros para la tabla `municipio`
+--
+ALTER TABLE `municipio`
+  ADD CONSTRAINT `fk_municipio_departamento` FOREIGN KEY (`Id_Departamento`) REFERENCES `departamento` (`Id_Departamento`);
+
+--
+-- Filtros para la tabla `predio`
+--
+ALTER TABLE `predio`
+  ADD CONSTRAINT `fk_predio_lugar` FOREIGN KEY (`Id_lugar`) REFERENCES `lugar_produccion` (`Id_lugar`),
+  ADD CONSTRAINT `fk_predio_vereda` FOREIGN KEY (`Id_vereda`) REFERENCES `vereda` (`Id_Vereda`);
+
+--
+-- Filtros para la tabla `vereda`
+--
+ALTER TABLE `vereda`
+  ADD CONSTRAINT `fk_vereda_municipio` FOREIGN KEY (`Id_Municipio`) REFERENCES `municipio` (`Id_Municipio`);
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
