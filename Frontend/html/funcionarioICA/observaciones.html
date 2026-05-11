@@ -27,7 +27,6 @@
             <a class="nav-item" href="perfil.html"><span class="icon">👤</span> Perfil</a>
             <a class="nav-item" href="observaciones.html"><span class="icon">🔎</span> Gestionar observaciones</a>
             <a class="nav-item" href="solicitudes.html"><span class="icon">📩</span> Mis solicitudes</a>
-            <a class="nav-item" href="reportes.html"><span class="icon">📊</span> Reportes</a>
             <div class="sidebar-bottom">
                 <button class="btn-hide-menu" id="toggleSidebar">← Ocultar menú</button>
             </div>
@@ -37,71 +36,203 @@
         <main class="main">
             <div class="contenido-principal">
                 <div id="contenido">
+
                     <div class="header">
                         <h2>Observaciones</h2>
-                        <button class="btn-primary" onclick="abrirModalObs()">+ Agregar observación</button>
                     </div>
+
+                    <!--
+                        TABLA DE OBSERVACIONES
+                        ─────────────────────
+                        Columnas:
+                          • Lugar de producción  — nombre + municipio/departamento
+                          • Fecha                — fecha de la observación o "—" si pendiente
+                          • Técnico              — nombre del técnico asignado (solo nombre)
+                          • Observación          — texto o indicador de pendiente
+                          • Inspección           — badge con ID de inspección
+                          • Acciones             — 3 botones funcionales (✏️ 🗑 👁) +
+                                                   botón visual de descarga (ícono SVG, sin JS)
+
+                        v8 — ACENTO LATERAL DINÁMICO:
+                          Cada <tr> generado por renderTablaObs() recibe:
+                            • data-lugar-id="INS001"  → identificador único para actualizaciones quirúrgicas
+                            • class="tr--pendiente"   → sin observación (acento dorado, §23 main.css)
+                            • class="tr--completado"  → con observación (acento verde, §23 main.css)
+                          Al guardar una observación, _actualizarAcentoFila() cambia la clase
+                          de la <tr> afectada sin reconstruir toda la tabla.
+
+                        v9 — COLUMNA "ESTADO" ELIMINADA:
+                          Se quitó el <th>Estado</th> del encabezado y las celdas
+                          correspondientes de cada fila. El estado se comunica
+                          visualmente a través del acento lateral (v8).
+
+                        Las filas son inyectadas dinámicamente por renderTablaObs() en funcionario.js
+                    -->
                     <table>
                         <thead>
-                            <tr><th>Fecha</th><th>Observación</th><th>Inspección</th><th>Acciones</th></tr>
+                            <tr>
+                                <th>Lugar de producción</th>
+                                <th>Fecha Observación</th>
+                                <th>Observación</th>
+                                <th>Técnico</th>
+                                <th>Inspección</th>
+                                <th>Acciones</th>
+                            </tr>
                         </thead>
                         <tbody id="cuerpoTablaObs">
-                            <tr>
-                                <td>08/03/2026</td>
-                                <td>Le falta más agüita a esas plantas, papi. Echele ojo.</td>
-                                <td><span class="badge badge-calido">INS001</span></td>
-                                <td>
-                                    <button class="action-btn action-edit" title="Editar">✏️</button>
-                                    <button class="action-btn action-del"  title="Eliminar">🗑</button>
-                                    <button class="action-btn action-eye"  title="Ver">👁</button>
-                                </td>
-                            </tr>
+                            <!-- Poblado por renderTablaObs() en funcionario.js -->
                         </tbody>
                     </table>
+
                 </div>
             </div>
         </main>
 
     </div>
 
+    <!-- Toast de notificaciones -->
     <div class="toast" id="toast"></div>
 
-    <!-- MODAL: AGREGAR OBSERVACIÓN -->
-    <div class="modal-obs-overlay" id="modal-obs-overlay">
-        <div class="modal-obs-box">
+    <!--
+        MODAL UNIFICADO: AGREGAR / EDITAR OBSERVACIÓN
+        ──────────────────────────────────────────────
+        Este único modal sirve para dos casos de uso:
+          • Agregar: cuando el lugar está en estado "pendiente"
+          • Editar:  cuando el lugar ya tiene una observación ("realizada")
 
-            <div class="modal-obs-head">
+        El JS adapta dinámicamente:
+          – El título  (#modal-obs-titulo)
+          – El subtítulo (#modal-obs-sub)
+          – El contenido del textarea (#obs-edit-textarea)
+          – El texto del botón guardar (#btn-guardar-obs)
+
+        Identificador: #modal-obs-edit-overlay
+    -->
+    <div class="modal-obs-edit-overlay" id="modal-obs-edit-overlay">
+        <div class="modal-obs-edit-box">
+
+            <!-- Cabecera -->
+            <div class="modal__head">
                 <div>
-                    <div class="modal-obs-titulo">Nueva observación</div>
-                    <div class="modal-obs-sub">Solo lugares con inspección completada</div>
+                    <div class="modal__title" id="modal-obs-titulo">Observación</div>
+                    <div class="modal__subtitle" id="modal-obs-sub"></div>
                 </div>
-                <button class="modal-obs-close" onclick="cerrarModalObs()">✕</button>
+                <button class="modal__close" onclick="cerrarModalObsEdit()">✕</button>
             </div>
 
-            <div class="modal-obs-body">
+            <!-- Cuerpo -->
+            <div class="modal__body">
 
-                <label class="modal-obs-label">Lugar de producción</label>
-                <div id="lugares-obs-grid" class="lugares-obs-grid"></div>
+                <!-- Info del lugar (solo lectura, poblada por JS) -->
+                <div class="obs-edit-lugar-info" id="obs-edit-lugar-info"></div>
 
-                <label class="modal-obs-label" style="margin-top:14px;">Observación *</label>
+                <!-- Campo de texto de la observación -->
+                <label class="form-label form-label--obs" for="obs-edit-textarea">
+                    Observación *
+                </label>
                 <textarea
-                    id="obs-textarea"
+                    id="obs-edit-textarea"
                     class="obs-textarea"
-                    rows="3"
-                    disabled
-                    placeholder="Selecciona primero un lugar de producción...">
+                    rows="4"
+                    placeholder="Escribe la observación aquí...">
                 </textarea>
 
+                <!-- Contador de caracteres -->
+                <span id="obs-edit-counter" class="obs-edit-counter"></span>
+
             </div>
 
-            <div class="modal-obs-foot">
-                <span id="obs-counter" class="obs-counter"></span>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-outline-secondary" onclick="cerrarModalObs()">Cancelar</button>
-                    <button class="btn btn-sm btn-success" id="btn-guardar-obs" disabled onclick="guardarObservacion()">
-                        Guardar observación
-                    </button>
+            <!-- Pie -->
+            <div class="modal__foot">
+                <button class="btn btn-sm btn-outline-secondary" onclick="cerrarModalObsEdit()">
+                    Cancelar
+                </button>
+                <button class="btn btn-sm btn-success" id="btn-guardar-obs" disabled onclick="guardarObsEdit()">
+                    Guardar
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!--
+        MODAL VER REPORTE  (v11 — campo Cultivo por lote)
+        ──────────────────────────────────────────────────
+        Muestra el detalle de lotes de un lugar de producción con:
+
+          1. Fecha de inspección (#reporte-fecha-contenedor):
+             Chip informativo generado dinámicamente por verReporte()
+             a partir del objeto fechasInspeccion[lugarId]. Muestra
+             la fecha en formato DD/MM/YYYY o "Pendiente" si es null.
+             Se inserta antes del bloque de resumen general.
+
+          2. Sección de resumen general (#reporte-resumen):
+             Muestra totales de plantas sembradas, contadas y afectadas.
+             Generada dinámicamente por verReporte() en funcionario.js.
+
+          3. Listado de tarjetas acordeón (#reporte-lotes-acordeon):
+             Cada lote se renderiza como una tarjeta .reporte-lote-card
+             colapsada por defecto. Numeración automática secuencial:
+             "Lote 1", "Lote 2", …, "Lote N".
+             Al expandirse muestra:
+               • Cultivo (v11): primer campo visible, proviene de
+                 lote.cultivo en reportesLotes[]. Muestra "No especificado"
+                 si el dato no está definido. Reutiliza las clases
+                 .reporte-lote-fila / .reporte-lote-campo / .reporte-lote-valor.
+               • Plantas sembradas / contadas / afectadas
+               • Nivel de alerta (badge .badge-alerta + .alerta-*)
+                 calculado por calcularNivelAlerta() en funcionario.js.
+               • Plagas detectadas o "Sin plagas detectadas".
+             El header muestra el badge de alerta junto al chevron.
+
+        El JS lo abre mediante verReporte(lugarId) y lo cierra con
+        cerrarModalReporte(). toggleLoteCard() gestiona expand/collapse.
+
+        Identificador del overlay: #modal-reporte-overlay
+    -->
+    <div class="modal-obs-edit-overlay" id="modal-reporte-overlay">
+        <div class="modal-reporte-box">
+
+            <!-- Cabecera -->
+            <div class="modal__head">
+                <div>
+                    <div class="modal__title" id="modal-reporte-titulo">Ver reporte</div>
+                    <div class="modal__subtitle" id="modal-reporte-sub"></div>
                 </div>
+                <button class="modal__close" onclick="cerrarModalReporte()">✕</button>
+            </div>
+
+            <!-- Cuerpo -->
+            <div class="modal__body">
+
+                <!--
+                    SECCIÓN RESUMEN GENERAL
+                    Totales de plantas: sembradas / contadas / afectadas.
+                    Poblado dinámicamente por verReporte() en funcionario.js.
+                -->
+                <div class="reporte-resumen" id="reporte-resumen">
+                    <!-- Generado por JS -->
+                </div>
+
+                <!-- Separador semántico -->
+                <div class="reporte-lotes-titulo">Detalle por lote</div>
+
+                <!--
+                    ACORDEÓN DE LOTES
+                    Cada .reporte-lote-card es generada por verReporte().
+                    Inician cerradas; se expanden con toggleLoteCard().
+                -->
+                <div id="reporte-lotes-acordeon">
+                    <!-- Generado dinámicamente por verReporte() en funcionario.js -->
+                </div>
+
+            </div>
+
+            <!-- Pie -->
+            <div class="modal__foot">
+                <button class="btn btn-sm btn-outline-secondary" onclick="cerrarModalReporte()">
+                    Cerrar
+                </button>
             </div>
 
         </div>

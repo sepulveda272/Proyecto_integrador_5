@@ -27,7 +27,6 @@
             <a class="nav-item" href="perfil.html"><span class="icon">👤</span> Perfil</a>
             <a class="nav-item" href="observaciones.html"><span class="icon">🔎</span> Gestionar observaciones</a>
             <a class="nav-item" href="solicitudes.html"><span class="icon">📩</span> Mis solicitudes</a>
-            <a class="nav-item" href="reportes.html"><span class="icon">📊</span> Reportes</a>
             <div class="sidebar-bottom">
                 <button class="btn-hide-menu" id="toggleSidebar">← Ocultar menú</button>
             </div>
@@ -48,7 +47,8 @@
                     
 
                     <!-- Cards -->
-                    <div class="cards-grid">
+                    <!-- id="cards-solicitudes" requerido por filtrarSolicitudes() y _actualizarCardCita() en funcionario.js -->
+                    <div class="cards-grid" id="cards-solicitudes">
 
                         <div class="card"
                             data-estado="pendiente"
@@ -181,15 +181,30 @@
                     class="cita-fecha-input"
                     disabled
                     onchange="validarFormCita()">
- 
+
+                <!-- Paso 3: Seleccionar hora (se habilita tras elegir fecha) -->
+                <label class="modal-cita-label" style="margin-top:16px;">
+                    <span class="modal-cita-step">3</span>
+                    Hora de inspección
+                </label>
+                <input
+                    type="time"
+                    id="cita-hora"
+                    class="cita-fecha-input"
+                    disabled
+                    onchange="validarFormCita()">
+
                 <!-- Mensaje de confirmación -->
                 <div class="cita-success-msg" id="cita-success-msg"></div>
  
             </div>
  
             <!-- Footer -->
+            <!-- CAMBIO: "Cancelar" reemplazado por "Rechazar cita" según requerimiento.
+                 Se reutiliza .btn--danger / .btn-danger (§2 main.css) para el color rojo,
+                 evitando crear clases nuevas. -->
             <div class="modal-cita-foot">
-                <button class="btn btn-sm btn-outline-secondary" onclick="cerrarModalCita()">Cancelar</button>
+                <button class="btn btn-danger" onclick="rechazarCita()">✕ Rechazar cita</button>
                 <button class="btn btn-sm btn-success" id="btn-aceptar-cita" disabled onclick="aceptarCita()">
                     ✔ Aceptar cita
                 </button>

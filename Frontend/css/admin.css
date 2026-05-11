@@ -1,0 +1,855 @@
+/* =========================================================
+   SIFEX — admin.css
+   Vista: Gestión de Usuarios
+   Paleta: verde institucional · neutros fríos · blanco
+   =========================================================
+   ÍNDICE
+   0.  Importación de fuentes
+   1.  Variables globales
+   2.  Reset local (scope .gu-wrapper)
+   3.  Layout: wrapper y encabezado
+   4.  Botón "Nuevo usuario"
+   5.  Tarjeta contenedora
+   6.  Tabs de filtro por rol
+   7.  Barra de herramientas (búsqueda + contador)
+   8.  Tabla de usuarios
+   9.  Celdas especiales: avatar-nombre, badges
+   10. Columna de acciones (Ver · Editar · Eliminar)
+   11. Estado vacío
+   12. Modales (overlay, cabecera, cuerpo, pie)
+   13. Formulario del modal
+   14. Modal "Ver detalle"
+   15. Modal "Confirmar eliminación"
+   16. Toast de notificación
+   17. Responsive (≤ 680 px)
+   ========================================================= */
+
+
+/* ── 0. IMPORTACIÓN DE FUENTES ─────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+
+
+/* ── 1. VARIABLES GLOBALES ─────────────────────────────── */
+:root {
+  /* Colores */
+  --gu-primary:         #1a6e3c;
+  --gu-primary-light:   #2e9e5a;
+  --gu-primary-pale:    #e8f5ed;
+  --gu-accent:          #f0a500;
+  --gu-danger:          #d63b3b;
+  --gu-danger-pale:     #fdf0f0;
+  --gu-info:            #1a56b0;
+  --gu-info-pale:       #e8f0fe;
+  --gu-n50:             #f7f8fa;   /* fondo muy claro */
+  --gu-n100:            #eff1f5;
+  --gu-n200:            #dde1ea;
+  --gu-n500:            #8892a4;   /* texto secundario */
+  --gu-n700:            #3d4757;   /* texto normal */
+  --gu-n900:            #1a1f2b;   /* texto principal */
+  --gu-white:           #ffffff;
+
+  /* Radios */
+  --gu-r-sm:  6px;
+  --gu-r-md:  10px;
+  --gu-r-lg:  16px;
+
+  /* Sombras */
+  --gu-sh-sm: 0 1px 4px rgba(0,0,0,.07);
+  --gu-sh-md: 0 4px 16px rgba(0,0,0,.09);
+  --gu-sh-lg: 0 8px 32px rgba(0,0,0,.13);
+
+  /* Tipografía */
+  --gu-font:      'DM Sans', sans-serif;
+  --gu-font-mono: 'DM Mono', monospace;
+
+  /* Transición estándar */
+  --gu-t: .18s ease;
+}
+
+
+/* ── 2. RESET LOCAL ────────────────────────────────────── */
+/* Aplica solo dentro del wrapper para no pisar Bootstrap */
+.gu-wrapper *,
+.gu-modal * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+
+/* ── 3. LAYOUT: WRAPPER Y ENCABEZADO ───────────────────── */
+.gu-wrapper {
+  font-family: var(--gu-font);
+  color: var(--gu-n900);
+  padding: 28px 32px;
+  min-height: 100%;
+  /* La tabla ocupa todo el ancho disponible automáticamente */
+  width: 100%;
+}
+
+/* Encabezado: título a la izquierda, botón a la derecha */
+.gu-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.gu-header__titles h1 {
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -.3px;
+  color: var(--gu-n900);
+  line-height: 1.15;
+}
+
+.gu-header__titles p {
+  font-size: .9rem;
+  color: var(--gu-n500);
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+
+/* ── 4. BOTÓN "NUEVO USUARIO" ──────────────────────────── */
+.gu-btn-nuevo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--gu-primary);
+  color: var(--gu-white);
+  border: none;
+  border-radius: var(--gu-r-md);
+  padding: 10px 20px;
+  font-family: var(--gu-font);
+  font-size: .92rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(26,110,60,.25);
+  transition:
+    background var(--gu-t),
+    box-shadow var(--gu-t),
+    transform var(--gu-t);
+  white-space: nowrap;
+}
+
+.gu-btn-nuevo:hover {
+  background: var(--gu-primary-light);
+  box-shadow: 0 4px 14px rgba(26,110,60,.35);
+  transform: translateY(-1px);
+}
+
+.gu-btn-nuevo:active { transform: translateY(0); }
+
+
+/* ── 5. TARJETA CONTENEDORA ────────────────────────────── */
+.gu-card {
+  background: var(--gu-white);
+  border-radius: var(--gu-r-lg);
+  box-shadow: var(--gu-sh-md);
+  overflow: hidden;
+  /* Ancho completo dentro del wrapper */
+  width: 100%;
+}
+
+
+/* ── 6. TABS DE FILTRO POR ROL ─────────────────────────── */
+.gu-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 20px 24px 0;
+  border-bottom: 2px solid var(--gu-n100);
+  flex-wrap: wrap;
+}
+
+.gu-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border: none;
+  background: transparent;
+  border-radius: var(--gu-r-sm) var(--gu-r-sm) 0 0;
+  font-family: var(--gu-font);
+  font-size: .875rem;
+  font-weight: 500;
+  color: var(--gu-n500);
+  cursor: pointer;
+  /* Superpone 2px para tapar el borde inferior del contenedor */
+  position: relative;
+  bottom: -2px;
+  border-bottom: 2px solid transparent;
+  transition:
+    color var(--gu-t),
+    border-color var(--gu-t),
+    background var(--gu-t);
+}
+
+.gu-tab:hover {
+  color: var(--gu-primary);
+  background: var(--gu-primary-pale);
+}
+
+.gu-tab.activa {
+  color: var(--gu-primary);
+  font-weight: 700;
+  border-bottom-color: var(--gu-primary);
+  background: var(--gu-primary-pale);
+}
+
+/* Badge numérico dentro de cada tab */
+.gu-tab__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 99px;
+  font-size: .73rem;
+  font-weight: 700;
+  background: var(--gu-n100);
+  color: var(--gu-n700);
+  transition: background var(--gu-t), color var(--gu-t);
+}
+
+.gu-tab.activa .gu-tab__badge {
+  background: var(--gu-primary);
+  color: var(--gu-white);
+}
+
+
+/* ── 7. BARRA DE HERRAMIENTAS ──────────────────────────── */
+.gu-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 24px;
+  background: var(--gu-n50);
+  border-bottom: 1px solid var(--gu-n200);
+}
+
+/* Campo de búsqueda */
+.gu-search {
+  position: relative;
+  max-width: 340px;
+  width: 100%;
+}
+
+.gu-search__icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gu-n500);
+  pointer-events: none;
+  display: flex;
+}
+
+.gu-search__input {
+  width: 100%;
+  padding: 8px 12px 8px 34px;
+  border: 1px solid var(--gu-n200);
+  border-radius: var(--gu-r-sm);
+  font-family: var(--gu-font);
+  font-size: .88rem;
+  color: var(--gu-n900);
+  background: var(--gu-white);
+  outline: none;
+  transition: border-color var(--gu-t), box-shadow var(--gu-t);
+}
+
+.gu-search__input::placeholder { color: var(--gu-n500); }
+
+.gu-search__input:focus {
+  border-color: var(--gu-primary);
+  box-shadow: 0 0 0 3px rgba(26,110,60,.12);
+}
+
+/* Texto informativo de conteo */
+.gu-toolbar__info {
+  font-size: .82rem;
+  color: var(--gu-n500);
+  white-space: nowrap;
+}
+
+.gu-toolbar__info strong {
+  color: var(--gu-n700);
+  font-weight: 600;
+}
+
+
+/* ── 8. TABLA DE USUARIOS ──────────────────────────────── */
+.gu-table-wrapper {
+  overflow-x: auto;
+  /* Garantiza que la tabla use todo el ancho disponible */
+  width: 100%;
+}
+
+.gu-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .88rem;
+}
+
+/* Encabezados */
+.gu-table thead tr {
+  background: var(--gu-n50);
+  border-bottom: 2px solid var(--gu-n200);
+}
+
+.gu-table thead th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--gu-n500);
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* La columna "Acciones" se centra */
+.gu-th-acciones { text-align: center; }
+
+/* Filas del cuerpo */
+.gu-table tbody tr {
+  border-bottom: 1px solid var(--gu-n100);
+  transition: background var(--gu-t);
+}
+
+.gu-table tbody tr:last-child { border-bottom: none; }
+
+.gu-table tbody tr:hover { background: var(--gu-primary-pale); }
+
+.gu-table tbody td {
+  padding: 13px 16px;
+  vertical-align: middle;
+  color: var(--gu-n700);
+  line-height: 1.4;
+}
+
+
+/* ── 9. CELDAS ESPECIALES ──────────────────────────────── */
+
+/* Avatar + nombre/correo en la primera columna */
+.gu-cell-usuario {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gu-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gu-primary-pale);
+  color: var(--gu-primary);
+  font-weight: 700;
+  font-size: .82rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  border: 1.5px solid rgba(26,110,60,.2);
+}
+
+.gu-cell-usuario__nombre {
+  font-weight: 600;
+  color: var(--gu-n900);
+  line-height: 1.2;
+}
+
+.gu-cell-usuario__email {
+  font-size: .76rem;
+  color: var(--gu-n500);
+  margin-top: 2px;
+  font-family: var(--gu-font-mono);
+}
+
+/* Badge de rol */
+.gu-badge-rol {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+.gu-badge-rol--tecnico    { background: #e3f0ff; color: #1a5fa0; }
+.gu-badge-rol--productor  { background: #fff4e0; color: #a0620e; }
+.gu-badge-rol--funcionario{ background: var(--gu-primary-pale); color: var(--gu-primary); }
+
+/* Badge de estado (activo / inactivo) */
+.gu-badge-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.gu-badge-estado::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.gu-badge-estado--activo           { color: var(--gu-primary); }
+.gu-badge-estado--activo::before   { background: var(--gu-primary); }
+.gu-badge-estado--inactivo         { color: var(--gu-n500); }
+.gu-badge-estado--inactivo::before { background: var(--gu-n500); }
+
+
+/* ── 10. COLUMNA DE ACCIONES ───────────────────────────── */
+.gu-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* Botón de acción base */
+.gu-btn-accion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--gu-r-sm);
+  cursor: pointer;
+  transition:
+    background var(--gu-t),
+    transform var(--gu-t),
+    box-shadow var(--gu-t);
+  flex-shrink: 0;
+}
+
+.gu-btn-accion:active { transform: scale(.92); }
+
+/* Ver (azul suave) */
+.gu-btn-accion--ver {
+  background: var(--gu-info-pale);
+  color: var(--gu-info);
+}
+.gu-btn-accion--ver:hover {
+  background: #c9d8fc;
+  box-shadow: 0 2px 6px rgba(26,86,176,.2);
+}
+
+/* Editar (amarillo suave) */
+.gu-btn-accion--editar {
+  background: #fff7e0;
+  color: #a06000;
+}
+.gu-btn-accion--editar:hover {
+  background: #ffe9b0;
+  box-shadow: 0 2px 6px rgba(160,96,0,.18);
+}
+
+/* Eliminar (rojo suave) */
+.gu-btn-accion--eliminar {
+  background: var(--gu-danger-pale);
+  color: var(--gu-danger);
+}
+.gu-btn-accion--eliminar:hover {
+  background: #f9d5d5;
+  box-shadow: 0 2px 6px rgba(214,59,59,.2);
+}
+
+/* Tooltip nativo del title — mejora accesibilidad */
+.gu-btn-accion[title] { cursor: pointer; }
+
+
+/* ── 11. ESTADO VACÍO ──────────────────────────────────── */
+.gu-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 24px;
+  color: var(--gu-n500);
+  text-align: center;
+}
+
+.gu-empty svg { opacity: .3; }
+
+.gu-empty p {
+  font-size: .92rem;
+  max-width: 280px;
+  line-height: 1.6;
+}
+
+
+/* ── 12. MODALES ───────────────────────────────────────── */
+
+/* Fondo oscuro con blur */
+.gu-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,15,25,.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+  /* Estado por defecto: oculto */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .22s ease;
+}
+
+/* Clase que el JS agrega para mostrar el modal */
+.gu-modal-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Contenedor del modal */
+.gu-modal {
+  background: var(--gu-white);
+  border-radius: var(--gu-r-lg);
+  box-shadow: var(--gu-sh-lg);
+  width: 100%;
+  max-width: 500px;
+  overflow: hidden;
+  transform: translateY(20px) scale(.97);
+  transition: transform .22s ease;
+}
+
+.gu-modal-overlay.visible .gu-modal {
+  transform: translateY(0) scale(1);
+}
+
+/* Tamaño reducido para modales de confirmación / ver */
+.gu-modal--sm  { max-width: 400px; }
+.gu-modal--ver { max-width: 460px; }
+
+/* Cabecera del modal */
+.gu-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--gu-n100);
+}
+
+.gu-modal__header h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--gu-n900);
+}
+
+/* Botón cerrar (✕) */
+.gu-modal__close {
+  background: var(--gu-n100);
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--gu-n700);
+  transition: background var(--gu-t), color var(--gu-t);
+  flex-shrink: 0;
+}
+
+.gu-modal__close:hover {
+  background: var(--gu-n200);
+  color: var(--gu-n900);
+}
+
+/* Cuerpo y pie del modal */
+.gu-modal__body { padding: 22px 24px; }
+
+.gu-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--gu-n100);
+  background: var(--gu-n50);
+}
+
+
+/* ── 13. FORMULARIO DEL MODAL ──────────────────────────── */
+.gu-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.gu-form-group { margin-bottom: 16px; }
+
+.gu-form-group label {
+  display: block;
+  font-size: .81rem;
+  font-weight: 600;
+  color: var(--gu-n700);
+  margin-bottom: 5px;
+  letter-spacing: .02em;
+}
+
+.gu-form-group abbr {
+  color: var(--gu-danger);
+  text-decoration: none;
+}
+
+.gu-form-group input,
+.gu-form-group select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--gu-n200);
+  border-radius: var(--gu-r-sm);
+  font-family: var(--gu-font);
+  font-size: .9rem;
+  color: var(--gu-n900);
+  background: var(--gu-white);
+  outline: none;
+  transition: border-color var(--gu-t), box-shadow var(--gu-t);
+}
+
+.gu-form-group input:focus,
+.gu-form-group select:focus {
+  border-color: var(--gu-primary);
+  box-shadow: 0 0 0 3px rgba(26,110,60,.12);
+}
+
+/* Botones del pie del modal */
+.gu-btn-cancelar {
+  padding: 9px 18px;
+  border: 1.5px solid var(--gu-n200);
+  border-radius: var(--gu-r-sm);
+  background: var(--gu-white);
+  font-family: var(--gu-font);
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--gu-n700);
+  cursor: pointer;
+  transition: background var(--gu-t), border-color var(--gu-t);
+}
+
+.gu-btn-cancelar:hover {
+  background: var(--gu-n100);
+  border-color: var(--gu-n500);
+}
+
+.gu-btn-guardar {
+  padding: 9px 20px;
+  border: none;
+  border-radius: var(--gu-r-sm);
+  background: var(--gu-primary);
+  font-family: var(--gu-font);
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--gu-white);
+  cursor: pointer;
+  transition: background var(--gu-t), box-shadow var(--gu-t);
+}
+
+.gu-btn-guardar:hover {
+  background: var(--gu-primary-light);
+  box-shadow: 0 3px 10px rgba(26,110,60,.3);
+}
+
+
+/* ── 14. MODAL "VER DETALLE" ───────────────────────────── */
+
+/* Grid de dos columnas etiqueta / valor */
+.gu-ver-grid {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 10px 16px;
+  align-items: start;
+}
+
+.gu-ver-label {
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--gu-n500);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding-top: 2px;
+}
+
+.gu-ver-valor {
+  font-size: .9rem;
+  color: var(--gu-n900);
+  font-weight: 500;
+  word-break: break-word;
+}
+
+/* Separador horizontal dentro del grid de detalle */
+.gu-ver-divider {
+  grid-column: 1 / -1;
+  border: none;
+  border-top: 1px solid var(--gu-n100);
+  margin: 4px 0;
+}
+
+
+/* ── 15. MODAL "CONFIRMAR ELIMINACIÓN" ─────────────────── */
+.gu-confirm__body {
+  text-align: center;
+  padding: 28px 24px 12px;
+}
+
+.gu-confirm__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--gu-danger-pale);
+  color: var(--gu-danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.gu-confirm__body h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--gu-n900);
+}
+
+.gu-confirm__body p {
+  font-size: .88rem;
+  color: var(--gu-n500);
+  line-height: 1.6;
+}
+
+.gu-btn-eliminar-conf {
+  padding: 9px 20px;
+  border: none;
+  border-radius: var(--gu-r-sm);
+  background: var(--gu-danger);
+  font-family: var(--gu-font);
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--gu-white);
+  cursor: pointer;
+  transition: background var(--gu-t), box-shadow var(--gu-t);
+}
+
+.gu-btn-eliminar-conf:hover {
+  background: #b83232;
+  box-shadow: 0 3px 10px rgba(214,59,59,.3);
+}
+
+
+/* ── 16. TOAST DE NOTIFICACIÓN ─────────────────────────── */
+.gu-toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 99999;
+  background: var(--gu-n900);
+  color: var(--gu-white);
+  padding: 12px 18px;
+  border-radius: var(--gu-r-md);
+  font-family: var(--gu-font);
+  font-size: .88rem;
+  font-weight: 500;
+  box-shadow: var(--gu-sh-lg);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 340px;
+  /* Estado inicial: oculto */
+  opacity: 0;
+  transform: translateY(16px);
+  pointer-events: none;
+  transition: opacity .25s ease, transform .25s ease;
+}
+
+.gu-toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+/* Variantes por tipo */
+.gu-toast--exito  { border-left: 4px solid var(--gu-primary-light); }
+.gu-toast--error  { border-left: 4px solid var(--gu-danger); }
+.gu-toast--aviso  { border-left: 4px solid var(--gu-accent); }
+
+
+/* ── 17. RESPONSIVE ────────────────────────────────────── */
+@media (max-width: 680px) {
+
+  .gu-wrapper { padding: 16px; }
+
+  /* Encabezado en columna */
+  .gu-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .gu-btn-nuevo {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Toolbar en columna */
+  .gu-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .gu-search { max-width: 100%; }
+
+  /* Tabs más compactas */
+  .gu-tabs { gap: 2px; padding: 12px 12px 0; }
+  .gu-tab  { font-size: .8rem; padding: 7px 10px; }
+
+  /* Formulario en columna */
+  .gu-form-row { grid-template-columns: 1fr; }
+
+  /* Grid "ver detalle" en columna */
+  .gu-ver-grid { grid-template-columns: 1fr; }
+  .gu-ver-label { margin-bottom: -6px; }
+}
+
+/* ── OCULTAR BOTÓN "Agregar predio" cuando corresponda ──────
+   El JS gestiona la propiedad hidden del elemento,
+   pero esta regla refuerza la ocultación para que
+   no ocupe espacio en el layout cuando está hidden.
+──────────────────────────────────────────────────────────── */
+#gl-btn-nuevo[hidden] {
+  display: none;
+}
+ 
+ 
+/* ── COLUMNA DE CAPACIDAD: alineación numérica ──────────────
+   La columna "Capacidad" en Lugares de producción muestra
+   números, por lo que se alinea a la derecha para facilitar
+   la lectura comparativa.
+──────────────────────────────────────────────────────────── */
+.gl-td-numero {
+  text-align: right;
+  font-family: var(--gu-font-mono);
+  font-size: .86rem;
+  color: var(--gu-n700);
+  letter-spacing: .02em;
+}

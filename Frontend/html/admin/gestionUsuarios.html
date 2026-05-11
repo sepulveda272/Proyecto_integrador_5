@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIFEX - Gestión de Usuarios</title>
+
+  <!-- Estilos base del proyecto -->
+  <link href="../../css/main.css" rel="stylesheet" />
+  <link href="../../css/admin.css" rel="stylesheet" />
+
+  <!-- Bootstrap 5 (layout y utilidades generales) -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+    crossorigin="anonymous"
+  />
+</head>
+<body>
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║  TOPBAR                                              ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <div class="topbar">
+    <span class="topbar-title">Admin</span>
+    <span class="topbar-user">Juan David Sepulveda Rojas</span>
+    <button class="btn-salir">Salir</button>
+  </div>
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║  LAYOUT: sidebar + contenido principal              ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <div class="layout" id="layout">
+
+    <!-- ── Sidebar ─────────────────────────────────────── -->
+    <nav class="sidebar" aria-label="Menú principal">
+      <div class="sidebar-logo">
+        <span class="icon" aria-hidden="true">🌿</span>
+        <span>SIFEX</span>
+      </div>
+
+      <!-- Ítem: Gestión de usuarios (activo en esta vista) -->
+      <a class="nav-item active" href="gestionUsuarios.html" aria-current="page">
+        <span class="icon" aria-hidden="true">👥</span> Usuarios
+      </a>
+
+      <!-- Ítem: Gestión de lugares (nueva sección) -->
+      <a class="nav-item" href="gestionLugares.html">
+        <span class="icon" aria-hidden="true">📍</span> Lugares de producción
+      </a>
+
+      <div class="sidebar-bottom">
+        <button class="btn-hide-menu" id="toggleSidebar">← Ocultar menú</button>
+      </div>
+    </nav>
+
+    <!-- ── Área principal ──────────────────────────────── -->
+    <main class="main" id="contenido-principal">
+
+      <div class="gu-wrapper">
+
+        <!-- ── Encabezado de sección ──────────────────── -->
+        <div class="gu-header">
+          <div class="gu-header__titles">
+            <h1>Gestión de Usuarios</h1>
+            <p>Administre técnicos, productores y funcionarios del sistema.</p>
+          </div>
+          <!-- Botón crear nuevo usuario -->
+          <button class="gu-btn-nuevo" id="gu-btn-nuevo" aria-label="Crear nuevo usuario">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Nuevo usuario
+          </button>
+        </div>
+
+        <!-- ── Tarjeta principal ───────────────────────── -->
+        <div class="gu-card">
+
+          <!-- ── Pestañas de filtro por rol ─────────────
+               data-rol: valor que el JS usa para filtrar.
+               La tab "todos" muestra todos los usuarios.
+          ──────────────────────────────────────────────── -->
+          <div class="gu-tabs" role="tablist" aria-label="Filtrar usuarios por rol">
+
+            <button class="gu-tab activa" data-rol="todos"
+                    role="tab" aria-selected="true" id="tab-todos">
+              <span aria-hidden="true">🗂️</span> Todos
+              <span class="gu-tab__badge" id="badge-todos">0</span>
+            </button>
+
+            <button class="gu-tab" data-rol="tecnico"
+                    role="tab" aria-selected="false" id="tab-tecnico">
+              <span aria-hidden="true">🔧</span> Técnico
+              <span class="gu-tab__badge" id="badge-tecnico">0</span>
+            </button>
+
+            <button class="gu-tab" data-rol="productor"
+                    role="tab" aria-selected="false" id="tab-productor">
+              <span aria-hidden="true">🌱</span> Productor
+              <span class="gu-tab__badge" id="badge-productor">0</span>
+            </button>
+
+            <button class="gu-tab" data-rol="funcionario"
+                    role="tab" aria-selected="false" id="tab-funcionario">
+              <span aria-hidden="true">🏛️</span> Funcionario ICA
+              <span class="gu-tab__badge" id="badge-funcionario">0</span>
+            </button>
+
+          </div><!-- /gu-tabs -->
+
+          <!-- ── Barra de herramientas: búsqueda + contador ── -->
+          <div class="gu-toolbar">
+            <div class="gu-search">
+              <span class="gu-search__icon" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </span>
+              <input
+                class="gu-search__input"
+                id="gu-busqueda"
+                type="search"
+                placeholder="Buscar por nombre o correo…"
+                aria-label="Buscar usuarios"
+                autocomplete="off"
+              />
+            </div>
+            <!-- El JS actualiza este span con el conteo visible -->
+            <span class="gu-toolbar__info" id="gu-info-count" aria-live="polite"></span>
+          </div>
+
+          <!-- ── Tabla de usuarios ───────────────────────
+               thead: encabezados fijos.
+               tbody: filas generadas dinámicamente por JS (admin.js → renderizarTabla).
+               #gu-empty: visible solo cuando no hay resultados.
+          ──────────────────────────────────────────────── -->
+          <div class="gu-table-wrapper">
+            <table class="gu-table" id="gu-tabla"
+                   role="grid" aria-label="Lista de usuarios">
+              <thead>
+                <tr>
+                  <th scope="col">Usuario</th>
+                  <th scope="col">Teléfono</th>
+                  <th scope="col">Región</th>
+                  <th scope="col">Rol</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col" class="gu-th-acciones">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="gu-tbody">
+                <!-- Filas generadas por admin.js -->
+              </tbody>
+            </table>
+
+            <!-- Estado vacío -->
+            <div class="gu-empty" id="gu-empty"
+                 role="status" aria-live="polite" hidden>
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.3"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              <p>No se encontraron usuarios para este filtro.</p>
+            </div>
+
+          </div><!-- /gu-table-wrapper -->
+
+        </div><!-- /gu-card -->
+
+      </div><!-- /gu-wrapper -->
+
+    </main>
+
+  </div><!-- /layout -->
+
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║  MODAL — VER DETALLE DE USUARIO                     ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <div class="gu-modal-overlay" id="gu-modal-ver"
+       role="dialog" aria-modal="true"
+       aria-labelledby="gu-ver-titulo" hidden>
+    <div class="gu-modal gu-modal--ver">
+
+      <div class="gu-modal__header">
+        <h2 id="gu-ver-titulo">Detalle de usuario</h2>
+        <button class="gu-modal__close" id="gu-ver-close" aria-label="Cerrar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="gu-modal__body">
+        <!-- El JS rellena con los datos del usuario -->
+        <div id="gu-ver-contenido" class="gu-ver-grid"></div>
+      </div>
+
+      <div class="gu-modal__footer">
+        <button class="gu-btn-cancelar" id="gu-ver-cancelar">Cerrar</button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║  MODAL — CREAR / EDITAR USUARIO                     ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <div class="gu-modal-overlay" id="gu-modal-form"
+       role="dialog" aria-modal="true"
+       aria-labelledby="gu-modal-titulo" hidden>
+    <div class="gu-modal">
+
+      <div class="gu-modal__header">
+        <!-- El JS cambia este texto según modo crear / editar -->
+        <h2 id="gu-modal-titulo">Nuevo usuario</h2>
+        <button class="gu-modal__close" id="gu-modal-close" aria-label="Cerrar modal">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="gu-modal__body">
+
+        <div class="gu-form-row">
+          <div class="gu-form-group">
+            <label for="f-nombre">Nombre completo <abbr title="Requerido">*</abbr></label>
+            <input id="f-nombre" type="text"
+                   placeholder="Ej. Carlos Ramírez"
+                   maxlength="80" autocomplete="name" />
+          </div>
+          <div class="gu-form-group">
+            <label for="f-correo">Correo electrónico <abbr title="Requerido">*</abbr></label>
+            <input id="f-correo" type="email"
+                   placeholder="correo@ejemplo.com"
+                   maxlength="100" autocomplete="email" />
+          </div>
+        </div>
+
+        <div class="gu-form-row">
+          <div class="gu-form-group">
+            <label for="f-telefono">Teléfono</label>
+            <input id="f-telefono" type="tel"
+                   placeholder="310 000 0000"
+                   maxlength="20" autocomplete="tel" />
+          </div>
+          <div class="gu-form-group">
+            <label for="f-region">Región / Departamento</label>
+            <input id="f-region" type="text"
+                   placeholder="Ej. Santander" maxlength="60" />
+          </div>
+        </div>
+
+        <div class="gu-form-row">
+          <div class="gu-form-group">
+            <label for="f-rol">Rol <abbr title="Requerido">*</abbr></label>
+            <select id="f-rol">
+              <option value="">— Seleccione —</option>
+              <option value="tecnico">Técnico</option>
+              <option value="productor">Productor</option>
+              <option value="funcionario">Funcionario ICA</option>
+            </select>
+          </div>
+          <div class="gu-form-group">
+            <label for="f-estado">Estado</label>
+            <select id="f-estado">
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+          </div>
+        </div>
+
+      </div><!-- /gu-modal__body -->
+
+      <div class="gu-modal__footer">
+        <button class="gu-btn-cancelar" id="gu-form-cancelar">Cancelar</button>
+        <button class="gu-btn-guardar"  id="gu-form-guardar">Guardar</button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║  MODAL — CONFIRMAR ELIMINACIÓN                      ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <div class="gu-modal-overlay" id="gu-modal-confirm"
+       role="alertdialog" aria-modal="true"
+       aria-labelledby="gu-confirm-titulo"
+       aria-describedby="gu-confirm-desc" hidden>
+    <div class="gu-modal gu-modal--sm">
+
+      <div class="gu-confirm__body">
+        <div class="gu-confirm__icon" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6"/><path d="M14 11v6"/>
+            <path d="M9 6V4h6v2"/>
+          </svg>
+        </div>
+        <h3 id="gu-confirm-titulo">¿Eliminar usuario?</h3>
+        <!-- El JS escribe aquí el nombre del usuario a eliminar -->
+        <p id="gu-confirm-desc">Esta acción no se puede deshacer.</p>
+      </div>
+
+      <div class="gu-modal__footer">
+        <button class="gu-btn-cancelar"      id="gu-confirm-cancelar">Cancelar</button>
+        <button class="gu-btn-eliminar-conf" id="gu-confirm-ok">Sí, eliminar</button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║  TOAST — Notificaciones no intrusivas               ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <div class="gu-toast" id="gu-toast"
+       role="alert" aria-live="assertive" aria-atomic="true"></div>
+
+
+  <!-- Scripts: base del proyecto → lógica de esta vista -->
+  <script src="../../js/admin.js"></script>
+
+</body>
+</html>

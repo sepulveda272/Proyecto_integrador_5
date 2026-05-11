@@ -1,33 +1,56 @@
 /* ============================================================
-   SIFEX — main.css  (refactorizado)
+   SIFEX — main.css (optimizado)
 
    ÍNDICE
    0.  Variables y tokens de diseño
    1.  Reset
-   2.  Botones  (base .btn + modificadores)
-       → Añadido: .action-lote (botón lotes en tabla)
+   2.  Botones
    3.  Badges
    4.  Inputs y campos
-       → Añadido: .form-input[readonly]  (bloquea date-picker nativo)
-       → Añadido: .label-hint            (sufijo "(solo lectura)" en labels)
    5.  Layout: body, topbar, sidebar, main
    6.  Login
    7.  Tabla
    8.  Encabezados de sección
-       → Añadido: .page-title--sm (modificador tamaño reducido)
    9.  Filtros
-   10. Cards grid  (inspecciones / solicitudes / citas)
+   10. Cards grid
    11. Perfil
    12. Formularios multi-paso (lugar de producción)
-   13. Modal base  (.modal-base + modificadores)
-       13a. Modal agendar cita  (productor)
-       13b. Modal observación   (funcionario)
+   13. Modales
+       13a. Modal agendar cita (productor)
+       13b. Modal observación unificado (funcionario)
        13c. Modal verificar cita (funcionario)
    14. Toast
    15. Animaciones
    16. Vista de edición de lugar de producción
    17. Modal detalle — tabs + accordion de lotes
-   18. Modal detalle — layout y contenido específico  [NUEVO — migrado de lugarProducción.html]
+   18. Modal detalle — layout y contenido específico
+   19. Vista observaciones — estilos migrados
+   20. Vista observaciones — modal Ver Reporte
+   21. Modal Ver Reporte — acordeón de lotes + resumen
+   22. Modal Ver Reporte — nivel de alerta + fecha
+   23. Tabla observaciones — acento lateral de fila
+
+   ELIMINACIONES (clases sin uso en HTML ni JS):
+   - §2: .btn-aprobar             → no aparece en ningún HTML ni JS
+   - §2: .btn-edit                → no aparece en ningún HTML ni JS
+   - §3: .badge-activo/.badge--active, .badge-pendiente/.badge--pending,
+         .badge-calida/.badge--hot, .badge-fria/.badge--cold,
+         .badge-templada/.badge--warm → ninguna aparece en HTML ni JS;
+         solo se usan: .badge-aprobado, .badge-revision, .badge-rechazado
+   - §5: .sidebar.hidden          → la lógica de toggle añade/quita .hidden pero
+         no hay regla que le asigne display:none en el CSS original; se confirma
+         que la IIFE de tecnicos.js solo hace classList.toggle('hidden') como
+         señal de texto; el sidebar no se oculta visualmente vía CSS, por lo que
+         no se necesita ninguna regla .hidden adicional
+   - §8: .section-header          → agrupado con .header, sin uso independiente
+   - §10: comentario de prog-* eliminado — las clases prog-* SÍ se usan en
+          inspeccion.html; se mantienen
+   - §18: .predio-extended (duplicado literal de dos bloques idénticos)
+          → se conserva solo una declaración
+
+   DUPLICADOS ELIMINADOS:
+   - §18: .predio-extended aparecía dos veces consecutivas con idéntico contenido;
+          se mantiene solo la primera declaración
    ============================================================ */
 
 
@@ -103,17 +126,16 @@
    Modificadores   → .btn--primary  .btn--secondary  .btn--danger
                      .btn--ghost    .btn--exit
    Alias legacy    → nombres anteriores mapeados a la base
-   ============================================================ */
 
+   ELIMINADO: .btn-aprobar (fondo azul) — sin uso en ningún HTML/JS
+   ELIMINADO: .btn-edit (fondo dorado)  — sin uso en ningún HTML/JS
+   ============================================================ */
 .btn,
 .btn-primary, .btn-agregar, .btn-save, .btn-solicitar, .btn-generar,
 .btn-secondary, .btn-sec,
 .btn-danger, .btn-eliminar,
 .btn-cancel,
-.btn-salir,
-.btn-detalles,
-.btn-edit,
-.btn-aprobar {
+.btn-salir {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -197,27 +219,40 @@
 
 .btn--exit:hover, .btn-salir:hover { background: #c1121f; }
 
-/* Editar — dorado */
-.btn-edit { background: #e3bf3d; color: var(--white); padding: 8px 12px; }
-.btn-edit:hover { background: #e79c56; }
-
-/* Aprobar — azul */
-.btn-aprobar { background: #cce5ff; color: #004085; }
-.btn-aprobar:hover { background: #b8daff; }
-
-/* Detalles — translúcido */
+/* Ver detalles / Acciones en cards */
 .btn-detalles {
-    flex: 1;
-    background: rgb(135 199 160 / 51%);
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 7px;
+    padding: 8px 18px;
+    background: transparent;
+    color: var(--green-dark);
+    border: 1.5px solid var(--green-dark);
+    border-radius: var(--radius-lg);
+    font-family: var(--font-dm);
     font-size: 13px;
-    padding: 9px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    box-sizing: border-box;
+    transition:
+        background    var(--t-base),
+        color         var(--t-base),
+        border-color  var(--t-base),
+        box-shadow    var(--t-base),
+        transform     var(--t-fast);
 }
 
 .btn-detalles:hover {
-    background: rgba(83, 158, 101, 0.2);
-    border-color: var(--color-primary);
+    background: var(--green-dark);
+    color: var(--white);
+    border-color: var(--green-dark);
+    box-shadow: 0 4px 14px rgba(45, 106, 79, 0.28);
+    transform: translateY(-1px);
 }
 
 /* Deshabilitado */
@@ -230,7 +265,7 @@
     pointer-events: none;
 }
 
-/* Botones de acción en tabla */
+/* Botones de acción en tabla (iconos 32×32) */
 .action-btn {
     display: inline-flex;
     align-items: center;
@@ -249,10 +284,9 @@
 .action-edit { background: var(--green-dark); color: var(--white); margin-right: 4px; }
 .action-del  { background: var(--accent-rose); color: #c0394a;     margin-right: 4px; }
 .action-eye  { background: var(--accent-gold); color: var(--white); }
-/* Botón de lotes: fondo verde medio — [AÑADIDO] faltaba definición para .action-lote */
-.action-lote { background: var(--green-mid); color: var(--white); margin-left: 4px; }
+.action-lote { background: var(--green-mid);   color: var(--white); margin-left: 4px; }
 
-/* Ocultar menú */
+/* Ocultar/mostrar menú (sidebar) */
 .btn-hide-menu {
     display: block;
     width: 100%;
@@ -270,7 +304,7 @@
 
 .btn-hide-menu:hover { background: rgba(255,255,255,.2); }
 
-/* Volver */
+/* Volver (flecha) */
 .btn-back {
     display: flex;
     align-items: center;
@@ -291,9 +325,16 @@
 
 /* ============================================================
    3. BADGES
-   Clase base .badge + modificadores
-   ============================================================ */
+   Clase base .badge + modificadores en uso.
 
+   ELIMINADO: .badge-activo/.badge--active     — sin uso en HTML/JS
+   ELIMINADO: .badge-pendiente/.badge--pending  — sin uso en HTML/JS
+   ELIMINADO: .badge-calida/.badge--hot         — sin uso en HTML/JS
+   ELIMINADO: .badge-fria/.badge--cold          — sin uso en HTML/JS
+   ELIMINADO: .badge-templada/.badge--warm      — sin uso en HTML/JS
+   ELIMINADO: alias .badge--approved, .badge--review, .badge--rejected
+              → solo se usan las versiones sin prefijo -- en el proyecto
+   ============================================================ */
 .badge {
     display: inline-block;
     padding: 4px 10px;
@@ -304,26 +345,19 @@
     white-space: nowrap;
 }
 
-.badge-activo, .badge--active       { background: var(--green-light); color: #1b4332; }
-.badge-pendiente, .badge--pending   { background: #fff3cd;             color: #856404; }
-.badge-calida, .badge--hot          { background: #fde8d0;             color: #c05e10; }
-.badge-fria, .badge--cold           { background: #d4eaf7;             color: #1a6496; }
-.badge-templada, .badge--warm       { background: #e3f4de;             color: #2d6a4f; }
-
-.badge-aprobado, .badge--approved {
+.badge-aprobado {
     background: rgba(61,107,85,.15);
     color: var(--color-primary);
     border: 1px solid rgba(61,107,85,.3);
 }
 
-.badge-revision, .badge--review {
+.badge-revision {
     background: rgb(255 232 170 / 51%);
     color: #ffb900;
     border: 1px solid rgba(212,160,23,.3);
 }
 
-/* Badge rechazado (usado en solicitudes.html) */
-.badge-rechazado, .badge--rejected {
+.badge-rechazado {
     background: rgba(230,57,70,.15);
     color: var(--accent-red);
     border: 1px solid rgba(230,57,70,.3);
@@ -359,22 +393,15 @@
 
 .form-input::placeholder { color: #b8cfc1; }
 
+/* Variante solo-lectura visual */
 .form-input.readonly {
     background: var(--green-xlight);
     color: var(--text-mid);
     cursor: default;
 }
 
-/*
- * [NUEVO §4] Bloquea la apertura del selector nativo de fecha en inputs
- * con atributo readonly (ej: fecha de siembra en view-edit).
- * Sin esto Chrome/Firefox muestran el date-picker aunque readonly esté
- * presente, lo que puede confundir al usuario.
- * Se usa el selector de atributo para no interferir con disabled.
- */
-.form-input[readonly] {
-    pointer-events: none;
-}
+/* Bloquea el selector nativo de fecha en inputs con atributo readonly */
+.form-input[readonly] { pointer-events: none; }
 
 .form-input.error { border-color: var(--accent-red); }
 
@@ -405,12 +432,7 @@
     margin-bottom: 5px;
 }
 
-/*
- * [NUEVO §4] Sufijo de aclaración junto a un label (ej: "solo lectura").
- * Se aplica en un <span> dentro del <label> para heredar el bloque sin
- * romper el flujo. Anula text-transform/letter-spacing del padre para
- * leer en minúsculas normales y diferenciarse visualmente del label.
- */
+/* Sufijo de aclaración junto a un label (ej: "solo lectura") */
 .label-hint {
     font-size: 10px;
     font-weight: 400;
@@ -420,7 +442,7 @@
     margin-left: 4px;
 }
 
-/* Campo perfil (fondo verde claro) */
+/* Campo con etiqueta vertical (perfil) */
 .field {
     display: flex;
     flex-direction: column;
@@ -461,7 +483,6 @@
 /* ============================================================
    5. LAYOUT: BODY, TOPBAR, SIDEBAR, MAIN
    ============================================================ */
-
 body {
     display: flex;
     flex-direction: column;
@@ -592,7 +613,7 @@ body.login-page {
     text-align: center;
 }
 
-/* Toggle sidebar (admin) */
+/* Toggle sidebar */
 #toggleSidebar {
     width: 100%;
     padding: 10px;
@@ -610,7 +631,6 @@ body.login-page {
 /* ============================================================
    6. LOGIN
    ============================================================ */
-
 .card-login {
     width: 380px;
     padding: 40px 30px;
@@ -680,7 +700,6 @@ body.login-page {
 /* ============================================================
    7. TABLA
    ============================================================ */
-
 table {
     width: 100%;
     border-collapse: collapse;
@@ -724,17 +743,21 @@ tr:last-child td { border-bottom: none; }
 
 /* ============================================================
    8. ENCABEZADOS DE SECCIÓN
-   ============================================================ */
 
+   ELIMINADO: .section-header como selector independiente —
+   se unificó con .header ya que ambos tenían exactamente los
+   mismos estilos y .section-header no aparece en ningún HTML.
+   ============================================================ */
 h1 { font-size: 28px; margin-bottom: 5px; }
 h2 { color: var(--green-dark); }
 
 /* Header de vista (título + botón) */
-.header, .section-header {
+.header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 16px;
+    gap: 12px; /* Requerido por observaciones.html para separar título y botón descargar */
 }
 
 /* Header de página con padding lateral */
@@ -754,8 +777,7 @@ h2 { color: var(--green-dark); }
     margin-bottom: 6px;
 }
 
-/* Modificador: título de página en tamaño reducido (formularios y edición)
-   [MIGRADO] Reemplaza los tres style="font-size:22px;" inline de lugarProducción.html */
+/* Modificador: título en tamaño reducido para formularios y edición */
 .page-title--sm { font-size: 22px; }
 
 /* Toprow (perfil) */
@@ -766,7 +788,7 @@ h2 { color: var(--green-dark); }
     margin-bottom: 10px;
 }
 
-/* Etiqueta de sección pequeña con línea (usada en cards de perfil) */
+/* Etiqueta de sección con línea decorativa */
 .toprow-title,
 .section-head {
     font-size: 11px;
@@ -814,7 +836,6 @@ h2 { color: var(--green-dark); }
 /* ============================================================
    9. FILTROS
    ============================================================ */
-
 .filtros {
     display: flex;
     flex-wrap: wrap;
@@ -847,7 +868,6 @@ h2 { color: var(--green-dark); }
 /* ============================================================
    10. CARDS GRID (inspecciones / solicitudes / citas)
    ============================================================ */
-
 .cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -864,7 +884,6 @@ h2 { color: var(--green-dark); }
     display: flex;
     flex-direction: column;
     padding: 0;
-    /* Anulamos hover heredado del .card de perfil */
     transition: none;
 }
 
@@ -913,8 +932,10 @@ h2 { color: var(--green-dark); }
 
 .coord-text { font-size: 12.5px; color: var(--text-mid); }
 
+/* Zona de botones en la parte inferior de la card (solicitudes.html, inspeccion.html) */
 .card-actions { display: flex; gap: 10px; padding: 0 18px 16px; }
 
+/***/* revisar */***/
 /* Barra de progreso en cards de inspección */
 .prog-wrap { display: flex; flex-direction: column; gap: 5px; }
 
@@ -946,13 +967,13 @@ h2 { color: var(--green-dark); }
 .prog-bar { height: 100%; border-radius: 20px; transition: width .4s ease; }
 .prog-bar--pend { background: #e0931f; }
 .prog-bar--comp { background: var(--green-mid); }
-
+/***/* revisar */***/
 
 /* ============================================================
    11. PERFIL
    ============================================================ */
 
-/* Contenedor principal con dos columnas */
+/* Contenedor principal */
 .content {
     flex: 1;
     padding: 28px 32px;
@@ -1058,7 +1079,7 @@ h2 { color: var(--green-dark); }
     gap: 16px;
 }
 
-/* Card de sección del perfil */
+/* Card de sección (usada también en el perfil) */
 .card {
     background: var(--white);
     border: 0.5px solid #c3deca;
@@ -1107,14 +1128,8 @@ h2 { color: var(--green-dark); }
 /* ============================================================
    12. FORMULARIOS MULTI-PASO (lugar de producción)
    ============================================================ */
-
-.view {
-    display: none;
-}
-
-.view.active {
-    display: block;
-}
+.view        { display: none; }
+.view.active { display: block; }
 
 .table-card {
     background: var(--white);
@@ -1280,9 +1295,10 @@ h2 { color: var(--green-dark); }
    Usada en: agendar cita, observación, verificar cita
    ============================================================ */
 
-/* Overlay base (compartido por los 3 modales) */
+/* Overlay base */
 .modal-base,
 .modal-overlay,
+/* revisar */
 .modal-obs-overlay,
 .modal-cita-overlay {
     position: fixed;
@@ -1299,6 +1315,7 @@ h2 { color: var(--green-dark); }
 
 .modal-base.show,
 .modal-overlay.show,
+/* revisar */
 .modal-obs-overlay.show,
 .modal-cita-overlay.show {
     opacity: 1;
@@ -1308,7 +1325,7 @@ h2 { color: var(--green-dark); }
 /* Box interior base */
 .modal-base__box,
 .modal-box,
-.modal-obs-box,
+/* revisar */
 .modal-cita-box {
     background: var(--white);
     border-radius: var(--radius-xl);
@@ -1325,6 +1342,7 @@ h2 { color: var(--green-dark); }
 
 .modal-base.show   .modal-base__box,
 .modal-overlay.show .modal-box,
+/* revisar */
 .modal-obs-overlay.show .modal-obs-box,
 .modal-cita-overlay.show .modal-cita-box {
     transform: translateY(0);
@@ -1332,6 +1350,7 @@ h2 { color: var(--green-dark); }
 
 /* Cabecera modal */
 .modal__head,
+/* revisar */
 .modal-obs-head,
 .modal-cita-head {
     display: flex;
@@ -1345,14 +1364,14 @@ h2 { color: var(--green-dark); }
 
 /* Títulos del modal */
 .modal__title, .modal-title,
-.modal-obs-titulo, .modal-cita-titulo {
+.modal-cita-titulo {
     font-size: 15px;
     font-weight: 600;
     color: var(--text-dark);
 }
 
 .modal__subtitle, .modal-subtitle,
-.modal-obs-sub, .modal-cita-sub {
+.modal-cita-sub {
     font-size: 12px;
     color: var(--text-light);
     margin-top: 2px;
@@ -1360,7 +1379,7 @@ h2 { color: var(--green-dark); }
 
 /* Botón cerrar */
 .modal__close, .modal-close,
-.modal-obs-close, .modal-cita-close {
+.modal-cita-close {
     background: none;
     border: none;
     font-size: 18px;
@@ -1372,20 +1391,22 @@ h2 { color: var(--green-dark); }
 }
 
 .modal__close:hover, .modal-close:hover,
-.modal-obs-close:hover, .modal-cita-close:hover { color: var(--text-dark); }
+.modal-cita-close:hover { color: var(--text-dark); }
 
 /* Cuerpo modal */
-.modal__body, .modal-obs-body, .modal-cita-body {
+.modal__body, .modal-cita-body {
     flex: 1;
     overflow-y: auto;
     padding: 16px 20px;
 }
 
 .modal__body::-webkit-scrollbar,
+/* revisar */
 .modal-obs-body::-webkit-scrollbar,
 .modal-cita-body::-webkit-scrollbar { width: 4px; }
 
 .modal__body::-webkit-scrollbar-thumb,
+/* revisar */
 .modal-obs-body::-webkit-scrollbar-thumb,
 .modal-cita-body::-webkit-scrollbar-thumb {
     background: var(--border);
@@ -1393,7 +1414,7 @@ h2 { color: var(--green-dark); }
 }
 
 /* Pie modal */
-.modal__foot, .modal-obs-foot, .modal-cita-foot, .modal-footer-custom {
+.modal__foot, .modal-cita-foot, .modal-footer-custom {
     display: flex;
     justify-content: flex-end;
     align-items: center;
@@ -1429,31 +1450,48 @@ h2 { color: var(--green-dark); }
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 12px 16px;
+    padding: 14px 16px;
     margin-bottom: 10px;
     border: 1.5px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     cursor: pointer;
     user-select: none;
-    transition: border-color var(--t-fast), background var(--t-fast);
+    transition:
+        border-color var(--t-fast),
+        background   var(--t-fast),
+        box-shadow   var(--t-fast),
+        transform    var(--t-fast);
 }
 
-.lugar-option:hover    { background: var(--green-xlight); }
-.lugar-option.selected { border-color: var(--green-dark); background: #e8f5ee; }
+.lugar-option:hover {
+    background: var(--green-xlight);
+    border-color: var(--green-mid);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.lugar-option.selected {
+    border-color: var(--green-dark);
+    background: #e8f5ee;
+    box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.12);
+}
+
 .lugar-option input[type="checkbox"] { display: none; }
 
+/* Indicador de selección (checkmark visual) */
 .lugar-check {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     flex-shrink: 0;
     border: 2px solid var(--border);
-    border-radius: 5px;
-    font-size: 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
     color: transparent;
-    transition: background var(--t-fast), border-color var(--t-fast);
+    transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
 }
 
 .lugar-option.selected .lugar-check {
@@ -1462,53 +1500,103 @@ h2 { color: var(--green-dark); }
     color: var(--white);
 }
 
-.lugar-info   { flex: 1; }
-.lugar-id     { font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: .4px; }
-.lugar-nombre { font-size: 14px; font-weight: 600; color: var(--text-dark); }
+/* Info del lugar dentro de la opción */
+.lugar-info { flex: 1; }
+.lugar-id {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 2px;
+}
+.lugar-nombre {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+/* Encabezado de la lista de lugares dentro del modal */
+.modal-cita-lugares-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 10px;
+    padding: 0 2px;
+}
 
 
-/* ── 13b. Modal observación (funcionario) ── */
+/* ── 13b. Modal unificado de observación — Agregar / Editar (funcionario) ── */
 
-/* Grid de lugares completados */
-.lugares-obs-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
+/* Overlay */
+.modal-obs-edit-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 1055;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--t-base);
+}
+
+.modal-obs-edit-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Box interior */
+.modal-obs-edit-box {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(12px);
+    transition: transform var(--t-base);
+    box-shadow: 0 20px 60px rgba(0,0,0,.18);
+}
+
+.modal-obs-edit-overlay.show .modal-obs-edit-box {
+    transform: translateY(0);
+}
+
+/* Bloque informativo del lugar (solo lectura) */
+.obs-edit-lugar-info {
+    background: var(--green-xlight);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
     margin-bottom: 4px;
 }
 
-.lugar-obs-card {
-    position: relative;
-    padding: 10px 12px;
-    border: 1px solid #d4eadb;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: border-color var(--t-fast), background var(--t-fast);
+.obs-edit-lugar-nombre {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 2px;
 }
 
-.lugar-obs-card:hover         { background: var(--green-xlight); border-color: #7ab88a; }
-.lugar-obs-card.sel           { border-color: var(--green-dark); background: #e6f5ea; }
-
-.lugar-obs-chk {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    border: 1.5px solid var(--border);
-    transition: all var(--t-fast);
+.obs-edit-lugar-meta {
+    font-size: 11px;
+    color: #7a9e82;
 }
 
-.lugar-obs-card.sel .lugar-obs-chk {
-    background: var(--green-dark);
-    border-color: var(--green-dark);
+/* Contador de caracteres del textarea */
+.obs-edit-counter {
+    display: block;
+    font-size: 11px;
+    color: var(--text-light);
+    margin-top: 5px;
+    text-align: right;
 }
-
-.lugar-obs-nombre { font-size: 13px; font-weight: 600; color: var(--text-dark); margin-bottom: 2px; padding-right: 18px; }
-.lugar-obs-meta   { font-size: 11px; color: #7a9e82; }
-
-.obs-counter { font-size: 11px; color: var(--text-light); margin-right: auto; }
 
 
 /* ── 13c. Modal verificar cita (funcionario) ── */
@@ -1600,7 +1688,6 @@ h2 { color: var(--green-dark); }
 /* ============================================================
    14. TOAST
    ============================================================ */
-
 .toast {
     position: fixed;
     bottom: 28px;
@@ -1625,7 +1712,6 @@ h2 { color: var(--green-dark); }
 /* ============================================================
    15. ANIMACIONES
    ============================================================ */
-
 @keyframes slideUp {
     from { opacity: 0; transform: translateY(14px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -1641,13 +1727,12 @@ h2 { color: var(--green-dark); }
     to   { opacity: 1; background-color: transparent; }
 }
 
+
 /* ============================================================
    16. VISTA DE EDICIÓN DE LUGAR DE PRODUCCIÓN
-   Clases usadas por view-edit: lista de predios editables
-   y tarjetas accordion de lotes.
    ============================================================ */
 
-/* ── Lista de predios editables ── */
+/* Lista de predios editables */
 .predios-edit-list {
     display: flex;
     flex-direction: column;
@@ -1655,7 +1740,7 @@ h2 { color: var(--green-dark); }
     margin-bottom: 14px;
 }
 
-/* Fila individual de predio: etiqueta + código + botón eliminar */
+/* Fila individual de predio */
 .predio-edit-row {
     display: flex;
     align-items: center;
@@ -1667,7 +1752,6 @@ h2 { color: var(--green-dark); }
     animation: fadeIn .2s ease;
 }
 
-/* Etiqueta "Predio N" */
 .predio-edit-label {
     min-width: 70px;
     font-size: 13px;
@@ -1676,14 +1760,13 @@ h2 { color: var(--green-dark); }
     white-space: nowrap;
 }
 
-/* Código del predio (texto de solo lectura) */
 .predio-edit-code {
     flex: 1;
     font-size: 13px;
     color: var(--text-dark);
 }
 
-/* Botón eliminar predio — reutiliza colores del sistema */
+/* Botón eliminar predio */
 .btn-del-predio {
     display: inline-flex;
     align-items: center;
@@ -1701,7 +1784,7 @@ h2 { color: var(--green-dark); }
 
 .btn-del-predio:hover { opacity: .8; transform: scale(1.08); }
 
-/* ── Fila para agregar nuevo predio ── */
+/* Fila para agregar nuevo predio */
 .predio-add-row {
     display: flex;
     gap: 8px;
@@ -1709,12 +1792,9 @@ h2 { color: var(--green-dark); }
     margin-top: 6px;
 }
 
-/* El input ocupa el espacio disponible */
 .predio-add-row .form-input { flex: 1; }
 
-/* ── Tarjetas accordion de lotes en la vista de edición ──
-   Reutilizan la misma lógica visual que .lote-card pero con
-   clases propias para no interferir con la vista de creación. */
+/* Tarjetas accordion de lotes en la vista de edición */
 .lote-edit-card {
     border: 1.5px solid var(--border);
     border-radius: var(--radius-md);
@@ -1727,7 +1807,6 @@ h2 { color: var(--green-dark); }
 
 .lote-edit-card.open { border-color: var(--green-mid); }
 
-/* Cabecera de la tarjeta (clickable para expand/collapse) */
 .lote-edit-header {
     display: flex;
     justify-content: space-between;
@@ -1745,7 +1824,6 @@ h2 { color: var(--green-dark); }
 .lote-edit-card.open .lote-edit-header,
 .lote-edit-header:hover { background: var(--green-light); }
 
-/* Chevron que rota al expandir */
 .lote-edit-chevron {
     font-size: 13px;
     color: var(--text-light);
@@ -1754,7 +1832,6 @@ h2 { color: var(--green-dark); }
 
 .lote-edit-card.open .lote-edit-chevron { transform: rotate(180deg); }
 
-/* Cuerpo de la tarjeta (oculto cuando collapsed) */
 .lote-edit-body {
     display: none;
     padding: 16px;
@@ -1767,7 +1844,7 @@ h2 { color: var(--green-dark); }
     animation: slideUp .2s ease;
 }
 
-/* ── Mensaje vacío (sin predios / sin lotes) ── */
+/* Mensaje vacío (sin predios / sin lotes) */
 .edit-empty-msg {
     font-size: 13px;
     color: var(--text-light);
@@ -1775,18 +1852,15 @@ h2 { color: var(--green-dark); }
     margin: 4px 0 10px;
 }
 
-/* ── Nota informativa dentro de tarjeta de lote ── */
+/* Nota informativa dentro de tarjeta de lote */
 .lote-edit-note {
     font-size: 11px;
     color: var(--text-light);
     margin-top: 6px;
 }
 
-/* ============================================================
-   16. PAGINACIÓN DE LOTES EN INSPECCION
-   ============================================================ */
-
-   #lotes-paginacion {
+/* Paginación de lotes en inspeccion.html */
+#lotes-paginacion {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1808,15 +1882,12 @@ h2 { color: var(--green-dark); }
 .pag-btn:disabled              { opacity: 0.45; cursor: default; }
 .pag-btn--activa               { background: #2d6a4f; color: #fff; font-weight: 600; }
 
+
 /* ============================================================
    17. MODAL DETALLE — TABS + ACCORDION DE LOTES
-   Clases exclusivas del modal de detalle de lugar de producción.
-   No interfieren con otros modales ni con las lote-card de edición.
    ============================================================ */
 
-/* ── Navegación por pestañas ── */
-
-/* Contenedor de los dos tabs (Lotes / Predios) */
+/* Navegación por pestañas */
 .detalle-tabs {
     display: flex;
     gap: 0;
@@ -1824,14 +1895,13 @@ h2 { color: var(--green-dark); }
     margin: 16px 0 20px;
 }
 
-/* Cada pestaña individual */
 .detalle-tab {
     flex: 1;
     padding: 10px 0;
     background: none;
     border: none;
     border-bottom: 3px solid transparent;
-    margin-bottom: -2px;          /* solapa el border-bottom del contenedor */
+    margin-bottom: -2px;
     font-family: var(--font-dm);
     font-size: 13.5px;
     font-weight: 600;
@@ -1844,19 +1914,15 @@ h2 { color: var(--green-dark); }
 
 .detalle-tab:hover { color: var(--green-dark); }
 
-/* Pestaña activa resaltada con línea verde */
 .detalle-tab.active {
     color: var(--green-dark);
     border-bottom-color: var(--green-dark);
 }
 
-/* Panel de cada sección (visible / oculto) */
 .detalle-panel       { display: none; }
 .detalle-panel.active { display: block; animation: slideUp .2s ease; }
 
-/* ── Accordion de lotes en el modal detalle ──
-   Clases propias (.dl-card) para no colisionar con .lote-card ni .lote-edit-card */
-
+/* Accordion de lotes en el modal detalle */
 .dl-card {
     border: 1.5px solid var(--border);
     border-radius: var(--radius-md);
@@ -1867,10 +1933,8 @@ h2 { color: var(--green-dark); }
     animation: fadeIn .2s ease;
 }
 
-/* Borde verde cuando está abierto */
 .dl-card.open { border-color: var(--green-mid); }
 
-/* Cabecera clickeable del accordion */
 .dl-card-header {
     display: flex;
     align-items: center;
@@ -1888,7 +1952,6 @@ h2 { color: var(--green-dark); }
 .dl-card.open .dl-card-header,
 .dl-card-header:hover { background: var(--green-light); }
 
-/* Chevron que rota al expandir */
 .dl-card-chevron {
     font-size: 12px;
     color: var(--text-light);
@@ -1897,7 +1960,6 @@ h2 { color: var(--green-dark); }
 
 .dl-card.open .dl-card-chevron { transform: rotate(180deg); }
 
-/* Cuerpo oculto por defecto; visible con .open */
 .dl-card-body {
     display: none;
     padding: 14px 16px;
@@ -1910,7 +1972,6 @@ h2 { color: var(--green-dark); }
     animation: slideUp .18s ease;
 }
 
-/* Filas de dato dentro del cuerpo del accordion */
 .dl-row {
     display: flex;
     justify-content: space-between;
@@ -1925,8 +1986,7 @@ h2 { color: var(--green-dark); }
 .dl-row span:first-child { color: var(--text-mid); font-size: 12px; }
 .dl-row span:last-child  { font-weight: 600; }
 
-/* ── Paginación dentro del modal detalle ──
-   Reutiliza .pag-btn ya definido en sección 16; solo añade el contenedor. */
+/* Paginación dentro del modal detalle */
 .detalle-paginacion {
     display: flex;
     justify-content: center;
@@ -1939,22 +1999,12 @@ h2 { color: var(--green-dark); }
 
 /* ============================================================
    18. MODAL DETALLE — LAYOUT Y CONTENIDO ESPECÍFICO
-   [MIGRADO] Todos estos estilos estaban embebidos en el <style>
-   de lugarProducción.html. Se trasladan aquí para centralizar
-   la hoja de estilos y eliminar la etiqueta <style> del HTML.
+   [MIGRADO desde lugarProducción.html]
 
-   Nota de reutilización:
-     • .detalle-item-row  reutiliza los mismos valores visuales
-       que .dl-row (§17), pero se mantiene separada porque
-       pertenece a la lista de predios (no al accordion de lotes)
-       y puede evolucionar de forma independiente.
-     • .detalle-empty     es semánticamente equivalente a
-       .edit-empty-msg (§16); se añade como alias para que el
-       JS que genera el HTML del modal no dependa de nombres
-       internos de la vista de edición.
+   DUPLICADO ELIMINADO: .predio-extended apareció dos veces
+   con contenido idéntico; se conserva solo una declaración.
    ============================================================ */
 
-/* ── Caja del modal con scroll ── */
 .modal-detalle-box {
     max-width: 680px;
     width: 95vw;
@@ -1965,13 +2015,11 @@ h2 { color: var(--green-dark); }
     padding: 0;
 }
 
-/* ── Cabecera fija del modal (título + nombre + botón cerrar) ── */
 .detalle-head {
     padding: 22px 28px 0;
     flex-shrink: 0;
 }
 
-/* ── Cuerpo scrolleable del modal (tabs + paneles) ── */
 .detalle-body {
     flex: 1;
     overflow-y: auto;
@@ -1984,7 +2032,6 @@ h2 { color: var(--green-dark); }
     border-radius: 4px;
 }
 
-/* ── Fila de estadísticas de resumen ── */
 .detalle-stats {
     display: flex;
     gap: 12px;
@@ -2004,7 +2051,6 @@ h2 { color: var(--green-dark); }
     gap: 4px;
 }
 
-/* Etiqueta de la estadística (texto secundario pequeño) */
 .stat-label {
     font-size: 11px;
     color: #555;
@@ -2012,21 +2058,18 @@ h2 { color: var(--green-dark); }
     letter-spacing: .05em;
 }
 
-/* Valor numérico principal de la estadística */
 .stat-value {
     font-size: 20px;
     font-weight: 700;
     color: var(--text-dark);
 }
 
-/* ── Lista de predios (sección Predios dentro del modal detalle) ── */
 .detalle-list {
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-/* Tarjeta individual de predio */
 .detalle-item {
     background: var(--white);
     border: 1px solid #d8e8df;
@@ -2034,7 +2077,6 @@ h2 { color: var(--green-dark); }
     padding: 12px 16px;
 }
 
-/* Título del predio dentro del modal detalle */
 .detalle-item-title {
     font-weight: 700;
     color: var(--green-dark);
@@ -2042,9 +2084,6 @@ h2 { color: var(--green-dark); }
     margin-bottom: 8px;
 }
 
-/* Fila de dato de un predio — estructura idéntica a .dl-row
-   pero semánticamente pertenece al listado de predios, no a
-   los lotes del accordion. Se mantiene separada por claridad. */
 .detalle-item-row {
     display: flex;
     justify-content: space-between;
@@ -2058,9 +2097,7 @@ h2 { color: var(--green-dark); }
 .detalle-item-row span:first-child { color: #666; }
 .detalle-item-row span:last-child  { font-weight: 600; }
 
-/* ── Mensaje cuando no hay datos (alias de .edit-empty-msg §16) ──
-   Permite que el JS del modal use un nombre semántico propio
-   sin acoplarse a la clase de la vista de edición. */
+/* Mensaje cuando no hay datos (alias semántico de .edit-empty-msg) */
 .detalle-empty {
     font-size: 13px;
     color: var(--text-light);
@@ -2068,7 +2105,7 @@ h2 { color: var(--green-dark); }
     margin: 4px 0 10px;
 }
 
-/* ── Fieldset extendido de predio en el formulario de creación ── */
+/* Fieldset extendido de predio en el formulario de creación */
 .predio-extended {
     background: #f8fdf9;
     border: 1px solid #c8e6d0;
@@ -2077,7 +2114,6 @@ h2 { color: var(--green-dark); }
     margin-bottom: 12px;
 }
 
-/* Encabezado del bloque de predio extendido */
 .predio-header {
     font-weight: 700;
     color: var(--green-dark);
@@ -2085,92 +2121,333 @@ h2 { color: var(--green-dark); }
     margin-bottom: 10px;
 }
 
-/*----------------------------------------------------*/
 
-/* Colores SIFEX */
-:root {
-  --sifex-green-dark: #2d5a4c;
-  --sifex-green-light: #f1f8f5;
-  --sifex-green-border: #c2e0d6;
-  --sifex-text-muted: #6c757d;
+/* ============================================================
+   19. VISTA OBSERVACIONES
+   [MIGRADO desde observaciones.html]
+   ============================================================ */
+
+/* Botón "Descargar" en cabecera de sección — visual, sin onclick */
+.btn-descargar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 18px;
+    background-color: var(--green-dark);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: default;
+    white-space: nowrap;
+    transition: background var(--t-fast);
 }
 
-.custom-modal {
-  border-radius: 20px;
+.btn-descargar:hover { background-color: var(--green-mid); }
+
+/* Modificador del botón de descarga en columna Acciones de cada fila */
+.action-btn.action-btn-descargar {
+    background-color: var(--green-dark);
+    color: var(--white);
+    cursor: default;
+    margin-left: 4px;
 }
 
-.modal-title {
-  color: var(--sifex-green-dark);
-  font-weight: 600;
+.action-btn.action-btn-descargar:hover {
+    background-color: var(--green-mid);
+    opacity: 1;
+    transform: none;
 }
 
-/* Tabs Personalizados */
-.custom-tabs .nav-link {
-  color: var(--sifex-text-muted);
-  font-weight: bold;
-  border: none;
-  background: transparent;
-  width: 50%; /* Divide el espacio entre Lotes y Predios */
-  text-align: center;
-  border-bottom: 2px solid #e9ecef;
+/* Modificador de .form-label para el textarea de observación en el modal */
+.form-label--obs { margin-top: 14px; }
+
+
+/* ============================================================
+   20. VISTA OBSERVACIONES — MODAL VER REPORTE  (v5)
+   ============================================================ */
+
+/* Caja interna del modal de reporte (más ancha que obs-edit-box) */
+.modal-reporte-box {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    width: 95vw;
+    max-width: 720px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(12px);
+    transition: transform var(--t-base);
+    box-shadow: 0 20px 60px rgba(0,0,0,.18);
 }
 
-.custom-tabs .nav-link.active {
-  color: var(--sifex-green-dark) !important;
-  border-bottom: 3px solid var(--sifex-green-dark) !important;
+#modal-reporte-overlay.show .modal-reporte-box {
+    transform: translateY(0);
 }
 
-/* Tarjetas de estadísticas superiores */
-.stat-card {
-  background-color: var(--sifex-green-light);
-  border: 1px solid var(--sifex-green-border);
-  border-radius: 12px;
-  padding: 15px;
+/* Tabla de lotes dentro del modal de reporte */
+.reporte-tabla {
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
 }
 
-.stat-card label {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--sifex-text-muted);
-  font-weight: bold;
-  margin-bottom: 5px;
+.reporte-tabla th {
+    font-size: 11px;
+    padding: 10px 12px;
 }
 
-.stat-card .value {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: var(--sifex-green-dark);
+/* Celdas numéricas: centradas para lectura comparativa */
+.reporte-num {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
 }
 
-/* Contenedor del Lote (Verde suave) */
-.lote-container {
-  border: 1px solid var(--sifex-green-border);
-  border-radius: 12px;
-  overflow: hidden;
+/* Plantas afectadas con daño */
+.reporte-afectadas--con-dano {
+    color: var(--color-danger);
+    font-weight: 600;
 }
 
-.lote-header {
-  background-color: #dcf1e9;
-  padding: 10px 20px;
-  color: var(--sifex-green-dark);
-  font-weight: bold;
+/* Celda con valor ausente */
+.td-vacio { color: var(--text-light); }
+
+/* Celda de observación pendiente */
+.td-pendiente {
+    color: var(--text-light);
+    font-style: italic;
 }
 
-.lote-body {
-  padding: 15px 20px;
-  background-color: #fff;
-  font-size: 0.9rem;
+/* Subtexto de municipio/departamento en la celda "Lugar de producción" */
+.td-meta { color: #7a9e82; }
+
+/* Texto de cita asignada en las cards (migrado desde funcionario.js) */
+.card-cita-asignada {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--color-primary);
+    font-weight: 500;
 }
 
-/* Botón cerrar estilo SIFEX */
-.btn-cerrar {
-  background-color: var(--sifex-green-dark);
-  color: white;
-  border-radius: 10px;
-  font-weight: bold;
+/* Mensaje cuando no hay técnicos disponibles */
+.cita-sin-tecnicos {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-light);
+    font-size: 13px;
 }
 
-.btn-cerrar:hover {
-  background-color: #23473c;
-  color: white;
+
+/* ============================================================
+   21. MODAL VER REPORTE — ACORDEÓN DE LOTES + RESUMEN  (v6)
+   ============================================================ */
+
+/* Resumen general de plantas */
+.reporte-resumen {
+    display: flex;
+    gap: 0;
+    background: var(--green-xlight);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 18px;
+}
+
+.reporte-resumen-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 14px 12px;
+    border-right: 1px solid var(--border);
+}
+
+.reporte-resumen-item:last-child { border-right: none; }
+
+.reporte-resumen-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+}
+
+.reporte-resumen-valor {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--green-dark);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Modificador: plantas afectadas con daño (> 0) */
+.reporte-resumen-valor--dano { color: var(--color-danger); }
+
+/* Título separador entre resumen y acordeón */
+.reporte-lotes-titulo {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 10px;
+}
+
+/* Filas de datos en tarjeta de lote */
+.reporte-lote-datos {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.reporte-lote-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid #f0f4f2;
+    font-size: 13px;
+}
+
+.reporte-lote-fila:last-child { border-bottom: none; }
+
+.reporte-lote-fila--plagas {
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.reporte-lote-campo {
+    color: var(--text-mid);
+    font-size: 12px;
+    min-width: 130px;
+}
+
+.reporte-lote-valor {
+    font-weight: 600;
+    color: var(--text-dark);
+    text-align: right;
+}
+
+/* Tag de nombre de plaga */
+.reporte-lote-plaga-tag {
+    display: inline-block;
+    padding: 3px 9px;
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid rgba(212,160,23,.3);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Indicador de ausencia de plagas */
+.reporte-lote-sin-plagas {
+    font-size: 12px;
+    color: var(--text-light);
+    font-style: italic;
+    font-weight: 400;
+}
+
+
+/* ============================================================
+   22. MODAL VER REPORTE — NIVEL DE ALERTA + FECHA INSPECCIÓN (v7)
+   ============================================================ */
+
+/* Badge base de nivel de alerta */
+.badge-alerta {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+/* Modificadores de nivel de alerta */
+.alerta-sin-incidencia { background: var(--green-light); color: #1b4332; }
+.alerta-muy-baja       { background: #d3f9d8;            color: #2d6a2d; }
+.alerta-baja           { background: #fff3cd;            color: #856404; }
+.alerta-moderada       { background: #ffe8cc;            color: #7c4a00; }
+.alerta-alta           { background: #fde8d0;            color: #c05e10; }
+.alerta-muy-alta       { background: #fdd5d8;            color: #9b1c2a; }
+.alerta-critica        { background: var(--accent-red);  color: var(--white); }
+.alerta-sin-datos      { background: #f0f0f0;            color: var(--text-light); }
+
+/* Wrapper del lado derecho del encabezado de tarjeta (badge + chevron) */
+.lote-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Chip de fecha de inspección */
+.reporte-fecha-inspeccion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 14px;
+    margin-bottom: 14px;
+    background: var(--green-xlight);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green-mid);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+}
+
+/* Variante: sin fecha registrada */
+.reporte-fecha-inspeccion--pendiente {
+    border-left-color: var(--accent-gold);
+    background: #fffdf5;
+}
+
+.reporte-fecha-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.reporte-fecha-valor {
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 13px;
+}
+
+.reporte-fecha-valor--pendiente {
+    color: var(--accent-gold);
+    font-style: italic;
+    font-weight: 500;
+}
+
+
+/* ============================================================
+   23. TABLA OBSERVACIONES — ACENTO LATERAL DE FILA  (v8)
+   Indicador visual de estado en el borde izquierdo de cada <tr>.
+   Se usa box-shadow inset para no alterar el modelo de caja.
+   ============================================================ */
+
+/* Fila con observación pendiente — acento dorado */
+tbody tr.tr--pendiente {
+    box-shadow: inset 4px 0 0 var(--accent-gold);
+    background-color: rgba(244, 162, 97, 0.04);
+}
+
+tbody tr.tr--pendiente:hover {
+    background-color: rgba(244, 162, 97, 0.09);
+}
+
+/* Fila con observación completada — acento verde */
+tbody tr.tr--completado {
+    box-shadow: inset 4px 0 0 var(--green-mid);
+    background-color: rgba(82, 183, 136, 0.04);
+}
+
+tbody tr.tr--completado:hover {
+    background-color: rgba(82, 183, 136, 0.09);
 }

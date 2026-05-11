@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIFEX - Gestión de Lugares</title>
+
+  <!-- Estilos base del proyecto -->
+  <link href="../../css/main.css" rel="stylesheet" />
+  <link href="../../css/admin.css" rel="stylesheet" />
+
+  <!-- Bootstrap 5 (layout y utilidades generales) -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+    crossorigin="anonymous"
+  />
+</head>
+<body>
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║  TOPBAR                                              ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <div class="topbar">
+    <span class="topbar-title">Admin</span>
+    <span class="topbar-user">Juan David Sepulveda Rojas</span>
+    <button class="btn-salir">Salir</button>
+  </div>
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║  LAYOUT: sidebar + contenido principal              ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <div class="layout" id="layout">
+
+    <!-- ── Sidebar ─────────────────────────────────────── -->
+    <nav class="sidebar" aria-label="Menú principal">
+      <div class="sidebar-logo">
+        <span class="icon" aria-hidden="true">🌿</span>
+        <span>SIFEX</span>
+      </div>
+
+      <!-- Ítem: Gestión de usuarios -->
+      <a class="nav-item" href="gestionUsuarios.html">
+        <span class="icon" aria-hidden="true">👥</span> Usuarios
+      </a>
+
+      <!-- Ítem: Gestión de lugares (activo en esta vista) -->
+      <a class="nav-item active" href="gestionLugares.html" aria-current="page">
+        <span class="icon" aria-hidden="true">📍</span> Lugares de producción
+      </a>
+
+      <div class="sidebar-bottom">
+        <button class="btn-hide-menu" id="toggleSidebar">← Ocultar menú</button>
+      </div>
+    </nav>
+
+    <!-- ── Área principal ──────────────────────────────── -->
+    <main class="main" id="contenido-principal">
+
+      <div class="gu-wrapper">
+
+        <!-- ── Encabezado de sección ──────────────────────
+             El botón se muestra u oculta dinámicamente
+             según el filtro activo (ver gestionLugares.js).
+        ──────────────────────────────────────────────────── -->
+        <div class="gu-header">
+          <div class="gu-header__titles">
+            <h1>Gestión de Lugares</h1>
+            <p>Administre predios y lugares de producción registrados en el sistema.</p>
+          </div>
+
+          <!-- Botón de acción: solo visible en la pestaña "Predios" -->
+          <button class="gu-btn-nuevo" id="gl-btn-nuevo" aria-label="Agregar predio">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Agregar predio
+          </button>
+        </div>
+
+        <!-- ── Tarjeta principal ───────────────────────── -->
+        <div class="gu-card">
+
+          <!-- ── Pestañas de filtro ──────────────────────
+               data-filtro: valor que el JS usa para
+               determinar qué tabla y botón renderizar.
+          ──────────────────────────────────────────────── -->
+          <div class="gu-tabs" role="tablist" aria-label="Filtrar lugares por tipo">
+
+            <!-- Pestaña: Predios (activa por defecto) -->
+            <button class="gu-tab activa" data-filtro="predios"
+                    role="tab" aria-selected="true" id="gl-tab-predios">
+              <span aria-hidden="true">🏡</span> Predios
+              <span class="gu-tab__badge" id="gl-badge-predios">0</span>
+            </button>
+
+            <!-- Pestaña: Lugares de producción -->
+            <button class="gu-tab" data-filtro="lugares"
+                    role="tab" aria-selected="false" id="gl-tab-lugares">
+              <span aria-hidden="true">🌾</span> Lugares de producción
+              <span class="gu-tab__badge" id="gl-badge-lugares">0</span>
+            </button>
+
+          </div><!-- /gu-tabs -->
+
+          <!-- ── Barra de herramientas: búsqueda + contador ── -->
+          <div class="gu-toolbar">
+            <div class="gu-search">
+              <span class="gu-search__icon" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </span>
+              <input
+                class="gu-search__input"
+                id="gl-busqueda"
+                type="search"
+                placeholder="Buscar…"
+                aria-label="Buscar registros"
+                autocomplete="off"
+              />
+            </div>
+            <!-- El JS actualiza este span con el conteo visible -->
+            <span class="gu-toolbar__info" id="gl-info-count" aria-live="polite"></span>
+          </div>
+
+          <!-- ── Tabla dinámica ──────────────────────────
+               El JS reconstruye thead y tbody completos
+               al cambiar de filtro (ver gestionLugares.js
+               → renderizarTabla).
+          ──────────────────────────────────────────────── -->
+          <div class="gu-table-wrapper">
+            <table class="gu-table" id="gl-tabla"
+                   role="grid" aria-label="Lista de lugares">
+              <!-- thead y tbody se generan por JS -->
+              <thead id="gl-thead"></thead>
+              <tbody id="gl-tbody"></tbody>
+            </table>
+
+            <!-- Estado vacío: visible cuando no hay resultados -->
+            <div class="gu-empty" id="gl-empty"
+                 role="status" aria-live="polite" hidden>
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.3"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              <p>No se encontraron registros para este filtro.</p>
+            </div>
+
+          </div><!-- /gu-table-wrapper -->
+
+        </div><!-- /gu-card -->
+
+      </div><!-- /gu-wrapper -->
+
+    </main>
+
+  </div><!-- /layout -->
+
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║  MODAL — VER DETALLE DE LUGAR                       ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <div class="gu-modal-overlay" id="gl-modal-ver"
+       role="dialog" aria-modal="true"
+       aria-labelledby="gl-ver-titulo" hidden>
+    <div class="gu-modal gu-modal--ver">
+
+      <div class="gu-modal__header">
+        <h2 id="gl-ver-titulo">Detalle</h2>
+        <button class="gu-modal__close" id="gl-ver-close" aria-label="Cerrar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="gu-modal__body">
+        <!-- El JS rellena con los datos del registro seleccionado -->
+        <div id="gl-ver-contenido" class="gu-ver-grid"></div>
+      </div>
+
+      <div class="gu-modal__footer">
+        <button class="gu-btn-cancelar" id="gl-ver-cancelar">Cerrar</button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║  MODAL — CREAR / EDITAR PREDIO                      ║
+       ║  (Solo disponible cuando el filtro activo           ║
+       ║   es "Predios". Para lugares de producción          ║
+       ║   no existe botón de creación.)                     ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <div class="gu-modal-overlay" id="gl-modal-form"
+       role="dialog" aria-modal="true"
+       aria-labelledby="gl-modal-titulo" hidden>
+    <div class="gu-modal">
+
+      <div class="gu-modal__header">
+        <!-- El JS cambia este texto según modo crear / editar -->
+        <h2 id="gl-modal-titulo">Nuevo predio</h2>
+        <button class="gu-modal__close" id="gl-modal-close" aria-label="Cerrar modal">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="gu-modal__body">
+
+        <!-- Fila 1: nombre y municipio -->
+        <div class="gu-form-row">
+          <div class="gu-form-group">
+            <label for="gl-f-nombre">Nombre del predio <abbr title="Requerido">*</abbr></label>
+            <input id="gl-f-nombre" type="text"
+                   placeholder="Ej. La Esperanza"
+                   maxlength="100" />
+          </div>
+          <div class="gu-form-group">
+            <label for="gl-f-municipio">Municipio <abbr title="Requerido">*</abbr></label>
+            <input id="gl-f-municipio" type="text"
+                   placeholder="Ej. Bucaramanga"
+                   maxlength="80" />
+          </div>
+        </div>
+
+        <!-- Fila 2: departamento y área -->
+        <div class="gu-form-row">
+          <div class="gu-form-group">
+            <label for="gl-f-departamento">Departamento</label>
+            <input id="gl-f-departamento" type="text"
+                   placeholder="Ej. Santander"
+                   maxlength="80" />
+          </div>
+          <div class="gu-form-group">
+            <label for="gl-f-area">Área (ha)</label>
+            <input id="gl-f-area" type="number"
+                   placeholder="Ej. 12.5"
+                   min="0" step="0.01" />
+          </div>
+        </div>
+
+        <!-- Fila 3: propietario y estado -->
+        <div class="gu-form-row">
+          <div class="gu-form-group">
+            <label for="gl-f-propietario">Propietario <abbr title="Requerido">*</abbr></label>
+            <input id="gl-f-propietario" type="text"
+                   placeholder="Nombre completo"
+                   maxlength="100" />
+          </div>
+          <div class="gu-form-group">
+            <label for="gl-f-estado">Estado</label>
+            <select id="gl-f-estado">
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+          </div>
+        </div>
+
+      </div><!-- /gu-modal__body -->
+
+      <div class="gu-modal__footer">
+        <button class="gu-btn-cancelar" id="gl-form-cancelar">Cancelar</button>
+        <button class="gu-btn-guardar"  id="gl-form-guardar">Guardar</button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║  MODAL — CONFIRMAR ELIMINACIÓN                      ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <div class="gu-modal-overlay" id="gl-modal-confirm"
+       role="alertdialog" aria-modal="true"
+       aria-labelledby="gl-confirm-titulo"
+       aria-describedby="gl-confirm-desc" hidden>
+    <div class="gu-modal gu-modal--sm">
+
+      <div class="gu-confirm__body">
+        <div class="gu-confirm__icon" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6"/><path d="M14 11v6"/>
+            <path d="M9 6V4h6v2"/>
+          </svg>
+        </div>
+        <h3 id="gl-confirm-titulo">¿Eliminar registro?</h3>
+        <!-- El JS escribe aquí el nombre del registro a eliminar -->
+        <p id="gl-confirm-desc">Esta acción no se puede deshacer.</p>
+      </div>
+
+      <div class="gu-modal__footer">
+        <button class="gu-btn-cancelar"      id="gl-confirm-cancelar">Cancelar</button>
+        <button class="gu-btn-eliminar-conf" id="gl-confirm-ok">Sí, eliminar</button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║  TOAST — Notificaciones no intrusivas               ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <div class="gu-toast" id="gl-toast"
+       role="alert" aria-live="assertive" aria-atomic="true"></div>
+
+
+  <!-- Scripts: base del proyecto → lógica de gestión de lugares -->
+  <script src="../../js/adminLugares.js"></script>
+
+</body>
+</html>

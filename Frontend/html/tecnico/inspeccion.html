@@ -3,39 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIFEX - Tecnico</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <title>SIFEX - Técnico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../../css/inspecciones.css">
     <link rel="stylesheet" href="../../css/main.css">
+
+    <!--
+    ══════════════════════════════════════════════════════════════
+    CAMBIOS DE ESTA VERSIÓN: ELIMINACIÓN DE PERSISTENCIA
+    ══════════════════════════════════════════════════════════════
+
+    [MODIFICADO] Las tarjetas de inspección en #seccion-cards vuelven
+    al estado definido en este HTML al recargar, ya que el JS ya no
+    restaura ningún estado desde localStorage.
+
+    En concreto:
+      · "Abduzcan"   → data-estado="pendiente"  (badge Pendiente, barra 25%)
+      · "San Cristóbal" → data-estado="completado" (badge Completado, barra 100%)
+
+    Estos son los estados INICIALES. Al interactuar durante la sesión
+    los estados cambian en memoria y en el DOM, pero al recargar la página
+    todo vuelve exactamente a lo que está escrito aquí.
+
+    Los estilos del formulario de inspección por lote han sido
+    migrados a main.css (sección 17). Este bloque <style> ha sido
+    eliminado para mantener separación de responsabilidades.
+    ══════════════════════════════════════════════════════════════
+    -->
 </head>
 <body>
 
-    <!-- TOPBAR -->
     <div class="topbar">
-        <span class="topbar-title">Tecnico Oficial</span>
+        <span class="topbar-title">Técnico Oficial</span>
         <span class="topbar-user">Yeison Suárez Suárez</span>
         <button class="btn-salir">Salir</button>
     </div>
 
     <div class="layout">
 
-        <!-- SIDEBAR -->
         <nav class="sidebar">
             <div class="sidebar-logo">
                 <span class="icon">🌿</span>
                 <span>SIFEX</span>
             </div>
             <a class="nav-item" href="perfil.html"><span class="icon">👤</span> Perfil</a>
-            <a class="nav-item" href="inspeccion.html"><span class="icon">📋</span> Inspección</a>
+            <a class="nav-item active" href="inspeccion.html"><span class="icon">📋</span> Inspección</a>
             <div class="sidebar-bottom">
                 <button class="btn-hide-menu" id="toggleSidebar">← Ocultar menú</button>
             </div>
         </nav>
 
-        <!-- MAIN -->
         <main class="main">
             <div class="contenido-principal">
                 <div id="contenido">
+
+                    <!-- ════════════════════════════════════════════════════════
+                         SECCIÓN 1: Encabezado con filtros + cards de inspecciones
+                         ════════════════════════════════════════════════════════ -->
                     <div class="header">
                         <div class="filtros">
                             <button class="filtro active" onclick="filtrarInspecciones('todos', this)">Todos</button>
@@ -44,213 +68,624 @@
                         </div>
                     </div>
 
-                    <!-- SECCIÓN 1: Cards resumen -->
+                    <!--
+                        #seccion-cards — Vista principal de tarjetas de inspección.
+
+                        [MODIFICADO] Antes: al cargar la página, _restaurarEstadoCardsEnDOM()
+                        en inspecciones.js leía localStorage y podía cambiar el data-estado,
+                        los badges y las barras de progreso respecto a lo escrito aquí.
+
+                        Ahora: el JS ya no restaura nada desde almacenamiento. El estado
+                        que se ve al cargar/recargar la página es EXACTAMENTE el definido
+                        en este HTML. Cada card comienza siempre desde su estado inicial:
+
+                          · Abduzcan    → pendiente / 25%
+                          · San Cristóbal → completado / 100%
+
+                        Durante la sesión el JS puede cambiar estos valores en el DOM,
+                        pero al recargar la página todo vuelve a lo que está aquí escrito.
+                    -->
                     <div id="seccion-cards" class="cards-grid">
 
-                    <div class="card" data-estado="pendiente">
-                        <div class="card__accent card__accent--pendiente"></div>
-                        <div class="card__inner">
-                        <div class="card-header">
-                            <span class="card-codigo">Abduzcan</span>
-                            <span class="badge badge-revision">Pendiente</span>
-                        </div>
-                        <div class="card-coords">
-                            <div class="coord-row">
-                            <div class="coord-icon">📍</div>
-                            <span class="coord-text">Norte de Santander · <strong>Pamplona</strong></span>
-                            </div>
-                        </div>
-                        <div class="prog-wrap">
-                            <div class="prog-label">
-                            <span class="prog-key">Progreso</span>
-                            <span class="prog-val prog-val--pend">25%</span>
-                            </div>
-                            <div class="prog-track">
-                            <div class="prog-bar prog-bar--pend" style="width: 25%"></div>
-                            </div>
-                        </div>
-                        </div>
-                        <div class="card-actions">
-                        <button class="btn-detalles"
-                            onclick="abrirVistaLotes('Abduzcan', 'Norte de Santander · Pamplona')">
-                            Continuar inspección ➜
-                        </button>
-                        </div>
-                    </div>
-
-                    <div class="card" data-estado="completado">
-                        <div class="card__accent card__accent--aprobado"></div>
-                        <div class="card__inner">
-                        <div class="card-header">
-                            <span class="card-codigo">San Cristóbal</span>
-                            <span class="badge badge-aprobado">Completado</span>
-                        </div>
-                        <div class="card-coords">
-                            <div class="coord-row">
-                            <div class="coord-icon">📍</div>
-                            <span class="coord-text">Santander · <strong>Bucaramanga</strong></span>
-                            </div>
-                        </div>
-                        <div class="prog-wrap">
-                            <div class="prog-label">
-                            <span class="prog-key">Progreso</span>
-                            <span class="prog-val prog-val--comp">100%</span>
-                            </div>
-                            <div class="prog-track">
-                            <div class="prog-bar prog-bar--comp" style="width: 100%"></div>
-                            </div>
-                        </div>
-                        </div>
-                        <div class="card-actions">
-                        <button class="btn-detalles"
-                            onclick="abrirVistaLotes('San Cristóbal', 'Santander · Bucaramanga')">
-                            Ver inspección
-                        </button>
-                        </div>
-                    </div>
-
-                    </div>
-
-                    <!-- SECCIÓN 2: Vista de lotes (oculta por defecto) -->
-                    <div id="seccion-lotes" style="display: none;">
-                    <div class="page">
-
-                        <div class="page__header">
-                        <button class="btn-back" onclick="volverACards()" title="Volver">←</button>
-                        <div>
-                            <div class="page__title" id="lotes-titulo">Lotes</div>
-                            <div class="page__sub" id="lotes-sub"></div>
-                        </div>
-                        </div>
-
-                        <!-- LOTE ROW 1 -->
-                        <div class="lote-row" data-estado="pendiente">
-                        <div class="lote-row__img" onclick="abrirModal('LOTE-001')">
-                            <img class="img-cultivo" src="../../img/tomates.png" alt="Tomate">
-                        </div>
-                        <div class="lote-row__info">
-                            <div class="lote-info__head">
-                            <span class="lote-info__numero">LOTE-001</span>
-                            <span class="lote-badge lote-badge--pend"><span class="lote-badge__dot"></span>Pendiente</span>
-                            </div>
-                            <div class="lote-fields">
-                            <div class="lote-field">
-                                <span class="lote-field__label">Cultivo</span>
-                                <span class="lote-field__value">Tomate</span>
-                            </div>
-                            <div class="lote-field">
-                                <span class="lote-field__label">Nombre científico</span>
-                                <span class="lote-field__value lote-field__value--italic">Solanum lycopersicum L.</span>
-                            </div>
-                            <div class="lote-field">
-                                <span class="lote-field__label">Variedad</span>
-                                <span class="lote-field__value">Chonto Nacional</span>
-                            </div>
-                            <div class="lote-field">
-                                <span class="lote-field__label">Área siembra</span>
-                                <span class="lote-field__value">2.4 ha</span>
-                            </div>
-                            <div class="lote-field">
-                                <span class="lote-field__label">Plantas sembradas</span>
-                                <span class="lote-field__value">1.272</span>
-                            </div>
-                            <div class="lote-field">
-                                <span class="lote-field__label">Estado fenológico</span>
-                                <span class="fenologico-pill">🌸 Floración</span>
-                            </div>
-                            <div class="lote-field">
-                                <span class="lote-field__label">Fecha siembra</span>
-                                <span class="lote-field__value">12/01/2026</span>
-                            </div>
-                            <div class="lote-field" style="grid-column:3/-1">
-                                <div class="lote-prog">
-                                <div class="lote-prog__label">
-                                    <span>Progreso</span>
-                                    <span class="lote-prog__pct-pend">25%</span>
+                        <!--
+                            CARD: Abduzcan
+                            Estado inicial: PENDIENTE
+                            [SIN CAMBIO ESTRUCTURAL] data-estado="pendiente" es el valor
+                            inicial. Antes el JS podía sobreescribirlo desde localStorage;
+                            ahora ya no. Al recargar siempre será "pendiente".
+                        -->
+                        <div class="card" data-estado="pendiente">
+                            <div class="card__accent card__accent--pendiente"></div>
+                            <div class="card__inner">
+                                <div class="card-header">
+                                    <span class="card-codigo">Abduzcan</span>
+                                    <span class="badge badge-revision">Pendiente</span>
                                 </div>
-                                <div class="lote-prog__track">
-                                    <div class="lote-prog__bar lote-prog__bar--pend" style="width:25%"></div>
+                                <div class="card-coords">
+                                    <div class="coord-row">
+                                        <div class="coord-icon">📍</div>
+                                        <span class="coord-text">Norte de Santander · <strong>Pamplona</strong></span>
+                                    </div>
                                 </div>
+                                <!--
+                                    RESTAURADO: bloque .prog-wrap — barra de progreso de la tarjeta.
+                                    El porcentaje (25%) y el modificador --pend corresponden al estado
+                                    "Pendiente" de esta inspección. El valor es estático en el HTML;
+                                    JS puede actualizarlo durante la sesión, pero al recargar vuelve a 25%.
+                                -->
+                                <div class="prog-wrap">
+                                    <div class="prog-label">
+                                        <span class="prog-key">Progreso</span>
+                                        <span class="prog-val prog-val--pend">25%</span>
+                                    </div>
+                                    <div class="prog-track">
+                                        <div class="prog-bar prog-bar--pend" style="width:25%"></div>
+                                    </div>
                                 </div>
                             </div>
+                            <div class="card-actions">
+                                <button class="btn-detalles"
+                                    onclick="abrirVistaLotes('Abduzcan','Norte de Santander · Pamplona')">
+                                    Continuar inspección ➜
+                                </button>
                             </div>
-                        </div>
-                        <div class="lote-row__action" onclick="abrirModal('LOTE-001')">
-                            <div class="action-icon">📋</div>
-                            <span class="action-label">Realizar inspección</span>
-                        </div>
                         </div>
 
-                        <!-- LOTE ROW 2 -->
-                        <div class="lote-row" data-estado="completado">
-                        <div class="lote-row__img" onclick="abrirModal('LOTE-002')">
-                            <img src="../../img/papas.png" alt="Papa">
-                        </div>
-                        <div class="lote-row__info">
-                            <div class="lote-info__head">
-                            <span class="lote-info__numero">LOTE-002</span>
-                            <span class="lote-badge lote-badge--comp"><span class="lote-badge__dot"></span>Completado</span>
-                            </div>
-                            <div class="lote-fields">
-                            <div class="lote-field">
-                                <span class="lote-field__label">Cultivo</span>
-                                <span class="lote-field__value">Papa</span>
-                            </div>
-                            <div class="lote-field">
-                                <span class="lote-field__label">Nombre científico</span>
-                                <span class="lote-field__value lote-field__value--italic">Solanum tuberosum L.</span>
-                            </div>
-                            <div class="lote-field">
-                                <span class="lote-field__label">Variedad</span>
-                                <span class="lote-field__value">Pastusa Suprema</span>
-                            </div>
-                            <div class="lote-field">
-                                <span class="lote-field__label">Área siembra</span>
-                                <span class="lote-field__value">1.8 ha</span>
-                            </div>
-                            <div class="lote-field">
-                                <span class="lote-field__label">Plantas sembradas</span>
-                                <span class="lote-field__value">3.243</span>
-                            </div>
-                            <div class="lote-field">
-                                <span class="lote-field__label">Estado fenológico</span>
-                                <span class="fenologico-pill" style="background:#e8f5ee;color:var(--green-dark)">🥔 Maduración</span>
-                            </div>
-                            <div class="lote-field">
-                                <span class="lote-field__label">Fecha siembra</span>
-                                <span class="lote-field__value">05/11/2025</span>
-                            </div>
-                            <div class="lote-field" style="grid-column:3/-1">
-                                <div class="lote-prog">
-                                <div class="lote-prog__label">
-                                    <span>Progreso</span>
-                                    <span class="lote-prog__pct-comp">100%</span>
+                        <!--
+                            CARD: San Cristóbal
+                            Estado inicial: COMPLETADO
+                            [SIN CAMBIO ESTRUCTURAL] data-estado="completado" es el valor
+                            inicial definido en el HTML. Antes el JS también lo recargaba
+                            desde localStorage; ahora coinciden (el HTML ya refleja el estado
+                            correcto), pero ya no hay dependencia de almacenamiento persistente.
+                        -->
+                        <div class="card" data-estado="completado">
+                            <div class="card__accent card__accent--aprobado"></div>
+                            <div class="card__inner">
+                                <div class="card-header">
+                                    <span class="card-codigo">San Cristóbal</span>
+                                    <span class="badge badge-aprobado">Completado</span>
                                 </div>
-                                <div class="lote-prog__track">
-                                    <div class="lote-prog__bar lote-prog__bar--comp" style="width:100%"></div>
+                                <div class="card-coords">
+                                    <div class="coord-row">
+                                        <div class="coord-icon">📍</div>
+                                        <span class="coord-text">Santander · <strong>Bucaramanga</strong></span>
+                                    </div>
                                 </div>
+                                <!--
+                                    RESTAURADO: bloque .prog-wrap — barra de progreso de la tarjeta.
+                                    El porcentaje (100%) y el modificador --comp corresponden al estado
+                                    "Completado" de esta inspección. Al recargar siempre será 100%.
+                                -->
+                                <div class="prog-wrap">
+                                    <div class="prog-label">
+                                        <span class="prog-key">Progreso</span>
+                                        <span class="prog-val prog-val--comp">100%</span>
+                                    </div>
+                                    <div class="prog-track">
+                                        <div class="prog-bar prog-bar--comp" style="width:100%"></div>
+                                    </div>
                                 </div>
                             </div>
+                            <div class="card-actions">
+                                <!--
+                                    El botón "Ver inspección" llama a ModalInspeccion.abrir()
+                                    para inspecciones completadas (muestra resumen en modal).
+                                    [SIN CAMBIO] El modal lee InspeccionStore (memoria); si la
+                                    página se recargó, el store estará vacío y el modal mostrará
+                                    los lotes en estado Pendiente, que es el comportamiento correcto.
+                                -->
+                                <button class="btn-detalles"
+                                    onclick="ModalInspeccion.abrir('San Cristóbal', 'completado')">
+                                    Ver inspección
+                                </button>
                             </div>
-                        </div>
-                        <div class="lote-row__action" onclick="abrirModal('LOTE-002')">
-                            <div class="action-icon">🔍</div>
-                            <span class="action-label">Ver inspección</span>
-                        </div>
                         </div>
 
                     </div>
+                    <!-- /seccion-cards -->
+
+                    <!-- ════════════════════════════════════════════════════════
+                         SECCIÓN 2: Lista de lotes con paginación
+                         Oculta por defecto. Se activa con abrirVistaLotes().
+                         ════════════════════════════════════════════════════════
+                         CORRECCIÓN APLICADA EN inspecciones.css §5a, §5f, §6:
+                         — Eliminadas alturas fijas (130px / 232.7px / 275.3px)
+                           en .lote-row__img, .lote-row__action e .img-cultivo
+                           que causaban desborde de imagen y espacio en blanco.
+                         — Eliminadas writing-mode, text-orientation y
+                           transform: rotate(180deg) en .action-label que
+                           provocaban el texto girado en los botones de acción.
+                         — No se requirieron cambios estructurales en el HTML.
+                         ════════════════════════════════════════════════════════ -->
+
+                    <!--
+                        [MODIFICADO] Antes: _restaurarEstadoLotesEnDOM() en JS leía
+                        localStorage y cambiaba data-estado, badges y botones de los
+                        lotes para reflejar inspecciones previas guardadas.
+
+                        Ahora: al abrir esta sección (abrirVistaLotes()), el DOM de los
+                        lotes refleja exactamente lo escrito en este HTML. Durante la misma
+                        sesión, los lotes inspeccionados siguen viéndose como "Completado"
+                        porque JS actualiza el DOM en tiempo real (sin localStorage).
+                        Al recargar la página, todos los lotes vuelven a su estado inicial.
+
+                        Estado inicial de cada lote:
+                          · LOTE-001 → pendiente
+                          · LOTE-002 → completado  (dato de diseño fijo en el HTML)
+                          · LOTE-003 → pendiente
+                          · LOTE-004 → pendiente
+                    -->
+                    <!-- Oculto por defecto mediante #seccion-lotes { display:none } en main.css (sección 17) -->
+                    <div id="seccion-lotes">
+                        <div class="page">
+
+                            <div class="page__header">
+                                <button class="btn-back" onclick="volverACards()" title="Volver">←</button>
+                                <div class="page__header-info">
+                                    <div class="page__title" id="lotes-titulo">Lotes</div>
+                                    <div class="page__sub"   id="lotes-sub"></div>
+                                </div>
+                                <!--
+                                    BOTÓN FINALIZAR INSPECCIÓN
+                                    - Deshabilitado por defecto (disabled en HTML).
+                                    - Solo se habilita cuando todos los lotes han sido
+                                      inspeccionados (verificarFinalizacion() en JS).
+                                    - El span .btn-finalizar__contador muestra progreso ej: "1/4".
+                                    [SIN CAMBIO] La lógica de habilitación es la misma;
+                                    sólo desaparece la persistencia en localStorage.
+                                -->
+                                <button id="btn-finalizar"
+                                        class="btn-finalizar"
+                                        onclick="finalizarInspeccion()"
+                                        disabled
+                                        title="Inspecciona todos los lotes para habilitar este botón"
+                                        aria-label="Finalizar inspección — disponible cuando todos los lotes estén inspeccionados">
+                                    <span class="btn-finalizar__icon">✓</span>
+                                    Finalizar inspección
+                                    <span class="btn-finalizar__contador" aria-label="Progreso">0/0</span>
+                                </button>
+                            </div>
+
+                            <!-- ── Lote 1 ── -->
+                            <!--
+                                Estado inicial: PENDIENTE
+                                [SIN CAMBIO ESTRUCTURAL] data-estado="pendiente" es el estado
+                                definido en el HTML. Sin localStorage, al recargar siempre
+                                aparecerá como Pendiente independientemente de lo que se hiciera
+                                en sesiones anteriores.
+                            -->
+                            <div class="lote-row" data-estado="pendiente">
+                                <div class="lote-row__img" onclick="abrirModal('LOTE-001')">
+                                    <img class="img-cultivo" src="../../img/tomates.png" alt="Tomate">
+                                </div>
+                                <div class="lote-row__info">
+                                    <div class="lote-info__head">
+                                        <span class="lote-info__numero">LOTE-001</span>
+                                        <span class="lote-badge lote-badge--pend">
+                                            <span class="lote-badge__dot"></span>Pendiente
+                                        </span>
+                                    </div>
+                                    <div class="lote-fields">
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Cultivo</span>
+                                            <span class="lote-field__value">Tomate</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Nombre científico</span>
+                                            <span class="lote-field__value lote-field__value--italic">Solanum lycopersicum</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Variedad</span>
+                                            <span class="lote-field__value">Tomate Chonto</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Área siembra</span>
+                                            <span class="lote-field__value">2.5 ha</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Plantas sembradas</span>
+                                            <span class="lote-field__value">3.200</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Estado fenológico</span>
+                                            <span class="fenologico-pill">🌸 Floración</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Fecha siembra</span>
+                                            <span class="lote-field__value">10/01/2026</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="lote-row__action" onclick="abrirModal('LOTE-001')">
+                                    <div class="action-icon">📋</div>
+                                    <span class="action-label">Realizar inspección</span>
+                                </div>
+                            </div>
+
+                            <!-- ── Lote 2 ── -->
+                            <!--
+                                Estado inicial: COMPLETADO
+                                [SIN CAMBIO ESTRUCTURAL] data-estado="completado" ya estaba
+                                en el HTML original. Sin localStorage, si el usuario recarga
+                                la página verá este lote como "Completado" según el HTML,
+                                pero InspeccionStore (memoria) estará vacío; al pulsar
+                                "Ver inspección" el modal mostrará 0 plantas y 0 plagas
+                                porque no hay datos guardados. Este es el comportamiento
+                                esperado al eliminar la persistencia.
+                            -->
+                            <div class="lote-row" data-estado="completado">
+                                <div class="lote-row__img" onclick="abrirModal('LOTE-002')">
+                                    <img class="img-cultivo" src="../../img/mango.png" alt="Mango">
+                                </div>
+                                <div class="lote-row__info">
+                                    <div class="lote-info__head">
+                                        <span class="lote-info__numero">LOTE-002</span>
+                                        <span class="lote-badge lote-badge--comp">
+                                            <span class="lote-badge__dot"></span>Completado
+                                        </span>
+                                    </div>
+                                    <div class="lote-fields">
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Cultivo</span>
+                                            <span class="lote-field__value">Mango</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Nombre científico</span>
+                                            <span class="lote-field__value lote-field__value--italic">Mangifera indica</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Variedad</span>
+                                            <span class="lote-field__value">Mango Tommy Atkins</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Área siembra</span>
+                                            <span class="lote-field__value">4.0 ha</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Plantas sembradas</span>
+                                            <span class="lote-field__value">1.800</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Estado fenológico</span>
+                                            <span class="fenologico-pill">🍃 Vegetativo</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Fecha siembra</span>
+                                            <span class="lote-field__value">05/09/2025</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="lote-row__action" onclick="abrirModal('LOTE-002')">
+                                    <div class="action-icon">📋</div>
+                                    <span class="action-label">Ver inspección</span>
+                                </div>
+                            </div>
+
+                            <!-- ── Lote 3 ── -->
+                            <!--
+                                Estado inicial: PENDIENTE
+                                [SIN CAMBIO ESTRUCTURAL]
+                            -->
+                            <div class="lote-row" data-estado="pendiente">
+                                <div class="lote-row__img" onclick="abrirModal('LOTE-003')">
+                                    <img class="img-cultivo" src="../../img/piña.png" alt="Piña">
+                                </div>
+                                <div class="lote-row__info">
+                                    <div class="lote-info__head">
+                                        <span class="lote-info__numero">LOTE-003</span>
+                                        <span class="lote-badge lote-badge--pend">
+                                            <span class="lote-badge__dot"></span>Pendiente
+                                        </span>
+                                    </div>
+                                    <div class="lote-fields">
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Cultivo</span>
+                                            <span class="lote-field__value">Piña</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Nombre científico</span>
+                                            <span class="lote-field__value lote-field__value--italic">Ananas comosus</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Variedad</span>
+                                            <span class="lote-field__value">Piña Golden (MD-2)</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Área siembra</span>
+                                            <span class="lote-field__value">3.4 ha</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Plantas sembradas</span>
+                                            <span class="lote-field__value">2.582</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Estado fenológico</span>
+                                            <span class="fenologico-pill">🌸 Floración</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Fecha siembra</span>
+                                            <span class="lote-field__value">18/04/2026</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="lote-row__action" onclick="abrirModal('LOTE-003')">
+                                    <div class="action-icon">📋</div>
+                                    <span class="action-label">Realizar inspección</span>
+                                </div>
+                            </div>
+
+                            <!-- ── Lote 4 ── -->
+                            <!--
+                                Estado inicial: PENDIENTE
+                                [SIN CAMBIO ESTRUCTURAL]
+                            -->
+                            <div class="lote-row" data-estado="pendiente">
+                                <div class="lote-row__img" onclick="abrirModal('LOTE-004')">
+                                    <img class="img-cultivo" src="../../img/banana.png" alt="Banana">
+                                </div>
+                                <div class="lote-row__info">
+                                    <div class="lote-info__head">
+                                        <span class="lote-info__numero">LOTE-004</span>
+                                        <span class="lote-badge lote-badge--pend">
+                                            <span class="lote-badge__dot"></span>Pendiente
+                                        </span>
+                                    </div>
+                                    <div class="lote-fields">
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Cultivo</span>
+                                            <span class="lote-field__value">Banana</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Nombre científico</span>
+                                            <span class="lote-field__value lote-field__value--italic">Musa acuminata</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Variedad</span>
+                                            <span class="lote-field__value">Banana Roja</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Área siembra</span>
+                                            <span class="lote-field__value">1.1 ha</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Plantas sembradas</span>
+                                            <span class="lote-field__value">4.253</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Estado fenológico</span>
+                                            <span class="fenologico-pill">🌸 Floración</span>
+                                        </div>
+                                        <div class="lote-field">
+                                            <span class="lote-field__label">Fecha siembra</span>
+                                            <span class="lote-field__value">18/01/2026</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="lote-row__action" onclick="abrirModal('LOTE-004')">
+                                    <div class="action-icon">📋</div>
+                                    <span class="action-label">Realizar inspección</span>
+                                </div>
+                            </div>
+                            <!-- /lotes -->
+
+                            <!--
+                                Contenedor de paginación.
+                                Arranca oculto; PaginacionLotes.init() lo activa
+                                cuando hay más de 3 lotes y construye los controles.
+                                [SIN CAMBIO] No usa almacenamiento persistente.
+                            -->
+                            <div id="lotes-paginacion"
+                                 role="navigation"
+                                 aria-label="Paginación de lotes">
+                            </div>
+
+                        </div><!-- /page -->
                     </div>
-                </div>
+                    <!-- /seccion-lotes -->
+
+                    <!-- ════════════════════════════════════════════════════════
+                         SECCIÓN 3: Formulario de inspección por lote
+                         ────────────────────────────────────────────────────────
+                         Se activa al pulsar "Realizar inspección" en cualquier lote.
+                         FormularioLote.abrir(loteId, cultivo, loteNum) la muestra y
+                         rellena los datos dinámicamente.
+
+                         ESTRUCTURA:
+                           .form-lote__header    — botón volver + título del lote
+                           .contador-bloque      — contador de plantas afectadas
+                           .plagas-seccion       — tarjetas seleccionables de plagas
+                           .form-lote__actions   — botones Cancelar y Guardar
+
+                         [SIN CAMBIO ESTRUCTURAL] El formulario no usa localStorage.
+                         Los datos del formulario (contador, plagas) se guardan en
+                         InspeccionStore (memoria). Al recargar la página el formulario
+                         siempre arranca en blanco (contador = 0, sin plagas marcadas).
+                         ════════════════════════════════════════════════════════ -->
+                    <!-- Oculto por defecto mediante #seccion-formulario { display:none } en main.css (sección 17) -->
+                    <div id="seccion-formulario">
+                        <div class="page">
+
+                            <!-- Encabezado: volver + identificación del lote -->
+                            <div class="form-lote__header">
+                                <button class="btn-back"
+                                        onclick="FormularioLote.cerrar()"
+                                        title="Volver a la lista de lotes">←</button>
+                                <div>
+                                    <!--
+                                        #form-lote-id y #form-cultivo se rellenan
+                                        dinámicamente por FormularioLote.abrir().
+                                    -->
+                                    <div class="form-lote__title">
+                                        Inspección — <span id="form-lote-id">—</span>
+                                    </div>
+                                    <div class="form-lote__sub">
+                                        Cultivo: <span id="form-cultivo">—</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ── Contador de plantas afectadas ────────── -->
+                            <div class="contador-bloque">
+                                <span class="contador-bloque__label">
+                                    Plantas afectadas registradas
+                                </span>
+
+                                <div class="contador-control">
+                                    <!--
+                                        Botón disminuir:
+                                        - Se deshabilita cuando el contador = 0
+                                          (FormularioLote.decrementar() también valida esto)
+                                        - aria-label descriptivo para lectores de pantalla
+                                        [SIN CAMBIO]
+                                    -->
+                                    <button id="contador-menos"
+                                            class="contador-btn"
+                                            onclick="FormularioLote.decrementar()"
+                                            aria-label="Disminuir contador"
+                                            disabled>−</button>
+
+                                    <!-- Valor numérico destacado -->
+                                    <span id="contador-valor" aria-live="polite" aria-atomic="true">0</span>
+
+                                    <!-- Botón aumentar -->
+                                    <button id="contador-mas"
+                                            class="contador-btn"
+                                            onclick="FormularioLote.incrementar()"
+                                            aria-label="Aumentar contador">+</button>
+                                </div>
+
+                                <span class="contador-bloque__hint">
+                                    Plantas sembradas: --
+                                </span>
+                            </div>
+
+                            <!-- ── Tarjetas de plagas ─────────────────────── -->
+                            <div class="plagas-seccion">
+                                <div class="plagas-seccion__title">
+                                    Plagas identificadas en el cultivo
+                                </div>
+                                <div class="plagas-seccion__sub">
+                                    Selecciona todas las plagas que observas.
+                                    Puedes marcar una o varias tarjetas.
+                                </div>
+
+                                <!--
+                                    #plagas-grid: contenedor donde FormularioLote
+                                    inyecta dinámicamente las tarjetas .plaga-card.
+                                    #plagas-empty: mensaje alternativo si el cultivo
+                                    no tiene plagas registradas en el catálogo.
+                                    [SIN CAMBIO]
+                                -->
+                                <div id="plagas-grid" role="group" aria-label="Listado de plagas"></div>
+                                <p id="plagas-empty">
+                                    No hay plagas registradas para este cultivo en el catálogo.
+                                </p>
+                            </div>
+
+                            <!-- ── Barra de acciones ─────────────────────── -->
+                            <div class="form-lote__actions">
+                                <button class="btn-cancelar-form"
+                                        onclick="FormularioLote.cerrar()">
+                                    Cancelar
+                                </button>
+                                <button class="btn-guardar-form"
+                                        onclick="FormularioLote.guardar()">
+                                    💾 Guardar inspección
+                                </button>
+                            </div>
+
+                        </div><!-- /page -->
+                    </div>
+                    <!-- /seccion-formulario -->
+
+                </div><!-- /contenido -->
             </div>
         </main>
 
     </div>
 
+    <!-- ════════════════════════════════════════════════════════════════════
+         MODAL VER / EDITAR INSPECCIÓN DE LOTE
+         ════════════════════════════════════════════════════════════════════
+
+         Reemplaza al anterior modal de acordeón multi-lote.
+         Ahora cada botón "Ver inspección" abre este modal dedicado
+         al lote específico, con dos modos:
+
+           MODO LECTURA (por defecto):
+             · Muestra plantas contadas y plagas detectadas registradas.
+             · NO muestra posibles plagas del catálogo.
+             · Botón "Editar inspección" para activar modo edición.
+
+           MODO EDICIÓN:
+             · Contador editable (−/+).
+             · Checkboxes para añadir/quitar plagas.
+             · Botones Cancelar y Guardar cambios.
+
+         ESTRUCTURA:
+           #modal-ver-editar-overlay  — overlay semitransparente (clic cierra)
+             #modal-ver-editar-box    — caja blanca centrada
+               .mve__header          — título (loteId) + cultivo + botón ×
+               #mve-body             — contenido dinámico (JS inyecta lectura o edición)
+               #mve-footer           — acciones (JS inyecta botones según modo)
+
+         CLASES CSS:
+           .mve--visible             — activa el overlay (añadida por JS)
+
+         [SIN CAMBIO ESTRUCTURAL] El modal no usa localStorage.
+         Lee datos de InspeccionStore (memoria). Al recargar la página,
+         el modal siempre mostrará el estado inicial (vacío o el definido
+         en el HTML de cada lote).
+         ════════════════════════════════════════════════════════════════════ -->
+    <div id="modal-ver-editar-overlay"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="mve-titulo"
+         onclick="ModalVerEditar.cerrarSiOverlay(event)">
+
+        <div id="modal-ver-editar-box">
+
+            <!-- Cabecera: ID del lote + cultivo + botón cerrar -->
+            <div class="mve__header">
+                <div class="mve__header-info">
+                    <h2 class="mve__titulo" id="mve-titulo">LOTE-000</h2>
+                    <p  class="mve__sub"    id="mve-sub">Cultivo: —</p>
+                </div>
+                <button class="mve__close"
+                        onclick="ModalVerEditar.cerrar()"
+                        aria-label="Cerrar modal">✕</button>
+            </div>
+
+            <!-- Cuerpo: JS inyecta aquí el contenido de lectura o edición -->
+            <div id="mve-body" class="mve__body"></div>
+
+            <!-- Footer: JS inyecta aquí los botones según el modo activo -->
+            <div id="mve-footer" class="mve__footer"></div>
+
+        </div>
+    </div>
+    <!-- /modal-ver-editar -->
+
     <div class="toast" id="toast"></div>
 
+    <!--
+        ORDEN DE SCRIPTS:
+        1. inspecciones.js — define CatalogoPlagas, FormularioLote,
+           PaginacionLotes y todas las funciones globales (filtrarInspecciones,
+           abrirVistaLotes, volverACards, abrirModal, mostrarToast).
+           Debe cargarse PRIMERO porque los onclick del HTML los referencian.
+
+           [MODIFICADO] Esta versión de inspecciones.js NO usa localStorage
+           ni sessionStorage. Todo el estado vive en memoria (Map/Set de JS)
+           y se reinicia completamente al recargar la página.
+
+        2. tecnicos.js — toggle del sidebar y CRUD del grid de técnicos
+           (IIFE con guard; sin efecto en esta página por ausencia de #techGrid).
+        3. Bootstrap JS — componentes Bootstrap opcionales.
+    -->
     <script src="../../js/inspecciones.js"></script>
     <script src="../../js/tecnicos.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
