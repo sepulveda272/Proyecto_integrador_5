@@ -48,78 +48,89 @@
 
 
 // ═══════════════════════════════════════════════════════════════
-//  DATOS  (mock — reemplazar con llamadas al backend en producción)
+//  DATOS — cargados desde el backend en cargarDatos()
 // ═══════════════════════════════════════════════════════════════
 
-// Lugares de producción con inspección completada
-const lugaresCompletados = [
-    { id: 'INS001', nombre: 'San Cristobal',     departamento: 'Santander',          municipio: 'Bucaramanga', tecnicoId: 'TEC001' },
-    { id: 'INS002', nombre: 'Abduzcan',           departamento: 'Norte de Santander', municipio: 'Pamplona',    tecnicoId: 'TEC004' },
-    { id: 'INS003', nombre: 'Finca La Esperanza', departamento: 'Antioquia',          municipio: 'Rionegro',    tecnicoId: 'TEC007' },
-];
+// Se rellenan dinámicamente con datos reales del backend
+let lugaresCompletados    = [];
+let tecnicosDisponibles   = [];
+let observacionesRegistradas = [];
+let reportesLotes         = {};
+let fechasInspeccion      = {};
 
-// Técnicos disponibles para asignación de citas
-const tecnicosDisponibles = [
-    { id: 'TEC001', nombre: 'Benito Camelo',    departamento: 'Santander',          municipio: 'Bucaramanga'   },
-    { id: 'TEC002', nombre: 'Laura Figueroa',   departamento: 'Santander',          municipio: 'Floridablanca' },
-    { id: 'TEC003', nombre: 'Carlos Martínez',  departamento: 'Santander',          municipio: 'Girón'         },
-    { id: 'TEC004', nombre: 'Paola Suárez',     departamento: 'Norte de Santander', municipio: 'Pamplona'      },
-    { id: 'TEC005', nombre: 'Héctor Rondón',    departamento: 'Norte de Santander', municipio: 'Cúcuta'        },
-    { id: 'TEC006', nombre: 'Marcela Torres',   departamento: 'Norte de Santander', municipio: 'Ocaña'         },
-    { id: 'TEC007', nombre: 'Andrés Ospina',    departamento: 'Antioquia',          municipio: 'Rionegro'      },
-    { id: 'TEC008', nombre: 'Sandra Velásquez', departamento: 'Antioquia',          municipio: 'Medellín'      },
-];
+// ID del funcionario ICA actualmente logueado
+let _funcionarioId = null;
 
-// Observaciones registradas por inspección
-const observacionesRegistradas = [
-    {
-        inspeccionId: 'INS001',
-        fecha:        '08/03/2026',
-        texto:        'Le falta más agüita a esas plantas, papi. Echele ojo.'
-    }
-];
+// ─── Función de carga inicial desde el backend ───────────────
 
-/**
- * Lotes por lugar de producción.
- * Campos por lote:
- *   lote             — nombre del lote
- *   cultivo          — especie o variedad cultivada en el lote  ← NUEVO (v11)
- *   plaga            — plaga detectada (o "Ninguna")
- *   cantidadPlagas   — número de individuos/focos
- *   plantasSembradas — total de plantas sembradas
- *   plantasContadas  — plantas verificadas en la inspección
- *   plantasAfectadas — calculado en JS: sembradas − contadas
- *
- * CAMPO CULTIVO (v11):
- *   Se agrega el campo `cultivo` a cada objeto de lote.
- *   Su valor es una cadena de texto libre con el nombre del cultivo.
- *   Se renderiza en verReporte() como la primera fila del .lote-edit-body,
- *   antes de los datos de plantas, para dar contexto inmediato al inspector.
- *   Si el campo está ausente o es falsy, se muestra "No especificado".
- */
-const reportesLotes = {
-    INS001: [
-        { lote: 'Lote A', cultivo: 'Tomate',    plaga: 'Mosca blanca',  cantidadPlagas: 12, plantasSembradas: 200, plantasContadas: 185 },
-        { lote: 'Lote B', cultivo: 'Cebolla',   plaga: 'Áfidos',        cantidadPlagas:  5, plantasSembradas: 150, plantasContadas: 140 },
-        { lote: 'Lote C', cultivo: 'Pimentón',  plaga: 'Ninguna',        cantidadPlagas:  0, plantasSembradas: 180, plantasContadas: 180 },
-    ],
-    INS002: [
-        { lote: 'Lote 1', cultivo: 'Café',      plaga: 'Trips',          cantidadPlagas:  8, plantasSembradas: 120, plantasContadas: 112 },
-        { lote: 'Lote 2', cultivo: 'Plátano',   plaga: 'Ninguna',        cantidadPlagas:  0, plantasSembradas:  90, plantasContadas:  90 },
-    ],
-    INS003: [
-        { lote: 'Sector Norte', cultivo: 'Aguacate',  plaga: 'Cochinilla', cantidadPlagas: 20, plantasSembradas: 300, plantasContadas: 270 },
-        { lote: 'Sector Sur',   cultivo: 'Mango',     plaga: 'Araña roja', cantidadPlagas:  3, plantasSembradas: 250, plantasContadas: 244 },
-        { lote: 'Sector Este',  cultivo: 'Maracuyá',  plaga: 'Ninguna',    cantidadPlagas:  0, plantasSembradas: 200, plantasContadas: 200 },
-    ],
-};
+async function cargarDatos() {
+    const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+    _funcionarioId = usuario.Id_funcionario ?? null;
 
-// Fecha de la última inspección por lugar (null = pendiente)
-const fechasInspeccion = {
-    INS001: '08/03/2026',
-    INS002: '15/03/2026',
-    INS003: null,
-};
+    // 1. Técnicos
+    try {
+        const resp = await fetch('http://localhost:9000/tecnico');
+        if (resp.ok) {
+            const data = await resp.json();
+            tecnicosDisponibles = (data.data || []).map(t => ({
+                id:           t.Id_tecnico,
+                nombre:       `${t.Primer_nombre} ${t.Primer_apellido}`,
+                departamento: 'General',
+                municipio:    'General'
+            }));
+        }
+    } catch (e) { console.error('Error cargando técnicos:', e); }
+
+    // 2. Inspecciones fitosanitarias
+    try {
+        const resp = await fetch('http://localhost:9000/inspeccion');
+        if (resp.ok) {
+            const data = await resp.json();
+            const inspecciones = data.data || [];
+
+            lugaresCompletados = inspecciones.map(i => ({
+                id:          i.Id_inspeccion,
+                nombre:      `Inspección #${i.Id_inspeccion}${i.Nombre_tecnico ? ' — Técnico: ' + i.Nombre_tecnico + ' ' + (i.Apellido_tecnico || '') : ''}`,
+                departamento: 'General',
+                municipio:    'General',
+                tecnicoId:   i.Id_tecnico
+            }));
+
+            inspecciones.forEach(i => {
+                reportesLotes[i.Id_inspeccion] = [{
+                    lote:            'Inspección principal',
+                    cultivo:         'No especificado',
+                    plaga:           i.Nivel_alerta > 0 ? `Nivel de alerta ${i.Nivel_alerta}` : 'Ninguna',
+                    cantidadPlagas:  i.Nivel_alerta,
+                    plantasSembradas: i.Plantas_revisadas,
+                    plantasContadas:  i.Plantas_revisadas - i.Plantas_afectadas
+                }];
+
+                fechasInspeccion[i.Id_inspeccion] = i.Fecha_inspeccion
+                    ? new Date(i.Fecha_inspeccion + 'T00:00:00').toLocaleDateString('es-CO')
+                    : null;
+            });
+        }
+    } catch (e) { console.error('Error cargando inspecciones:', e); }
+
+    // 3. Observaciones
+    try {
+        const resp = await fetch('http://localhost:9000/observacion');
+        if (resp.ok) {
+            const data = await resp.json();
+            observacionesRegistradas = (data.data || []).map(o => ({
+                id:          o.Id_observacion,
+                inspeccionId: o.Id_inspeccion,
+                fecha:       o.Fecha_observacion
+                                 ? new Date(o.Fecha_observacion).toLocaleDateString('es-CO')
+                                 : '',
+                texto:       o.Observaciones
+            }));
+        }
+    } catch (e) { console.error('Error cargando observaciones:', e); }
+
+    renderTablaObs();
+}
 
 
 // ═══════════════════════════════════════════════════════════════
@@ -160,25 +171,28 @@ function _fechaHoy() {
  * @param {string} lugarId
  */
 function _buscarObs(lugarId) {
-    return observacionesRegistradas.find(o => o.inspeccionId === lugarId);
+    // eslint-disable-next-line eqeqeq
+    return observacionesRegistradas.find(o => o.inspeccionId == lugarId);
 }
 
 /**
  * Retorna el objeto de lugar para un lugarId dado, o undefined.
- * @param {string} lugarId
+ * @param {number|string} lugarId
  */
 function _buscarLugar(lugarId) {
-    return lugaresCompletados.find(l => l.id === lugarId);
+    // eslint-disable-next-line eqeqeq
+    return lugaresCompletados.find(l => l.id == lugarId);
 }
 
 /**
  * Retorna el técnico asignado a un lugar, o undefined.
- * @param {string} lugarId
+ * @param {number|string} lugarId
  */
 function _buscarTecnicoDeLugar(lugarId) {
     const lugar = _buscarLugar(lugarId);
     if (!lugar?.tecnicoId) return undefined;
-    return tecnicosDisponibles.find(t => t.id === lugar.tecnicoId);
+    // eslint-disable-next-line eqeqeq
+    return tecnicosDisponibles.find(t => t.id == lugar.tecnicoId);
 }
 
 /**
@@ -247,15 +261,15 @@ function _botonesAccion(lugarId) {
         <button
             class="action-btn action-edit"
             title="Editar / Agregar observación"
-            onclick="abrirModalObsEdit('${lugarId}')">✏️</button>
+            onclick="abrirModalObsEdit(${lugarId})">✏️</button>
         <button
             class="action-btn action-del"
             title="Borrar"
-            onclick="eliminarObs('${lugarId}')">🗑</button>
+            onclick="eliminarObs(${lugarId})">🗑</button>
         <button
             class="action-btn action-eye"
             title="Ver reporte"
-            onclick="verReporte('${lugarId}')">👁</button>
+            onclick="verReporte(${lugarId})">👁</button>
         <button
             class="action-btn action-btn-descargar"
             title="Descargar"
@@ -449,31 +463,65 @@ function validarObsEdit() {
 }
 
 /**
- * Persiste el cambio en observacionesRegistradas[], actualiza el acento
- * visual de la fila afectada de forma inmediata y re-renderiza la tabla.
+ * Persiste la observación en el backend, actualiza el array en memoria
+ * y re-renderiza la tabla.
  */
-function guardarObsEdit() {
+async function guardarObsEdit() {
     const txt = document.getElementById('obs-edit-textarea').value.trim();
     if (!obsEditLugarId || txt.length === 0) return;
 
     const lugar    = _buscarLugar(obsEditLugarId);
     const obsExist = _buscarObs(obsEditLugarId);
 
-    if (obsExist) {
-        obsExist.texto = txt;
-        mostrarToast(`✔ Observación de ${lugar.nombre} actualizada.`);
-    } else {
-        observacionesRegistradas.push({
-            inspeccionId: obsEditLugarId,
-            fecha:        _fechaHoy(),
-            texto:        txt
-        });
-        mostrarToast(`✔ Observación guardada para ${lugar.nombre}.`);
+    try {
+        if (obsExist) {
+            // Actualizar observación existente (PUT)
+            const resp = await fetch(`http://localhost:9000/observacion/${obsExist.id}`, {
+                method:  'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ Observaciones: txt })
+            });
+            if (!resp.ok) {
+                const err = await resp.json();
+                return mostrarToast(`Error al actualizar: ${err.message}`);
+            }
+            obsExist.texto = txt;
+            mostrarToast(`✔ Observación de ${lugar?.nombre ?? 'la inspección'} actualizada.`);
+        } else {
+            // Crear nueva observación (POST)
+            if (!_funcionarioId) {
+                return mostrarToast('Error: no se encontró el ID del funcionario en sesión.');
+            }
+            const resp = await fetch('http://localhost:9000/observacion/add', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({
+                    Fecha_observacion: new Date().toISOString().slice(0, 19).replace('T', ' '),
+                    Observaciones:     txt,
+                    Id_inspeccion:     obsEditLugarId,
+                    Id_funcionario:    _funcionarioId
+                })
+            });
+            if (!resp.ok) {
+                const err = await resp.json();
+                return mostrarToast(`Error al guardar: ${err.message}`);
+            }
+            const result = await resp.json();
+            observacionesRegistradas.push({
+                id:          result.data?.id ?? null,
+                inspeccionId: obsEditLugarId,
+                fecha:       _fechaHoy(),
+                texto:       txt
+            });
+            mostrarToast(`✔ Observación guardada para ${lugar?.nombre ?? 'la inspección'}.`);
+        }
+    } catch (e) {
+        console.error('Error guardando observación:', e);
+        mostrarToast('No se pudo conectar con el servidor.');
+        return;
     }
 
-    // Actualizar acento antes de re-renderizar para garantizar la transición inmediata
     _actualizarAcentoFila(obsEditLugarId, !!_buscarObs(obsEditLugarId));
-
     cerrarModalObsEdit();
     renderTablaObs();
 }
@@ -484,15 +532,31 @@ function guardarObsEdit() {
 // ═══════════════════════════════════════════════════════════════
 
 /**
- * Botón "Borrar" — no-op intencionado.
- * El botón mantiene apariencia visual pero sin funcionalidad activa.
- * CONSERVADO: su onclick se inyecta dinámicamente en _botonesAccion();
- * eliminarla provocaría errores en consola al pulsar el botón.
- *
- * @param {string} _lugarId — ignorado intencionalmente
+ * Elimina la observación del lugar indicado en el backend y en memoria.
+ * @param {number} lugarId - ID de la inspección (Id_inspeccion)
  */
-function eliminarObs(_lugarId) {
-    // Sin implementación por requerimiento.
+async function eliminarObs(lugarId) {
+    const obs = _buscarObs(lugarId);
+    if (!obs) return mostrarToast('No hay observación para eliminar.');
+
+    if (!confirm('¿Estás seguro de que deseas eliminar esta observación?')) return;
+
+    try {
+        const resp = await fetch(`http://localhost:9000/observacion/${obs.id}`, {
+            method: 'DELETE'
+        });
+        if (!resp.ok) {
+            const err = await resp.json();
+            return mostrarToast(`Error al eliminar: ${err.message}`);
+        }
+        const idx = observacionesRegistradas.findIndex(o => o.id === obs.id);
+        if (idx !== -1) observacionesRegistradas.splice(idx, 1);
+        renderTablaObs();
+        mostrarToast('✔ Observación eliminada correctamente.');
+    } catch (e) {
+        console.error('Error eliminando observación:', e);
+        mostrarToast('No se pudo conectar con el servidor.');
+    }
 }
 
 /**
@@ -699,13 +763,8 @@ function abrirModalVerificarCita(card) {
     const departamento = card.dataset.departamento;
     const municipio    = card.dataset.municipio;
 
-    const tecnicos = tecnicosDisponibles
-        .filter(t => t.departamento === departamento)
-        .sort((a, b) => {
-            if (a.municipio === municipio && b.municipio !== municipio) return -1;
-            if (b.municipio === municipio && a.municipio !== municipio) return  1;
-            return a.nombre.localeCompare(b.nombre);
-        });
+    // Mostrar todos los técnicos activos (el backend no almacena departamento/municipio)
+    const tecnicos = tecnicosDisponibles.slice().sort((a, b) => a.nombre.localeCompare(b.nombre));
 
     document.getElementById('cita-modal-lugar').textContent     = lugar;
     document.getElementById('cita-modal-ubicacion').textContent = `${departamento} · ${municipio}`;
@@ -732,19 +791,15 @@ function abrirModalVerificarCita(card) {
             </div>`;
     } else {
         tecnicos.forEach(tec => {
-            const mismoMunicipio = tec.municipio === municipio;
-            const item           = document.createElement('div');
-            item.className       = 'cita-tecnico-item';
-            item.dataset.id      = tec.id;
-            item.innerHTML       = `
+            const item      = document.createElement('div');
+            item.className  = 'cita-tecnico-item';
+            item.dataset.id = tec.id;
+            item.innerHTML  = `
                 <div class="cita-tecnico-chk"></div>
                 <div class="cita-tecnico-info">
                     <div class="cita-tecnico-nombre">${tec.nombre}</div>
                     <div class="cita-tecnico-meta">
-                        ${tec.municipio}
-                        <span class="cita-tecnico-tag ${mismoMunicipio ? '' : 'cita-tecnico-tag--cercano'}">
-                            ${mismoMunicipio ? 'Mismo municipio' : 'Zona cercana'}
-                        </span>
+                        <span class="cita-tecnico-tag">Técnico Oficial</span>
                     </div>
                 </div>
             `;
@@ -961,8 +1016,8 @@ function mostrarToast(mensaje) {
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Poblar la tabla de observaciones al cargar (observaciones.html)
-    renderTablaObs();
+    // Cargar datos del backend y poblar la tabla al terminar
+    cargarDatos();
 
     // Contador en tiempo real del textarea del modal de observación (observaciones.html)
     document.getElementById('obs-edit-textarea')

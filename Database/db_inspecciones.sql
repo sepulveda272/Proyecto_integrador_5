@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 11-05-2026 a las 10:09:24
+-- Tiempo de generación: 21-05-2026 a las 04:27:32
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -42,6 +42,14 @@ CREATE TABLE `funcionario_ica` (
   `Estado` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
+--
+-- Volcado de datos para la tabla `funcionario_ica`
+--
+
+INSERT INTO `funcionario_ica` (`Id_funcionario`, `Numero_identificacion`, `Tipo_identificacion`, `Primer_nombre`, `Segundo_nombre`, `Primer_apellido`, `Segundo_apellido`, `Imagen`, `Celular`, `Correo`, `Password`, `Estado`) VALUES
+(1, '52876543', 'Cédula de ciudadanía', 'Laura', 'Milena', 'Figueroa', 'Torres', 'https://i.pravatar.cc/150?img=47', '3157896543', 'laura.figueroa@ica.gov.co', '$2b$10$zJQIiMSaISBPvPX0vDkr/eSgFkNdvIGKHx7IuAbRUKopezTLrQowS', 'Activo'),
+(2, '71234567', 'Cédula de ciudadanía', 'Andrés', NULL, 'Ospina', 'Vargas', 'https://i.pravatar.cc/150?img=60', '3189012345', 'andres.ospina@ica.gov.co', '$2b$10$zJQIiMSaISBPvPX0vDkr/eSgFkNdvIGKHx7IuAbRUKopezTLrQowS', 'Activo');
+
 -- --------------------------------------------------------
 
 --
@@ -58,6 +66,16 @@ CREATE TABLE `inspeccion_fitosanitario` (
   `Id_lugar` int(11) NOT NULL COMMENT 'Este ID hace referencia a Lugar_produccion en db_ubicaciones. No es una FOREIGN KEY física.'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
+--
+-- Volcado de datos para la tabla `inspeccion_fitosanitario`
+--
+
+INSERT INTO `inspeccion_fitosanitario` (`Id_inspeccion`, `Plantas_revisadas`, `Plantas_afectadas`, `Fecha_inspeccion`, `Nivel_alerta`, `Id_tecnico`, `Id_lugar`) VALUES
+(1, 3200, 240, '2026-03-08', 2, 1, 2),
+(2, 1800, 96, '2026-03-15', 1, 1, 2),
+(3, 2582, 400, '2026-04-01', 3, 2, 4),
+(4, 4253, 850, '2026-04-10', 4, 2, 4);
+
 -- --------------------------------------------------------
 
 --
@@ -71,6 +89,15 @@ CREATE TABLE `observaciones` (
   `Id_inspeccion` int(11) NOT NULL,
   `Id_funcionario` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `observaciones`
+--
+
+INSERT INTO `observaciones` (`Id_observacion`, `Fecha_observacion`, `Observaciones`, `Id_inspeccion`, `Id_funcionario`) VALUES
+(1, '2026-03-09 10:30:00', 'Se detecta presencia de trips (Frankliniella occidentalis) en el 7.5% de las plantas de Papa del lote norte. Se recomienda aplicación de insecticida autorizado y revisión del sistema de riego.', 1, 1),
+(2, '2026-03-16 14:15:00', 'Nivel de incidencia muy bajo en los lotes de Cacao. Buen estado fitosanitario general. Se sugiere monitoreo quincenal durante floración para prevenir Moniliophthora roreri.', 2, 1),
+(3, '2026-04-02 09:00:00', 'Presencia moderada de broca del café (Hypothenemus hampei) en el 15% de los frutos. Se indica tratamiento con Beauveria bassiana y re-inspección en 10 días. Lotes de Aguacate con síntomas iniciales de Phytophthora cinnamomi.', 3, 2);
 
 -- --------------------------------------------------------
 
@@ -92,6 +119,15 @@ CREATE TABLE `tecnico_oficial` (
   `Password` varchar(255) NOT NULL COMMENT 'Debe almacenarse hasheada',
   `Estado` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `tecnico_oficial`
+--
+
+INSERT INTO `tecnico_oficial` (`Id_tecnico`, `Numero_identificacion`, `Tipo_identificacion`, `Primer_nombre`, `Segundo_nombre`, `Primer_apellido`, `Segundo_apellido`, `Imagen`, `Celular`, `Correo`, `Password`, `Estado`) VALUES
+(1, '1098765432', 'Cédula de ciudadanía', 'Yeison', 'Andrés', 'Suárez', 'Ramírez', 'https://i.pravatar.cc/150?img=11', '3001234567', 'yeison.suarez@sifex.gov.co', '$2b$10$zJQIiMSaISBPvPX0vDkr/eSgFkNdvIGKHx7IuAbRUKopezTLrQowS', 'Activo'),
+(2, '1075432198', 'Cédula de ciudadanía', 'Paola', NULL, 'Suárez', 'Rincón', 'https://i.pravatar.cc/150?img=25', '3112345678', 'paola.suarez@sifex.gov.co', '$2b$10$zJQIiMSaISBPvPX0vDkr/eSgFkNdvIGKHx7IuAbRUKopezTLrQowS', 'Activo'),
+(3, '79654321', 'Cédula de ciudadanía', 'Carlos', 'Alberto', 'Martínez', 'Gómez', 'https://i.pravatar.cc/150?img=33', '3205678901', 'carlos.martinez@sifex.gov.co', '$2b$10$zJQIiMSaISBPvPX0vDkr/eSgFkNdvIGKHx7IuAbRUKopezTLrQowS', 'Activo');
 
 --
 -- Índices para tablas volcadas
@@ -136,25 +172,25 @@ ALTER TABLE `tecnico_oficial`
 -- AUTO_INCREMENT de la tabla `funcionario_ica`
 --
 ALTER TABLE `funcionario_ica`
-  MODIFY `Id_funcionario` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `Id_funcionario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `inspeccion_fitosanitario`
 --
 ALTER TABLE `inspeccion_fitosanitario`
-  MODIFY `Id_inspeccion` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `Id_inspeccion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `observaciones`
 --
 ALTER TABLE `observaciones`
-  MODIFY `Id_observacion` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `Id_observacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `tecnico_oficial`
 --
 ALTER TABLE `tecnico_oficial`
-  MODIFY `Id_tecnico` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `Id_tecnico` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Restricciones para tablas volcadas

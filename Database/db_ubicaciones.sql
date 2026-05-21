@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 11-05-2026 a las 10:09:37
+-- Tiempo de generación: 21-05-2026 a las 04:28:54
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -43,10 +43,10 @@ CREATE TABLE `citas` (
 --
 
 INSERT INTO `citas` (`Id_cita`, `Hora_inspeccion`, `Fecha_inspeccion`, `Id_productor`, `Id_lugar`, `Id_tecnico`, `Estado`, `Observaciones`) VALUES
-(2, NULL, NULL, 1, 2, NULL, 'Pendiente', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
-(4, NULL, NULL, 1, 4, NULL, 'Pendiente', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
-(5, NULL, NULL, 1, 12, NULL, 'Rechazado', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
-(6, NULL, NULL, 1, 4, NULL, 'Aceptado', 'El productor solicita revisión urgente en el lote principal por posible plaga.');
+(2, NULL, NULL, 1, 2, 1, 'Pendiente', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
+(4, NULL, NULL, 1, 4, 2, 'Pendiente', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
+(5, NULL, NULL, 1, 12, 3, 'Rechazado', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
+(6, NULL, NULL, 1, 4, 2, 'Aceptado', 'El productor solicita revisión urgente en el lote principal por posible plaga.');
 
 -- --------------------------------------------------------
 

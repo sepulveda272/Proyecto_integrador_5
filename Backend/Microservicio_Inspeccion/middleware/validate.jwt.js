@@ -13,12 +13,10 @@ const validateJWT = async (req = request, res = response, next) => {
         const { id } = jwt.verify(token, process.env.SECRET_OR_PRIVATE_KEY);
         const db = await getConnection();
 
-        // Definimos las tablas y el nombre de su columna ID según tus imágenes
+        // Tablas de usuarios en db_inspecciones
         const tablas = [
-            { nombre: 'Admin', idCol: 'Id_admin', rol: 'ADMIN' },
-            { nombre: 'Funcionario_ICA', idCol: 'Id_funcionario', rol: 'FUNCIONARIO' },
-            { nombre: 'Tecnico_oficial', idCol: 'Id_tecnico', rol: 'TECNICO' },
-            { nombre: 'Productor', idCol: 'Id_productor', rol: 'PRODUCTOR' }
+            { nombre: 'tecnico_oficial', idCol: 'Id_tecnico',    rol: 'TECNICO'     },
+            { nombre: 'funcionario_ica', idCol: 'Id_funcionario', rol: 'FUNCIONARIO' }
         ];
 
         let usuarioEncontrado = null;

@@ -142,18 +142,23 @@ const InspeccionStore = (() => {
 
     /**
      * Guarda o actualiza la inspección de un lote.
-     * [MODIFICADO] Ya no sincroniza a localStorage. Los datos sólo persisten
-     * mientras la pestaña/sesión está abierta. Al recargar, _datos se reinicia.
+     * @param {string}      loteId
+     * @param {number}      plantasContadas
+     * @param {string[]}    plagasDetectadas
+     * @param {Object[]}    posiblesPlagas
+     * @param {string}      cultivo
+     * @param {number|null} idBackend — ID devuelto por el backend tras el POST (opcional)
      */
-    function guardar(loteId, plantasContadas, plagasDetectadas, posiblesPlagas, cultivo) {
+    function guardar(loteId, plantasContadas, plagasDetectadas, posiblesPlagas, cultivo, idBackend = null) {
+        const previo = _datos.get(loteId);
         _datos.set(loteId, {
             plantasContadas,
             plagasDetectadas: [...plagasDetectadas],
             posiblesPlagas:   [...posiblesPlagas],
             cultivo,
             inspeccionado: true,
+            idBackend:     idBackend ?? previo?.idBackend ?? null
         });
-        // [ELIMINADO] PersistenciaStore.guardarInspecciones(_datos);
     }
 
     /**
@@ -307,11 +312,9 @@ const FormularioLote = (() => {
     }
 
     /**
-     * Guarda la inspección en InspeccionStore (sólo en memoria),
-     * actualiza el DOM del lote y recalcula el progreso de la card activa.
-     * [MODIFICADO] Se eliminó la referencia a PersistenciaStore.
+     * Guarda la inspección en InspeccionStore, actualiza el DOM y persiste en el backend.
      */
-    function guardar() {
+    async function guardar() {
         if (!loteActual) return;
 
         const plagasArray = Array.from(plagasSeleccionadas);
@@ -319,12 +322,76 @@ const FormularioLote = (() => {
         _actualizarLoteEnDOM(loteActual);
 
         const resumen = plagasArray.length
-            ? `${contadorPlantas} plantas contadas · ${plagasArray.length} plaga(s) detectada(s)`
-            : `${contadorPlantas} plantas contadas · Sin plagas detectadas`;
+            ? `${contadorPlantas} plantas afectadas · ${plagasArray.length} plaga(s) detectada(s)`
+            : `${contadorPlantas} plantas afectadas · Sin plagas detectadas`;
 
         mostrarToast(`✅ ${loteActual} guardado — ${resumen}`);
         cerrar();
         verificarFinalizacion();
+
+        // Persistir en el backend (no bloquea la UI)
+        _sincronizarConBackend(loteActual, plagasArray);
+    }
+
+    /**
+     * Envía los datos de la inspección al backend.
+     * POST si es nueva, PUT si ya tiene idBackend almacenado.
+     */
+    async function _sincronizarConBackend(loteId, plagasArray) {
+        const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+        if (!usuario.Id_tecnico || !_idLugarActivo) return;
+
+        // Leer plantas sembradas del DOM del lote
+        const loteRow = _obtenerFilaLote(loteId);
+        let plantasSembradas = 0;
+        if (loteRow) {
+            loteRow.querySelectorAll('.lote-field').forEach(campo => {
+                const lbl = campo.querySelector('.lote-field__label')?.textContent.trim();
+                const val = campo.querySelector('.lote-field__value')?.textContent.trim();
+                if (lbl === 'Plantas sembradas') {
+                    plantasSembradas = parseInt(val.replace(/[.,\s]/g, '')) || 0;
+                }
+            });
+        }
+
+        const datos       = InspeccionStore.obtener(loteId);
+        const nivelAlerta = plagasArray.length > 0 ? Math.min(6, plagasArray.length * 2) : 0;
+
+        try {
+            if (datos?.idBackend) {
+                // Actualizar inspección existente
+                await fetch(`http://localhost:9000/inspeccion/${datos.idBackend}`, {
+                    method:  'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({
+                        Plantas_revisadas: plantasSembradas,
+                        Plantas_afectadas: datos.plantasContadas,
+                        Nivel_alerta:      nivelAlerta
+                    })
+                });
+            } else {
+                // Crear nueva inspección
+                const resp = await fetch('http://localhost:9000/inspeccion/add', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({
+                        Plantas_revisadas: plantasSembradas,
+                        Plantas_afectadas: datos.plantasContadas,
+                        Fecha_inspeccion:  new Date().toISOString().split('T')[0],
+                        Nivel_alerta:      nivelAlerta,
+                        Id_tecnico:        usuario.Id_tecnico,
+                        Id_lugar:          _idLugarActivo
+                    })
+                });
+                if (resp.ok) {
+                    const result = await resp.json();
+                    InspeccionStore.guardar(loteId, datos.plantasContadas, datos.plagasDetectadas,
+                        datos.posiblesPlagas, datos.cultivo, result.data?.id ?? null);
+                }
+            }
+        } catch (e) {
+            console.error('Error al sincronizar inspección con backend:', e);
+        }
     }
 
     function _obtenerFilaLote(loteId) {
@@ -660,13 +727,32 @@ const ModalVerEditar = (() => {
     function activarEdicion()  { _modo = 'edicion';  _renderEdicion();  }
     function cancelarEdicion() { _modo = 'lectura';  _renderLectura();  }
 
-    function guardarEdicion() {
+    async function guardarEdicion() {
         if (!_loteId) return;
-        const datos         = InspeccionStore.obtener(_loteId);
+        const datos          = InspeccionStore.obtener(_loteId);
         const posiblesPlagas = datos?.posiblesPlagas ?? [];
         const cultivo        = datos?.cultivo        ?? _datosDOMDelLote(_loteId).cultivo;
-        // [SIN CAMBIO] InspeccionStore.guardar() ya no escribe en localStorage (ver módulo 3)
-        InspeccionStore.guardar(_loteId, _contadorEdicion, Array.from(_plagasEdicion), posiblesPlagas, cultivo);
+        const plagasArr      = Array.from(_plagasEdicion);
+
+        InspeccionStore.guardar(_loteId, _contadorEdicion, plagasArr, posiblesPlagas, cultivo, datos?.idBackend ?? null);
+
+        // Persistir edición en el backend si la inspección ya tiene ID
+        if (datos?.idBackend) {
+            const nivelAlerta = plagasArr.length > 0 ? Math.min(6, plagasArr.length * 2) : 0;
+            try {
+                await fetch(`http://localhost:9000/inspeccion/${datos.idBackend}`, {
+                    method:  'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({
+                        Plantas_afectadas: _contadorEdicion,
+                        Nivel_alerta:      nivelAlerta
+                    })
+                });
+            } catch (e) {
+                console.error('Error al actualizar inspección en backend:', e);
+            }
+        }
+
         mostrarToast(`✅ ${_loteId} actualizado correctamente`);
         verificarFinalizacion();
         _modo = 'lectura';
@@ -753,6 +839,13 @@ const ModalInspeccion = (() => {
 let _lugarActivo = '';
 
 /**
+ * ID numérico del lugar en la base de datos (Id_lugar de infraestructura).
+ * Se usa al guardar inspecciones en el backend.
+ * @type {number}
+ */
+let _idLugarActivo = 0;
+
+/**
  * Filtra las cards de inspección por estado.
  * @param {string}      estado — 'todos' | 'pendiente' | 'completado'
  * @param {HTMLElement} btn    — Botón pulsado (se marca como activo).
@@ -775,8 +868,9 @@ function filtrarInspecciones(estado, btn) {
  * @param {string} nombre    — Nombre del predio.
  * @param {string} ubicacion — Texto de ubicación.
  */
-function abrirVistaLotes(nombre, ubicacion) {
-    _lugarActivo = nombre;
+function abrirVistaLotes(nombre, ubicacion, idLugar = 0) {
+    _lugarActivo   = nombre;
+    _idLugarActivo = idLugar;
 
     document.getElementById('seccion-cards').style.display      = 'none';
     document.getElementById('seccion-formulario').style.display = 'none';
@@ -980,9 +1074,8 @@ function mostrarToast(mensaje) {
 // ═════════════════════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
 
-    // [ELIMINADO] _restaurarEstadoCardsEnDOM() — ya no existe.
-    // Al cargar la página el DOM refleja directamente el estado inicial del HTML,
-    // que es el comportamiento correcto y deseado sin persistencia.
+    // Cargar inspecciones previas del técnico desde el backend
+    _cargarInspeccionesDesdeBackend();
 
     // Tecla Escape cierra el modal Ver/Editar si está abierto
     document.addEventListener('keydown', e => {
@@ -996,3 +1089,56 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnFinalizar = document.getElementById('btn-finalizar');
     if (btnFinalizar) btnFinalizar.disabled = true;
 });
+
+/**
+ * Consulta las inspecciones del técnico logueado y restaura el progreso
+ * de las cards que tienen data-id-lugar y data-total-lotes en el HTML.
+ */
+async function _cargarInspeccionesDesdeBackend() {
+    const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+    if (!usuario.Id_tecnico) return;
+
+    try {
+        const resp = await fetch('http://localhost:9000/inspeccion');
+        if (!resp.ok) return;
+        const result = await resp.json();
+
+        // Filtrar solo las del técnico logueado y agrupar por Id_lugar
+        const porLugar = {};
+        (result.data || [])
+            .filter(i => i.Id_tecnico === usuario.Id_tecnico)
+            .forEach(i => {
+                if (!porLugar[i.Id_lugar]) porLugar[i.Id_lugar] = [];
+                porLugar[i.Id_lugar].push(i);
+            });
+
+        // Actualizar el estado de cada card que tenga data-id-lugar
+        document.querySelectorAll('#seccion-cards .card[data-id-lugar]').forEach(card => {
+            const idLugar   = parseInt(card.dataset.idLugar);
+            const totalLotes = parseInt(card.dataset.totalLotes) || 0;
+            if (!totalLotes) return;
+
+            const inspDone = porLugar[idLugar]?.length || 0;
+            const pct      = Math.round((inspDone / totalLotes) * 100);
+
+            if (pct >= 100) {
+                card.dataset.estado = 'completado';
+                const badge = card.querySelector('.badge');
+                if (badge) { badge.className = 'badge badge-aprobado'; badge.textContent = 'Completado'; }
+                const acento = card.querySelector('.card__accent');
+                if (acento) acento.className = 'card__accent card__accent--aprobado';
+                actualizarProgreso(card, 100, 'completado');
+                const btn = card.querySelector('.btn-detalles');
+                if (btn) {
+                    const nombre = card.querySelector('.card-codigo')?.textContent || '';
+                    btn.textContent = 'Ver inspección';
+                    btn.onclick     = () => ModalInspeccion.abrir(nombre, 'completado');
+                }
+            } else if (pct > 0) {
+                actualizarProgreso(card, pct, 'pendiente');
+            }
+        });
+    } catch (e) {
+        console.error('Error al cargar inspecciones del técnico:', e);
+    }
+}
