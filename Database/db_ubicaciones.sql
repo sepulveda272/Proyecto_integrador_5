@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 21-05-2026 a las 04:28:54
+-- Tiempo de generación: 26-05-2026 a las 10:37:25
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -43,10 +43,11 @@ CREATE TABLE `citas` (
 --
 
 INSERT INTO `citas` (`Id_cita`, `Hora_inspeccion`, `Fecha_inspeccion`, `Id_productor`, `Id_lugar`, `Id_tecnico`, `Estado`, `Observaciones`) VALUES
-(2, NULL, NULL, 1, 2, 1, 'Pendiente', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
-(4, NULL, NULL, 1, 4, 2, 'Pendiente', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
-(5, NULL, NULL, 1, 12, 3, 'Rechazado', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
-(6, NULL, NULL, 1, 4, 2, 'Aceptado', 'El productor solicita revisión urgente en el lote principal por posible plaga.');
+(2, '02:08:00', '2026-06-05', 1, 2, 1, 'Aceptada', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
+(4, '06:06:00', '2026-05-28', 1, 4, 1, 'Aceptada', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
+(5, '02:10:00', '2026-05-30', 1, 12, 1, 'Aceptada', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
+(6, '02:03:00', '2026-05-27', 1, 4, 1, 'Aceptada', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
+(9, '01:48:00', '2026-06-06', 1, 2, 1, 'Aceptada', 'prueba');
 
 -- --------------------------------------------------------
 
@@ -210,7 +211,7 @@ CREATE TABLE `productor` (
 --
 
 INSERT INTO `productor` (`Id_productor`, `Numero_identificacion`, `Tipo_identificacion`, `Primer_nombre`, `Segundo_nombre`, `Primer_apellido`, `Segundo_apellido`, `Imagen`, `Celular`, `Correo`, `Password`, `Estado`) VALUES
-(1, '987654321', 'C.C', 'PRUEBA2', '', 'PRUEBA2', '', 'PRUEBA2', 'PRUEBA2', 'prueba2@gmail.com', '$2b$10$ySGNEoJ3H9fEaZVVnG8Ra.NeVn4D5Au1fRNi2XezExFpkGq8lk5Q2', 'Activo');
+(1, '987654321', 'C.C', 'Juan', 'David', 'Sepulveda', '', 'PRUEBA2', 'PRUEBA2', 'prueba2@gmail.com', '$2b$10$XkN53Ix32vRpIeJCsdhodeEMX1tAPd4wJ0jRoSsngjhXC231hwIgy', 'Activo');
 
 -- --------------------------------------------------------
 
@@ -314,7 +315,7 @@ ALTER TABLE `vereda`
 -- AUTO_INCREMENT de la tabla `citas`
 --
 ALTER TABLE `citas`
-  MODIFY `Id_cita` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `Id_cita` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de la tabla `departamento`
