@@ -2,26 +2,42 @@ import getConnection from "../database/conection.js";
 import axios from 'axios';
 
 // URL del microservicio externo mencionado en los comentarios de tu tabla
-const INSPECCIONES_SERVICE_URL = "http://localhost:9000/tecnico"; 
+const INSPECCIONES_SERVICE_URL = "http://localhost:9000/tecnico";
+
+// URL del microservicio de inspecciones para crear inspecciones automáticamente
+const INSPECCION_SERVICE_URL = "http://localhost:9000/inspeccion/add";
 
 // 1. OBTENER TODAS LAS CITAS
 export const getCitas = async (req, res) => {
     try {
         const connection = await getConnection();
         
-        // 1. Modificamos la consulta con un JOIN para traer el nombre del lugar
-        // Ajusta "Lugar_produccion" y "Nombre_LugarProduccion" si los nombres en tu DB son diferentes
         const querySql = `
             SELECT 
                 c.*, 
-                lp.Nombre_LugarProduccion 
-            FROM citas c
-            LEFT JOIN Lugar_produccion lp ON c.Id_lugar = lp.Id_lugar
+                lp.Nombre_LugarProduccion,
+                m.Nombre_Municipio,
+                d.Nombre_Depart
+            FROM 
+                citas c,
+                lugar_produccion lp,
+                predio p,
+                vereda v,
+                municipio m,
+                departamento d
+            WHERE 
+                c.Id_lugar = lp.Id_lugar
+                AND lp.Id_lugar = p.Id_lugar
+                AND p.Id_vereda = v.Id_Vereda
+                AND v.Id_Municipio = m.Id_Municipio
+                AND m.Id_Departamento = d.Id_Departamento
+            GROUP BY 
+                c.Id_cita
         `;
         
         const citas = await connection.query(querySql);
 
-        // 2. Enriquecer con datos del microservicio externo (Técnicos)
+        // Enriquecer con datos del microservicio externo (Técnicos)
         const citasCompletas = await Promise.all(citas.map(async (cita) => {
             try {
                 if (!cita.Id_tecnico) {
@@ -30,7 +46,6 @@ export const getCitas = async (req, res) => {
                 
                 const response = await axios.get(`${INSPECCIONES_SERVICE_URL}/${cita.Id_tecnico}`);
                 
-                // Manejo de la respuesta del microservicio
                 let infoTecnico = "Técnico no encontrado";
                 if (response.data) {
                     infoTecnico = Array.isArray(response.data) && response.data.length > 0 
@@ -174,10 +189,60 @@ export const updateCita = async (req, res) => {
             });
         }
 
+        // 4. CREACIÓN AUTOMÁTICA DE INSPECCIÓN al aceptar la cita
+        //    Se ejecuta solo cuando el nuevo estado es "Aceptada" y la cita
+        //    tiene técnico, fecha y lugar definidos.
+        let inspeccionCreada = null;
+
+        const estadoNuevo = (datosBody.Estado || '').toLowerCase();
+
+        if (estadoNuevo === 'aceptada') {
+            try {
+                // Obtener datos completos de la cita para tener Id_lugar y los
+                // campos que pueden no venir en el body del PUT.
+                const [citaActualizada] = await connection.query(
+                    "SELECT * FROM citas WHERE Id_cita = ?", id
+                );
+
+                if (citaActualizada && citaActualizada.Id_tecnico && citaActualizada.Id_lugar) {
+                    const nuevaInspeccion = {
+                        Fecha_inspeccion:  citaActualizada.Fecha_inspeccion,
+                        Id_tecnico:        citaActualizada.Id_tecnico,
+                        Id_lugar:          citaActualizada.Id_lugar,
+                        // Valores base: el técnico los completará durante la visita
+                        Plantas_revisadas: 0,
+                        Plantas_afectadas: 0,
+                        Nivel_alerta:      0
+                    };
+
+                    const respInspeccion = await axios.post(
+                        INSPECCION_SERVICE_URL,
+                        nuevaInspeccion,
+                        { headers: { 'Content-Type': 'application/json' } }
+                    );
+
+                    inspeccionCreada = respInspeccion.data;
+                } else {
+                    console.warn(
+                        `[updateCita] Cita ${id} aceptada pero faltan Id_tecnico o Id_lugar ` +
+                        `— inspección NO creada.`
+                    );
+                }
+            } catch (errorInspeccion) {
+                // No interrumpimos la respuesta: la cita ya fue actualizada correctamente.
+                // Solo logueamos el fallo para que el equipo lo revise.
+                console.error(
+                    `[updateCita] Error al crear inspección para cita ${id}:`,
+                    errorInspeccion.message
+                );
+            }
+        }
+
         res.json({
             status: "Success",
             message: "Cita actualizada correctamente.",
-            data: datosBody
+            data: datosBody,
+            ...(inspeccionCreada && { inspeccion_creada: inspeccionCreada })
         });
 
     } catch (error) {

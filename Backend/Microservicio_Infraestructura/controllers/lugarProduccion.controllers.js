@@ -162,21 +162,50 @@ export const getLugarProduccion = async (req, res) => {
         const { id } = req.params;
         const connection = await getConnection();
 
-        // 1. Consultar datos del lugar
-        const [lugar] = await connection.query("SELECT * FROM Lugar_produccion WHERE Id_lugar = ?", id);
+        // 1. Consultar datos del lugar con nombre del productor
+        const [lugar] = await connection.query(`
+            SELECT 
+                l.*,
+                p.Primer_nombre AS Productor_nombre,
+                p.Primer_apellido AS Productor_apellido
+            FROM Lugar_produccion l
+            LEFT JOIN productor p ON l.Id_productor = p.Id_productor
+            WHERE l.Id_lugar = ?
+        `, id);
 
         if (!lugar) {
             return res.status(404).json({ status: "Error", message: "Lugar no encontrado" });
         }
 
-        // 2. Consultar los predios asociados a ese lugar
-        const predios = await connection.query("SELECT * FROM Predio WHERE Id_lugar = ?", id);
+        // 2. Consultar predios con datos de ubicación completos
+        const predios = await connection.query(`
+            SELECT 
+                pr.*,
+                v.Nombre_Vereda,
+                m.Nombre_Municipio,
+                d.Nombre_Depart
+            FROM Predio pr
+            LEFT JOIN Vereda v ON pr.Id_vereda = v.Id_vereda
+            LEFT JOIN Municipio m ON v.Id_municipio = m.Id_municipio
+            LEFT JOIN Departamento d ON m.Id_Departamento = d.Id_Departamento
+            WHERE pr.Id_lugar = ?
+        `, id);
+
+        // 3. Formatear predios con Ubicacion anidada (igual que getLugaresProduccion)
+        const prediosFormateados = predios.map(p => ({
+            ...p,
+            Ubicacion: {
+                Vereda: p.Nombre_Vereda || null,
+                Municipio: p.Nombre_Municipio || null,
+                Departamento: p.Nombre_Depart || null
+            }
+        }));
 
         res.json({
             status: "Success",
             data: {
                 ...lugar,
-                predios: predios // Array con los predios detallados
+                predios: prediosFormateados
             }
         });
     } catch (error) {
