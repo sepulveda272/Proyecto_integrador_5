@@ -38,7 +38,10 @@ function renderizarTarjetas(citas) {
         const badgeClase = estadoClase === 'pendiente' ? 'badge-revision' : 'badge-aprobado';
         
         const fecha = cita.Fecha_inspeccion ? new Date(cita.Fecha_inspeccion).toLocaleDateString() : 'Por definir';
-        const tecnicoNombre = cita.datos_tecnico?.Nombre || 'Por asignar';
+        const nombre = cita.datos_tecnico?.data?.Primer_nombre;
+        const apellido = cita.datos_tecnico?.data?.Primer_apellido || '';
+
+        const tecnicoNombre = nombre ? `${nombre} ${apellido}`.trim() : 'Por asignar';
 
 
         grid.insertAdjacentHTML('beforeend', `
@@ -52,7 +55,11 @@ function renderizarTarjetas(citas) {
                     <div class="card-coords">
                         <div class="coord-row">
                             <div class="coord-icon">📅</div>
-                            <span class="coord-text">Fecha: ${fecha} - ${cita.Hora_inspeccion || ''}</span>
+                            <span class="coord-text">Fecha: ${fecha}</span>
+                        </div>
+                        <div class="coord-row">
+                            <div class="coord-icon">⏰</div>
+                            <span class="coord-text">Hora: ${cita.Hora_inspeccion || 'Por asignar'}</span>
                         </div>
                         <div class="coord-row">
                             <div class="coord-icon">👤</div>

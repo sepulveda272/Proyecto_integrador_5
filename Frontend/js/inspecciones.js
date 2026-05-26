@@ -859,14 +859,12 @@ function filtrarInspecciones(estado, btn) {
 }
 
 /**
- * Transiciona a la vista de lotes de una inspección.
- * [MODIFICADO] Se eliminó la llamada a _restaurarEstadoLotesEnDOM() ya que esa
- * función leía el estado guardado en localStorage. Ahora el DOM de los lotes
- * parte siempre desde su estado inicial (todos Pendiente) al abrir la vista.
- * Dentro de la sesión, el estado se recupera desde InspeccionStore (memoria).
+ * Transiciona a la vista de lotes de una inspección y carga los lotes
+ * reales del lugar de producción desde el backend.
  *
  * @param {string} nombre    — Nombre del predio.
  * @param {string} ubicacion — Texto de ubicación.
+ * @param {number} idLugar   — ID del lugar de producción.
  */
 function abrirVistaLotes(nombre, ubicacion, idLugar = 0) {
     _lugarActivo   = nombre;
@@ -881,14 +879,128 @@ function abrirVistaLotes(nombre, ubicacion, idLugar = 0) {
     document.getElementById('lotes-titulo').textContent = 'Lotes — ' + nombre;
     document.getElementById('lotes-sub').textContent    = ubicacion + ' · Inspección en curso';
 
-    requestAnimationFrame(() => {
-        PaginacionLotes.init();
-        // [ELIMINADO] _restaurarEstadoLotesEnDOM() — ya no existe.
-        // Durante la misma sesión, los lotes inspeccionados siguen viéndose como
-        // "Completado" porque el DOM no se reinicia al navegar entre vistas;
-        // sólo se reinicia al recargar la página completa, que es el comportamiento deseado.
-        verificarFinalizacion();
+    // Mostrar indicador de carga mientras se obtienen los lotes
+    const listaLotes = document.getElementById('lista-lotes');
+    if (listaLotes) {
+        listaLotes.innerHTML = '<p style="padding:20px;color:var(--text-muted,#888)">⏳ Cargando lotes...</p>';
+    }
+
+    // Cargar lotes desde el backend
+    _cargarLotesDelLugar(idLugar).then(() => {
+        requestAnimationFrame(() => {
+            PaginacionLotes.init();
+            verificarFinalizacion();
+        });
     });
+}
+
+/**
+ * Carga los lotes reales del lugar de producción desde el backend
+ * y los renderiza en #lista-lotes dentro de #seccion-lotes.
+ *
+ * Endpoint: GET http://localhost:8003/lote  (filtrando por Id_lugar)
+ * Nota: El microservicio de infraestructura corre en el puerto 8003.
+ *
+ * @param {number} idLugar
+ */
+async function _cargarLotesDelLugar(idLugar) {
+    const listaLotes = document.getElementById('lista-lotes');
+    if (!listaLotes) return;
+
+    try {
+        const resp = await fetch(`http://localhost:8003/lote`);
+        if (!resp.ok) throw new Error('Error al obtener lotes');
+        const result = await resp.json();
+
+        // Filtrar solo los lotes del lugar activo
+        const lotes = (result.data || []).filter(l => Number(l.Id_lugar) === Number(idLugar));
+
+        if (!lotes.length) {
+            listaLotes.innerHTML = '<p style="padding:20px;color:var(--text-muted,#888)">ℹ️ Este lugar de producción no tiene lotes registrados.</p>';
+            return;
+        }
+
+        listaLotes.innerHTML = '';
+
+        lotes.forEach(lote => {
+            const loteId       = `LOTE-${lote.Numero_Lote}`;
+            const datosCultivo = (typeof lote.datos_cultivo === 'object' && lote.datos_cultivo !== null)
+                ? lote.datos_cultivo : null;
+            const cultivo      = datosCultivo?.Nombre_especie
+                ? `${datosCultivo.Nombre_especie}${datosCultivo.Variedad ? ' · ' + datosCultivo.Variedad : ''}`
+                : '—';
+            const imagenCultivo = datosCultivo?.Imagen || null;
+            const fecha    = lote.Fecha_siembra
+                ? new Date(lote.Fecha_siembra).toLocaleDateString('es-CO')
+                : '—';
+            const esFenologico = lote.Estado_fenologico || '—';
+            const totalPlantas = lote.Total_plantas ?? '—';
+            const areaTotal    = lote.Area_total    ?? '—';
+            const areaSiembra  = lote.Area_siembra  ?? '—';
+
+            const yaInspeccionado = InspeccionStore.estaInspeccionado(loteId);
+
+            const row = document.createElement('article');
+            row.className    = 'lote-row';
+            row.dataset.id   = loteId;
+            row.dataset.estado = yaInspeccionado ? 'completado' : 'pendiente';
+
+            row.innerHTML = `
+                <div class="lote-row__img" onclick="${yaInspeccionado ? `ModalVerEditar.abrir('${loteId}')` : `abrirModal('${loteId}')`}">
+                    ${imagenCultivo
+                        ? `<img class="img-cultivo" src="${imagenCultivo}" alt="${cultivo}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">`
+                        : `<span style="font-size:2rem">🌱</span>`}
+                </div>
+                <div class="lote-row__info">
+                    <div class="lote-info__numero">${loteId}</div>
+                    <div class="lote-fields">
+                        <div class="lote-field">
+                            <span class="lote-field__label">Cultivo</span>
+                            <span class="lote-field__value">${cultivo}</span>
+                        </div>
+                        <div class="lote-field">
+                            <span class="lote-field__label">Plantas sembradas</span>
+                            <span class="lote-field__value">${totalPlantas}</span>
+                        </div>
+                        <div class="lote-field">
+                            <span class="lote-field__label">Área total</span>
+                            <span class="lote-field__value">${areaTotal} ha</span>
+                        </div>
+                        <div class="lote-field">
+                            <span class="lote-field__label">Área siembra</span>
+                            <span class="lote-field__value">${areaSiembra} ha</span>
+                        </div>
+                        <div class="lote-field">
+                            <span class="lote-field__label">Estado fenológico</span>
+                            <span class="lote-field__value">${esFenologico}</span>
+                        </div>
+                        <div class="lote-field">
+                            <span class="lote-field__label">Fecha siembra</span>
+                            <span class="lote-field__value">${fecha}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="lote-row__meta">
+                    <span class="lote-badge ${yaInspeccionado ? 'lote-badge--comp' : 'lote-badge--pend'}">
+                        <span class="lote-badge__dot"></span>
+                        ${yaInspeccionado ? 'Completado' : 'Pendiente'}
+                    </span>
+                    <button class="lote-row__action" onclick="${yaInspeccionado ? `ModalVerEditar.abrir('${loteId}')` : `abrirModal('${loteId}')`}">
+                        <span class="action-icon">${yaInspeccionado ? '👁️' : '🔍'}</span>
+                        <span class="action-label">${yaInspeccionado ? 'Ver inspección' : 'Inspeccionar'}</span>
+                    </button>
+                </div>
+            `;
+
+            listaLotes.appendChild(row);
+        });
+
+    } catch (e) {
+        console.error('Error al cargar lotes:', e);
+        if (listaLotes) {
+            listaLotes.innerHTML = '<p style="padding:20px;color:#c0392b">❌ No se pudieron cargar los lotes. Verifica tu conexión.</p>';
+        }
+    }
 }
 
 /** Regresa desde la vista de lotes a la vista de cards. */
@@ -1091,54 +1203,133 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
- * Consulta las inspecciones del técnico logueado y restaura el progreso
- * de las cards que tienen data-id-lugar y data-total-lotes en el HTML.
+ * Consulta las inspecciones asignadas al técnico logueado usando el endpoint
+ * dedicado GET /inspeccion/tecnico/:idTecnico y renderiza las cards.
+ * También actualiza el nombre en el topbar con el dato del localStorage.
  */
 async function _cargarInspeccionesDesdeBackend() {
     const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
     if (!usuario.Id_tecnico) return;
 
+    // Mostrar nombre del técnico en el topbar
+    const spanUser = document.getElementById('topbar-user');
+    if (spanUser && usuario.Primer_nombre) {
+        spanUser.textContent =
+            `${usuario.Primer_nombre} ${usuario.Segundo_nombre || ''} ${usuario.Primer_apellido || ''} ${usuario.Segundo_apellido || ''}`.replace(/\s+/g, ' ').trim();
+    }
+
     try {
-        const resp = await fetch('http://localhost:9000/inspeccion');
-        if (!resp.ok) return;
+        const resp = await fetch(`http://localhost:9000/inspeccion/tecnico/${usuario.Id_tecnico}`);
+        if (!resp.ok) throw new Error('Error al obtener inspecciones');
         const result = await resp.json();
-
-        // Filtrar solo las del técnico logueado y agrupar por Id_lugar
-        const porLugar = {};
-        (result.data || [])
-            .filter(i => i.Id_tecnico === usuario.Id_tecnico)
-            .forEach(i => {
-                if (!porLugar[i.Id_lugar]) porLugar[i.Id_lugar] = [];
-                porLugar[i.Id_lugar].push(i);
-            });
-
-        // Actualizar el estado de cada card que tenga data-id-lugar
-        document.querySelectorAll('#seccion-cards .card[data-id-lugar]').forEach(card => {
-            const idLugar   = parseInt(card.dataset.idLugar);
-            const totalLotes = parseInt(card.dataset.totalLotes) || 0;
-            if (!totalLotes) return;
-
-            const inspDone = porLugar[idLugar]?.length || 0;
-            const pct      = Math.round((inspDone / totalLotes) * 100);
-
-            if (pct >= 100) {
-                card.dataset.estado = 'completado';
-                const badge = card.querySelector('.badge');
-                if (badge) { badge.className = 'badge badge-aprobado'; badge.textContent = 'Completado'; }
-                const acento = card.querySelector('.card__accent');
-                if (acento) acento.className = 'card__accent card__accent--aprobado';
-                actualizarProgreso(card, 100, 'completado');
-                const btn = card.querySelector('.btn-detalles');
-                if (btn) {
-                    const nombre = card.querySelector('.card-codigo')?.textContent || '';
-                    btn.textContent = 'Ver inspección';
-                    btn.onclick     = () => ModalInspeccion.abrir(nombre, 'completado');
-                }
-            } else if (pct > 0) {
-                actualizarProgreso(card, pct, 'pendiente');
-            }
-        });
+        _renderizarCards(result.data || []);
     } catch (e) {
         console.error('Error al cargar inspecciones del técnico:', e);
+        const grid = document.getElementById('seccion-cards');
+        if (grid) grid.innerHTML = '<p style="padding:24px;color:#c0392b">❌ No se pudieron cargar las inspecciones. Verifica tu conexión.</p>';
     }
+}
+
+/**
+ * Limpia #seccion-cards y renderiza una card por cada inspección.
+ *
+ * Estado de la card:
+ *   · "completado"  →  Plantas_revisadas > 0  (el técnico ya inspeccionó)
+ *   · "pendiente"   →  Plantas_revisadas === 0 (inspección aún no realizada)
+ *
+ * Cada card almacena data-id-lugar para que abrirVistaLotes() funcione.
+ *
+ * @param {Array} inspecciones - Array devuelto por GET /inspeccion/tecnico/:id
+ */
+function _renderizarCards(inspecciones) {
+    const grid = document.getElementById('seccion-cards');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    if (!inspecciones.length) {
+        grid.innerHTML = '<p style="padding:24px; color:var(--text-muted, #888)">No tienes inspecciones asignadas actualmente.</p>';
+        return;
+    }
+
+    inspecciones.forEach(insp => {
+        const estaCompleta = (insp.Plantas_revisadas ?? 0) > 0;
+        const estado       = estaCompleta ? 'completado' : 'pendiente';
+        const pct          = estaCompleta ? 100 : 0;
+        const nombre       = insp.Nombre_LugarProduccion || `Lugar #${insp.Id_lugar}`;
+        const productor    = insp.Nombre_Productor || null;
+
+        // Construir texto de ubicación con departamento, municipio y vereda
+        const partesUbicacion = [insp.Departamento, insp.Municipio, insp.Vereda].filter(Boolean);
+        const ubicacion = partesUbicacion.join(' · ');
+
+        const fecha = insp.Fecha_inspeccion
+            ? new Date(insp.Fecha_inspeccion).toLocaleDateString('es-CO')
+            : 'Por definir';
+
+        // Texto del botón según porcentaje
+        let textoBtnAccion;
+        if (estaCompleta) {
+            textoBtnAccion = 'Ver inspección ➜';
+        } else if (pct === 0) {
+            textoBtnAccion = 'Empezar inspección ➜';
+        } else {
+            textoBtnAccion = 'Continuar inspección ➜';
+        }
+
+        // Escapar comillas simples para uso seguro en atributos onclick
+        const nombreEsc   = nombre.replace(/'/g, "\\'");
+        const ubicEsc     = ubicacion.replace(/'/g, "\\'");
+
+        const card = document.createElement('div');
+        card.className        = 'card';
+        card.dataset.estado   = estado;
+        card.dataset.idLugar  = insp.Id_lugar;
+        card.dataset.totalLotes = 1;
+
+        card.innerHTML = `
+            <div class="card__accent card__accent--${estaCompleta ? 'aprobado' : 'pendiente'}"></div>
+            <div class="card__inner">
+                <div class="card-header">
+                    <span class="card-codigo">${nombre}</span>
+                    <span class="badge ${estaCompleta ? 'badge-aprobado' : 'badge-revision'}">
+                        ${estaCompleta ? 'Completado' : 'Pendiente'}
+                    </span>
+                </div>
+                <div class="card-coords">
+                    ${productor ? `
+                    <div class="coord-row">
+                        <div class="coord-icon">👤</div>
+                        <span class="coord-text">Productor: <strong>${productor}</strong></span>
+                    </div>` : ''}
+                    ${ubicacion ? `
+                    <div class="coord-row">
+                        <div class="coord-icon">📍</div>
+                        <span class="coord-text">${ubicacion}</span>
+                    </div>` : ''}
+                    <div class="coord-row">
+                        <div class="coord-icon">📅</div>
+                        <span class="coord-text">Fecha: <strong>${fecha}</strong></span>
+                    </div>
+                </div>
+                <div class="prog-wrap">
+                    <div class="prog-label">
+                        <span class="prog-key">Progreso</span>
+                        <span class="prog-val ${estaCompleta ? 'prog-val--comp' : 'prog-val--pend'}">${pct}%</span>
+                    </div>
+                    <div class="prog-track">
+                        <div class="prog-bar ${estaCompleta ? 'prog-bar--comp' : 'prog-bar--pend'}"
+                             style="width:${pct}%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-actions">
+                <button class="btn-detalles"
+                    onclick="abrirVistaLotes('${nombreEsc}', '${ubicEsc}', ${insp.Id_lugar})">
+                    ${textoBtnAccion}
+                </button>
+            </div>
+        `;
+
+        grid.appendChild(card);
+    });
 }

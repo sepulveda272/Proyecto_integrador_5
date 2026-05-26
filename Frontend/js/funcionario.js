@@ -48,6 +48,13 @@
 
 
 // ═══════════════════════════════════════════════════════════════
+//  CONSTANTES DE API
+// ═══════════════════════════════════════════════════════════════
+
+const API_URL_CITA_FUNC = 'http://localhost:8003/cita';
+
+
+// ═══════════════════════════════════════════════════════════════
 //  DATOS — cargados desde el backend en cargarDatos()
 // ═══════════════════════════════════════════════════════════════
 
@@ -725,6 +732,134 @@ function cerrarModalReporte() {
 
 
 // ═══════════════════════════════════════════════════════════════
+//  CITAS — LISTAR Y RENDERIZAR (solicitudes.html)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Obtiene todas las citas del backend y renderiza las cards
+ * en el grid #cards-solicitudes de solicitudes.html.
+ */
+async function cargarCitas() {
+    try {
+        const resp = await fetch(API_URL_CITA_FUNC);
+        if (!resp.ok) throw new Error('Error en la respuesta del servidor');
+        const result = await resp.json();
+
+        if (result.status === 'Success') {
+            renderizarCardsCitas(result.data);
+        } else {
+            mostrarToast('❌ No se pudieron cargar las citas.');
+        }
+    } catch (e) {
+        console.error('Error al cargar citas:', e);
+        mostrarToast('❌ Error al conectar con el servidor.');
+    }
+}
+
+/**
+ * Limpia el grid y renderiza una card por cada cita.
+ * Solo las citas en estado "Pendiente" muestran el botón "Verificar cita".
+ *
+ * Cada card almacena en dataset los datos necesarios para el modal:
+ *   data-id            → Id de la cita (usado en el PUT)
+ *   data-estado        → Estado normalizado en minúsculas (para los filtros)
+ *   data-lugar         → Nombre del lugar de producción
+ *   data-departamento  → Departamento (si viene del backend, o 'N/A')
+ *   data-municipio     → Municipio (si viene del backend, o 'N/A')
+ *
+ * @param {Array} citas - Array de objetos cita devuelto por el backend
+ */
+function renderizarCardsCitas(citas) {
+    const grid = document.getElementById('cards-solicitudes');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    citas.forEach(cita => {
+        const estadoRaw   = (cita.Estado || 'pendiente').toLowerCase();
+        const esPendiente = estadoRaw === 'pendiente';
+
+        const badgeClase = {
+            pendiente: 'badge-revision',
+            aceptada:  'badge-aprobado',
+            rechazada: 'badge-rechazado'
+        }[estadoRaw] || 'badge-revision';
+
+        const fecha        = cita.Fecha_inspeccion
+            ? new Date(cita.Fecha_inspeccion).toLocaleDateString('es-CO')
+            : null;
+        const hora         = cita.Hora_inspeccion || null;
+        const tecnicoNombre = cita.datos_tecnico?.Nombre
+            ? `${cita.datos_tecnico.Nombre} ${cita.datos_tecnico.Apellido || ''}`.trim()
+            : null;
+
+        // Filas informativas opcionales (fecha, hora, técnico)
+        let filasInfo = '';
+        if (fecha) {
+            filasInfo += `
+                <div class="coord-row">
+                    <div class="coord-icon">📅</div>
+                    <span class="coord-text"><strong>Fecha:</strong> ${fecha}${hora ? ' — ' + hora : ''}</span>
+                </div>`;
+        }
+        if (tecnicoNombre) {
+            filasInfo += `
+                <div class="coord-row">
+                    <div class="coord-icon">👨‍🔬</div>
+                    <span class="coord-text"><strong>Técnico:</strong> ${tecnicoNombre}</span>
+                </div>`;
+        }
+        if (cita.Observaciones) {
+            filasInfo += `
+                <div class="coord-row">
+                    <div class="coord-icon">📝</div>
+                    <span class="coord-text"><strong>Obs:</strong> ${cita.Observaciones}</span>
+                </div>`;
+        }
+
+        // El botón "Verificar cita" solo aparece en citas pendientes
+        const botonVerificar = esPendiente ? `
+            <div class="card-actions">
+                <button class="btn-detalles full" onclick="abrirModalVerificarCita(this.closest('.card'))">
+                    Verificar cita ➜
+                </button>
+            </div>` : '';
+
+        const card = document.createElement('div');
+        card.className          = 'card';
+        card.dataset.id          = cita.Id_cita ?? '';
+        card.dataset.estado      = estadoRaw;
+        card.dataset.lugar       = cita.Nombre_LugarProduccion || '';
+        card.dataset.departamento = cita.Nombre_Depart || 'N/A';
+        card.dataset.municipio   = cita.Nombre_Municipio || 'N/A';
+
+        card.innerHTML = `
+            <div class="card__accent card__accent--${estadoRaw}"></div>
+            <div class="card__inner">
+                <div class="card-header">
+                    <span class="card-codigo">${cita.Nombre_LugarProduccion || 'Sin nombre'}</span>
+                    <span class="badge ${badgeClase}">${(cita.Estado || 'PENDIENTE').toUpperCase()}</span>
+                </div>
+                <div class="card-coords">
+                    <div class="coord-row">
+                        <div class="coord-icon">📍</div>
+                        <span class="coord-text"><strong>Departamento:</strong> ${cita.Nombre_Depart || 'N/A'}</span>
+                    </div>
+                    <div class="coord-row">
+                        <div class="coord-icon">📍</div>
+                        <span class="coord-text"><strong>Municipio:</strong> ${cita.Nombre_Municipio || 'N/A'}</span>
+                    </div>
+                    ${filasInfo}
+                </div>
+            </div>
+            ${botonVerificar}
+        `;
+
+        grid.appendChild(card);
+    });
+}
+
+
+// ═══════════════════════════════════════════════════════════════
 //  FILTROS — SOLICITUDES
 // ═══════════════════════════════════════════════════════════════
 
@@ -820,36 +955,57 @@ function cerrarModalCita() {
 }
 
 /**
- * Marca la cita de la card activa como RECHAZADA:
+ * Marca la cita de la card activa como RECHAZADA enviando un PUT al backend.
  *   1. Cambia data-estado a "rechazada" (para que los filtros funcionen).
  *   2. Actualiza el badge a .badge-rechazado (rojo, §3 main.css).
  *   3. Actualiza el acento lateral a .card__accent--rechazado.
  *   4. Cierra el modal y muestra un toast de confirmación.
  */
-function rechazarCita() {
+async function rechazarCita() {
     // Caso defensivo: si no hay card activa, solo cerrar
     if (!citaCardActual) {
         document.getElementById('modal-cita-overlay').classList.remove('show');
         return;
     }
 
-    citaCardActual.dataset.estado = 'rechazada';
-
-    const badge = citaCardActual.querySelector('.badge');
-    if (badge) {
-        badge.className   = 'badge badge-rechazado';
-        badge.textContent = 'RECHAZADA';
-    }
-
-    const acento = citaCardActual.querySelector('.card__accent');
-    if (acento) {
-        acento.className = 'card__accent card__accent--rechazado';
-    }
-
+    const citaId = citaCardActual.dataset.id;
     const lugarNombre = citaCardActual.dataset.lugar || 'la solicitud';
-    document.getElementById('modal-cita-overlay').classList.remove('show');
-    citaCardActual = null;
-    mostrarToast(`✕ Cita de "${lugarNombre}" marcada como rechazada.`);
+
+    try {
+        if (citaId) {
+            const resp = await fetch(`${API_URL_CITA_FUNC}/${citaId}`, {
+                method:  'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ Estado: 'Rechazada' })
+            });
+            if (!resp.ok) throw new Error('Error en el servidor');
+        }
+
+        citaCardActual.dataset.estado = 'rechazada';
+
+        const badge = citaCardActual.querySelector('.badge');
+        if (badge) {
+            badge.className   = 'badge badge-rechazado';
+            badge.textContent = 'RECHAZADA';
+        }
+
+        const acento = citaCardActual.querySelector('.card__accent');
+        if (acento) {
+            acento.className = 'card__accent card__accent--rechazado';
+        }
+
+        // Ocultar botón "Verificar cita" ya que la cita fue rechazada
+        const actions = citaCardActual.querySelector('.card-actions');
+        if (actions) actions.style.display = 'none';
+
+        document.getElementById('modal-cita-overlay').classList.remove('show');
+        citaCardActual = null;
+        mostrarToast(`✕ Cita de "${lugarNombre}" marcada como rechazada.`);
+
+    } catch (e) {
+        console.error('Error al rechazar cita:', e);
+        mostrarToast('❌ Error al rechazar la cita. Inténtalo de nuevo.');
+    }
 }
 
 /**
@@ -896,35 +1052,65 @@ function validarFormCita() {
 }
 
 /**
- * Confirma la cita: muestra el mensaje de éxito en el modal,
- * actualiza la card y cierra el modal con un toast de confirmación.
+ * Confirma la cita: envía un PUT al backend con técnico, fecha y hora,
+ * luego actualiza la card visualmente y cierra el modal con un toast.
  */
-function aceptarCita() {
+async function aceptarCita() {
     const fecha = document.getElementById('cita-fecha').value;
     const hora  = document.getElementById('cita-hora').value;
-    if (!citaTecnicoSel || !fecha || !hora) return;
+    if (!citaTecnicoSel || !fecha || !hora || !citaCardActual) return;
+
+    const citaId = citaCardActual.dataset.id;
+    if (!citaId) {
+        mostrarToast('❌ No se encontró el ID de la cita.');
+        return;
+    }
 
     const [anio, mes, dia] = fecha.split('-');
     const fechaFormateada  = `${dia}/${mes}/${anio}`;
     const horaFormateada   = hora;
 
-    const msg = document.getElementById('cita-success-msg');
-    msg.innerHTML = `
-        ✔ Cita asignada correctamente.<br>
-        <small>
-            <strong>${citaTecnicoSel.nombre}</strong> realizará la inspección
-            el <strong>${fechaFormateada}</strong> a las <strong>${horaFormateada}</strong>.
-        </small>
-    `;
-    msg.classList.add('show');
+    // Deshabilitar botón mientras se procesa
     document.getElementById('btn-aceptar-cita').disabled = true;
 
-    _actualizarCardCita(citaTecnicoSel, fechaFormateada, horaFormateada);
+    try {
+        const body = {
+            Estado:           'Aceptada',
+            Id_tecnico:       citaTecnicoSel.id,
+            Fecha_inspeccion: fecha,       // formato YYYY-MM-DD para el backend
+            Hora_inspeccion:  hora         // formato HH:MM
+        };
 
-    setTimeout(() => {
-        cerrarModalCita();
-        mostrarToast(`✔ Cita asignada a ${citaTecnicoSel.nombre} para el ${fechaFormateada} a las ${horaFormateada}.`);
-    }, 2500);
+        const resp = await fetch(`${API_URL_CITA_FUNC}/${citaId}`, {
+            method:  'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(body)
+        });
+
+        if (!resp.ok) throw new Error('Error en el servidor');
+
+        const msg = document.getElementById('cita-success-msg');
+        msg.innerHTML = `
+            ✔ Cita asignada correctamente.<br>
+            <small>
+                <strong>${citaTecnicoSel.nombre}</strong> realizará la inspección
+                el <strong>${fechaFormateada}</strong> a las <strong>${horaFormateada}</strong>.
+            </small>
+        `;
+        msg.classList.add('show');
+
+        _actualizarCardCita(citaTecnicoSel, fechaFormateada, horaFormateada);
+
+        setTimeout(() => {
+            cerrarModalCita();
+            mostrarToast(`✔ Cita asignada a ${citaTecnicoSel.nombre} para el ${fechaFormateada} a las ${horaFormateada}.`);
+        }, 2500);
+
+    } catch (e) {
+        console.error('Error al aceptar cita:', e);
+        mostrarToast('❌ Error al guardar la cita. Inténtalo de nuevo.');
+        document.getElementById('btn-aceptar-cita').disabled = false;
+    }
 }
 
 /**
@@ -1018,6 +1204,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Cargar datos del backend y poblar la tabla al terminar
     cargarDatos();
+
+    // Si estamos en solicitudes.html, cargar las citas del backend
+    if (document.getElementById('cards-solicitudes')) {
+        cargarCitas();
+    }
 
     // Contador en tiempo real del textarea del modal de observación (observaciones.html)
     document.getElementById('obs-edit-textarea')

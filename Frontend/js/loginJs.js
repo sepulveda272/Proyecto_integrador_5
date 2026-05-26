@@ -65,7 +65,7 @@ function _guardarYRedirigir(result) {
     alert(result.message);
 
     const rol = result.data?.rol;
-    if      (rol === 'TECNICO')      window.location.href = './tecnico/inicio.html';
-    else if (rol === 'FUNCIONARIO')  window.location.href = './funcionarioICA/inicio.html';
-    else                             window.location.href = './productor/inicio.html';
+    if      (rol === 'TECNICO')      window.location.href = './tecnico/inspeccion.html';
+    else if (rol === 'FUNCIONARIO')  window.location.href = './funcionarioICA/solicitudes.html';
+    else                             window.location.href = './productor/lugarProducción.html';
 }

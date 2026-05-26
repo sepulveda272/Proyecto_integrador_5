@@ -46,95 +46,11 @@
                     </div>
                     
 
-                    <!-- Cards -->
+                    <!-- Cards generadas dinámicamente por cargarCitas() en funcionario.js -->
                     <!-- id="cards-solicitudes" requerido por filtrarSolicitudes() y _actualizarCardCita() en funcionario.js -->
                     <div class="cards-grid" id="cards-solicitudes">
-
-                        <div class="card"
-                            data-estado="pendiente"
-                            data-lugar="Abduzcan"
-                            data-departamento="Norte de Santander"
-                            data-municipio="Pamplona">
-                            <div class="card__accent card__accent--pendiente"></div>
-                            <div class="card__inner">
-                                <div class="card-header">
-                                    <span class="card-codigo">Abduzcan</span>
-                                    <span class="badge badge-revision">PENDIENTE</span>
-                                </div>
-                                <div class="card-coords">
-                                    <div class="coord-row">
-                                        <div class="coord-icon">📍</div>
-                                        <span class="coord-text"><strong>Departamento:</strong> Norte de Santander</span>
-                                    </div>
-                                    <div class="coord-row">
-                                        <div class="coord-icon">📍</div>
-                                        <span class="coord-text"><strong>Municipio:</strong> Pamplona</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-actions">
-                                <button class="btn-detalles full" onclick="abrirModalVerificarCita(this.closest('.card'))">
-                                    Verificar cita ➜</button>
-                            </div>
-                        </div>
-
-                        <div class="card"
-                            data-estado="rechazada"
-                            data-lugar="San Cristobal"
-                            data-departamento="Santander"
-                            data-municipio="Bucaramanga">
-                            <div class="card__accent card__accent--rechazado"></div>
-                            <div class="card__inner">
-                                <div class="card-header">
-                                    <span class="card-codigo">San Cristobal</span>
-                                    <span class="badge badge-rechazado">RECHAZADA</span>
-                                </div>
-                                <div class="card-coords">
-                                    <div class="coord-row">
-                                        <div class="coord-icon">📍</div>
-                                        <span class="coord-text"><strong>Departamento:</strong> Santander</span>
-                                    </div>
-                                    <div class="coord-row">
-                                        <div class="coord-icon">📍</div>
-                                        <span class="coord-text"><strong>Municipio:</strong> Bucaramanga</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-actions">
-                                <button class="btn-detalles full" onclick="abrirModalVerificarCita(this.closest('.card'))">
-                                    Verificar cita ➜</button>
-                            </div>
-                        </div>
-
-                        <div class="card"
-                            data-estado="aceptada"
-                            data-lugar="Pentecostal"
-                            data-departamento="Santander"
-                            data-municipio="Floridablanca">
-                            <div class="card__accent card__accent--aprobado"></div>
-                            <div class="card__inner">
-                                <div class="card-header">
-                                    <span class="card-codigo">Pentecostal</span>
-                                    <span class="badge badge-aprobado">ACEPTADA</span>
-                                </div>
-                                <div class="card-coords">
-                                    <div class="coord-row">
-                                        <div class="coord-icon">📍</div>
-                                        <span class="coord-text"><strong>Departamento:</strong> Santander</span>
-                                    </div>
-                                    <div class="coord-row">
-                                        <div class="coord-icon">📍</div>
-                                        <span class="coord-text"><strong>Municipio:</strong> Floridablanca</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-actions">
-                                <button class="btn-detalles full" onclick="abrirModalVerificarCita(this.closest('.card'))">
-                                    Verificar cita ➜</button>
-                            </div>
-                        </div>
-                
                     </div>
+                
                 </div>
             </div>
         </main>
@@ -214,6 +130,7 @@
     </div>
 
     <script src="../../js/funcionario.js"></script>
+    <script src="../../js/verificarJs.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 </body>
 </html>
