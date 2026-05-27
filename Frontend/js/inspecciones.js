@@ -149,15 +149,17 @@ const InspeccionStore = (() => {
      * @param {string}      cultivo
      * @param {number|null} idBackend — ID devuelto por el backend tras el POST (opcional)
      */
-    function guardar(loteId, plantasContadas, plagasDetectadas, posiblesPlagas, cultivo, idBackend = null) {
+    function guardar(loteId, plantasContadas, plagasDetectadas, posiblesPlagas, cultivo, idBackend = null, extras = {}) {
         const previo = _datos.get(loteId);
         _datos.set(loteId, {
             plantasContadas,
             plagasDetectadas: [...plagasDetectadas],
-            posiblesPlagas:   [...posiblesPlagas],
+            posiblesPlagas:   [...(posiblesPlagas || [])],
             cultivo,
             inspeccionado: true,
-            idBackend:     idBackend ?? previo?.idBackend ?? null
+            idBackend:     idBackend ?? previo?.idBackend ?? null,
+            estaCompleta:  extras.estaCompleta ?? previo?.estaCompleta ?? false,
+            plagasPorPlanta: extras.plagasPorPlanta ?? previo?.plagasPorPlanta ?? {}
         });
     }
 
@@ -179,7 +181,26 @@ const InspeccionStore = (() => {
         return _datos.has(loteId) && _datos.get(loteId).inspeccionado === true;
     }
 
-    return { guardar, obtener, estaInspeccionado };
+    /**
+     * Exporta todos los datos del store como objeto plano (para serializar en LS).
+     * @returns {Object}
+     */
+    function exportar() {
+        const obj = {};
+        _datos.forEach((val, key) => { obj[key] = { ...val }; });
+        return obj;
+    }
+
+    /**
+     * Importa datos desde un objeto plano (restauración desde LS).
+     * @param {Object} obj
+     */
+    function importar(obj) {
+        if (!obj) return;
+        Object.entries(obj).forEach(([key, val]) => { _datos.set(key, val); });
+    }
+
+    return { guardar, obtener, estaInspeccionado, exportar, importar };
 })();
 
 
@@ -190,22 +211,73 @@ const InspeccionStore = (() => {
 // ═════════════════════════════════════════════════════════════════════════════
 const FormularioLote = (() => {
 
-    let loteActual        = null;
-    let cultivoActual     = '';
-    let plagasCultivo     = [];
-    let contadorPlantas   = 0;
+    // ── Estado interno ─────────────────────────────────────────────────────
+    let loteActual          = null;   // ej: 'LOTE-11'
+    let cultivoActual       = '';     // nombre para mostrar en el form
+    let idCultivoActual     = null;   // Id_cultivo numérico para consultar la API
+    let plagasCultivo       = [];     // plagas disponibles del catálogo
+    let totalPlantasSembradas = 0;    // tope del contador
+    let plantaRevisadaActual  = 0;    // planta que se está contando actualmente
+
+    // plagasPorPlanta[n] = Set de ids de plagas marcadas en la planta n
+    const plagasPorPlanta = new Map();
+    // plagasSeleccionadas: Set con los ids de plagas actualmente seleccionadas
+    // (para la planta que se acaba de contar)
     const plagasSeleccionadas = new Set();
 
+    // ── Helpers UI ─────────────────────────────────────────────────────────
+
+    function _el(id) { return document.getElementById(id); }
+
+    /** Actualiza el número del contador y habilita/deshabilita botones. */
     function actualizarContador() {
-        const display  = document.getElementById('contador-valor');
-        const btnMenos = document.getElementById('contador-menos');
-        if (display)  display.textContent = contadorPlantas;
-        if (btnMenos) btnMenos.disabled   = contadorPlantas === 0;
+        const display  = _el('contador-valor');
+        const btnMenos = _el('contador-menos');
+        const btnMas   = _el('contador-mas');
+        if (display)  display.textContent = plantaRevisadaActual;
+        if (btnMenos) btnMenos.disabled   = plantaRevisadaActual === 0;
+        if (btnMas)   btnMas.disabled     = plantaRevisadaActual >= totalPlantasSembradas;
+
+        // Mostrar / ocultar zona de plagas según si hay plantas contadas
+        const plagasSeccion = document.querySelector('.plagas-seccion');
+        if (plagasSeccion) {
+            plagasSeccion.style.display = plantaRevisadaActual > 0 ? 'block' : 'none';
+        }
+
+        // Texto de la planta actual que se está revisando
+        const hint = document.querySelector('.contador-bloque__hint');
+        if (hint) {
+            if (plantaRevisadaActual >= totalPlantasSembradas && totalPlantasSembradas > 0) {
+                hint.textContent = `✅ Se revisaron todas las plantas (${totalPlantasSembradas}/${totalPlantasSembradas})`;
+            } else {
+                hint.textContent = `Plantas sembradas: ${totalPlantasSembradas} · Revisadas: ${plantaRevisadaActual}`;
+            }
+        }
+
+        _actualizarResumenPlagas();
     }
 
+    /** Muestra cuántas plantas afectadas hay hasta ahora. */
+    function _actualizarResumenPlagas() {
+        let resumenEl = _el('resumen-plantas-afectadas');
+        if (!resumenEl) {
+            resumenEl = document.createElement('div');
+            resumenEl.id = 'resumen-plantas-afectadas';
+            resumenEl.style.cssText = 'margin:8px 0 12px;font-size:0.85rem;color:#555;font-style:italic;';
+            const plagasSeccion = document.querySelector('.plagas-seccion');
+            if (plagasSeccion) plagasSeccion.prepend(resumenEl);
+        }
+        const afectadas = plagasPorPlanta.size;
+        const total     = plantaRevisadaActual;
+        resumenEl.textContent = total > 0
+            ? `Plantas con plagas detectadas: ${afectadas} de ${total} revisadas`
+            : '';
+    }
+
+    /** Renderiza las tarjetas de plagas disponibles para el cultivo. */
     function renderizarPlagas(plagas) {
-        const grid  = document.getElementById('plagas-grid');
-        const empty = document.getElementById('plagas-empty');
+        const grid  = _el('plagas-grid');
+        const empty = _el('plagas-empty');
         if (!grid) return;
 
         grid.innerHTML = '';
@@ -214,6 +286,16 @@ const FormularioLote = (() => {
             return;
         }
         if (empty) empty.style.display = 'none';
+
+        // Título dinámico indicando para qué planta se está registrando
+        let tituloEl = _el('plagas-planta-titulo');
+        if (!tituloEl) {
+            tituloEl = document.createElement('p');
+            tituloEl.id = 'plagas-planta-titulo';
+            tituloEl.style.cssText = 'font-size:0.9rem;font-weight:600;color:#2d6a4f;margin-bottom:8px;';
+            grid.before(tituloEl);
+        }
+        tituloEl.textContent = `¿Esta planta (N° ${plantaRevisadaActual}) tiene alguna plaga?`;
 
         plagas.forEach(plaga => {
             const seleccionada = plagasSeleccionadas.has(plaga.id);
@@ -226,7 +308,7 @@ const FormularioLote = (() => {
             card.setAttribute('aria-label', `Plaga: ${plaga.nombre}`);
             card.innerHTML = `
                 <div class="plaga-card__img">
-                    <img src="${plaga.img}" alt="${plaga.nombre}">
+                    <img src="${plaga.img}" alt="${plaga.nombre}" onerror="this.src='data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 80 80%22%3E%3Crect width=%2280%22 height=%2280%22 rx=%2210%22 fill=%22%23f0f4f0%22/%3E%3Ctext x=%2240%22 y=%2252%22 font-size=%2236%22 text-anchor=%22middle%22%3E🦠%3C/text%3E%3C/svg%3E'">
                     <span class="plaga-card__check" aria-hidden="true">✓</span>
                 </div>
                 <div class="plaga-card__body">
@@ -251,143 +333,324 @@ const FormularioLote = (() => {
             card.classList.add('plaga-card--seleccionada');
             card.setAttribute('aria-checked', 'true');
         }
+        // Guardar estado de la planta actual en tiempo real
+        if (plantaRevisadaActual > 0) {
+            if (plagasSeleccionadas.size > 0) {
+                plagasPorPlanta.set(plantaRevisadaActual, new Set(plagasSeleccionadas));
+            } else {
+                plagasPorPlanta.delete(plantaRevisadaActual);
+            }
+        }
+        _actualizarResumenPlagas();
     }
 
+    // ── Carga de plagas desde el catálogo ──────────────────────────────────
+
     /**
-     * Abre el formulario de inspección para el lote indicado.
-     * Restaura datos previos si el lote ya tenía una inspección guardada
-     * en memoria durante la sesión actual (no desde localStorage).
+     * Obtiene las plagas del catálogo para el Id_cultivo dado.
+     * Endpoint: GET http://localhost:8000/cultivo/:id/plagas
      */
-    function abrir(loteId, cultivo, loteNum) {
-        loteActual    = loteId;
-        cultivoActual = cultivo;
-        plagasCultivo = CatalogoPlagas.obtenerPorCultivo(cultivo);
+    async function _cargarPlagasDelCatalogo(idCultivo) {
+        const grid  = _el('plagas-grid');
+        const empty = _el('plagas-empty');
 
-        contadorPlantas = 0;
+        if (grid)  grid.innerHTML  = '<p style="padding:10px;color:#888;font-size:0.85rem">⏳ Cargando plagas...</p>';
+        if (empty) empty.style.display = 'none';
+
+        try {
+            const resp = await fetch(`http://localhost:8000/cultivo/${idCultivo}/plagas`);
+            if (!resp.ok) throw new Error('Sin respuesta del catálogo');
+            const result = await resp.json();
+            const data   = result.data || [];
+
+            plagasCultivo = data.map(p => ({
+                id:      p.Id_plaga,
+                nombre:  p.Nombre_comun || p.Nombre_cientifico,
+                img:     p.Imagen || '',
+                sintomas: p.Descripcion || ''
+            }));
+
+            renderizarPlagas(plagasCultivo);
+        } catch (e) {
+            console.error('Error al cargar plagas del catálogo:', e);
+            plagasCultivo = [];
+            if (grid)  grid.innerHTML = '';
+            if (empty) {
+                empty.textContent = '⚠️ No se pudieron cargar las plagas del catálogo.';
+                empty.style.display = 'block';
+            }
+        }
+    }
+
+    // ── API pública ────────────────────────────────────────────────────────
+
+    /**
+     * Abre el formulario de inspección para un lote.
+     * @param {string} loteId   — ej: 'LOTE-11'
+     * @param {string} cultivo  — nombre del cultivo (solo para mostrar)
+     * @param {string} loteNum  — ej: '11'
+     * @param {number|null} idCultivo — Id_cultivo numérico del catálogo
+     * @param {number} totalPlantas   — Total_plantas del lote
+     */
+    function abrir(loteId, cultivo, loteNum, idCultivo = null, totalPlantas = 0) {
+        loteActual            = loteId;
+        cultivoActual         = cultivo;
+        idCultivoActual       = idCultivo;
+        totalPlantasSembradas = Number(totalPlantas) || 0;
+        plantaRevisadaActual  = 0;
+        plagasPorPlanta.clear();
         plagasSeleccionadas.clear();
+        plagasCultivo = [];
 
-        // [SIN CAMBIO FUNCIONAL] Ahora InspeccionStore.obtener() consulta el Map
-        // en memoria, no localStorage. Si la página se recargó, siempre devuelve null.
+        // Restaurar datos previos si el lote ya fue inspeccionado en esta sesión
         const previo = InspeccionStore.obtener(loteId);
         if (previo) {
-            contadorPlantas = previo.plantasContadas;
-            previo.plagasDetectadas.forEach(id => plagasSeleccionadas.add(id));
+            plantaRevisadaActual = previo.plantasContadas || 0;
+            // Restaurar plagas por planta si se guardaron.
+            // plagasPorPlanta se guarda como objeto plano {numPlanta: [ids]}
+            // y se reconstruye como Map<number, Set<id>>.
+            if (previo.plagasPorPlanta) {
+                const src = previo.plagasPorPlanta;
+                if (src instanceof Map) {
+                    // Ya es un Map (mismo ciclo de sesión sin serialización)
+                    src.forEach((ids, num) => plagasPorPlanta.set(Number(num), new Set(ids)));
+                } else {
+                    // Es objeto plano {numPlanta: [ids]} — viene del store serializado
+                    Object.entries(src).forEach(([num, ids]) => {
+                        plagasPorPlanta.set(Number(num), new Set(ids));
+                    });
+                }
+            }
         }
 
-        const elLoteId  = document.getElementById('form-lote-id');
-        const elCultivo = document.getElementById('form-cultivo');
+        // Llenar encabezado
+        const elLoteId  = _el('form-lote-id');
+        const elCultivo = _el('form-cultivo');
         if (elLoteId)  elLoteId.textContent  = loteNum || loteId;
         if (elCultivo) elCultivo.textContent  = cultivo || '—';
 
-        // Hint de plantas sembradas leído del DOM del lote
-        const hint    = document.querySelector('.contador-bloque__hint');
-        const loteRow = _obtenerFilaLote(loteId);
-        let sembradas = '--';
-        if (loteRow) {
-            loteRow.querySelectorAll('.lote-field').forEach(campo => {
-                const lbl = campo.querySelector('.lote-field__label')?.textContent.trim();
-                const val = campo.querySelector('.lote-field__value')?.textContent.trim();
-                if (lbl === 'Plantas sembradas') sembradas = val;
-            });
-        }
-        if (hint) hint.textContent = `Plantas sembradas: ${sembradas}`;
+        // Ocultar plagas al inicio si no se ha contado ninguna planta
+        const plagasSeccion = document.querySelector('.plagas-seccion');
+        if (plagasSeccion) plagasSeccion.style.display = plantaRevisadaActual > 0 ? 'block' : 'none';
 
         actualizarContador();
-        renderizarPlagas(plagasCultivo);
 
-        document.getElementById('seccion-lotes').style.display      = 'none';
-        document.getElementById('seccion-formulario').style.display = 'block';
+        // Cargar plagas del catálogo real si hay idCultivo
+        if (idCultivo) {
+            _cargarPlagasDelCatalogo(idCultivo);
+        } else {
+            plagasCultivo = [];
+            if (_el('plagas-grid'))  _el('plagas-grid').innerHTML  = '';
+            if (_el('plagas-empty')) {
+                _el('plagas-empty').textContent = 'No hay plagas registradas para este cultivo en el catálogo.';
+                _el('plagas-empty').style.display = 'block';
+            }
+        }
+
+        // Actualizar texto del botón guardar
+        _actualizarBotonGuardar();
+
+        _el('seccion-lotes').style.display      = 'none';
+        _el('seccion-formulario').style.display = 'block';
+    }
+
+    /** Actualiza el texto/estado del botón guardar según el progreso. */
+    function _actualizarBotonGuardar() {
+        const btn = document.querySelector('.btn-guardar-form');
+        if (!btn) return;
+        if (plantaRevisadaActual === 0) {
+            btn.textContent = '💾 Guardar inspección';
+            btn.disabled    = false;
+        } else if (plantaRevisadaActual >= totalPlantasSembradas) {
+            btn.textContent = '✅ Guardar — Inspección completada';
+            btn.disabled    = false;
+            btn.style.background = '#2d6a4f';
+        } else {
+            btn.textContent = `💾 Guardar avance (${plantaRevisadaActual}/${totalPlantasSembradas} plantas)`;
+            btn.disabled    = false;
+            btn.style.background = '';
+        }
     }
 
     /** Cierra el formulario y regresa a la lista de lotes. */
     function cerrar() {
-        document.getElementById('seccion-formulario').style.display = 'none';
-        document.getElementById('seccion-lotes').style.display      = 'block';
-    }
-
-    function incrementar() { contadorPlantas += 1; actualizarContador(); }
-
-    function decrementar() {
-        if (contadorPlantas > 0) { contadorPlantas -= 1; actualizarContador(); }
+        _el('seccion-formulario').style.display = 'none';
+        _el('seccion-lotes').style.display      = 'block';
     }
 
     /**
-     * Guarda la inspección en InspeccionStore, actualiza el DOM y persiste en el backend.
+     * Incrementa el contador de plantas revisadas.
+     * Guarda las plagas de la planta actual y limpia la selección para la siguiente.
+     */
+    /** Guarda las plagas seleccionadas actualmente para la planta en curso. */
+    function _guardarPlantaActual() {
+        if (plantaRevisadaActual <= 0) return;
+        if (plagasSeleccionadas.size > 0) {
+            plagasPorPlanta.set(plantaRevisadaActual, new Set(plagasSeleccionadas));
+        } else {
+            // Si no tiene plagas, eliminar entrada previa para no contar esta planta como afectada
+            plagasPorPlanta.delete(plantaRevisadaActual);
+        }
+    }
+
+    /** Carga en plagasSeleccionadas las plagas guardadas para la planta indicada. */
+    function _cargarPlantaEnSeleccion(numPlanta) {
+        plagasSeleccionadas.clear();
+        const guardadas = plagasPorPlanta.get(numPlanta);
+        if (guardadas) guardadas.forEach(id => plagasSeleccionadas.add(id));
+    }
+
+    function incrementar() {
+        if (plantaRevisadaActual >= totalPlantasSembradas) return;
+
+        // 1. Guardar el estado de la planta que se acaba de revisar
+        _guardarPlantaActual();
+
+        // 2. Avanzar al siguiente número de planta
+        plantaRevisadaActual += 1;
+
+        // 3. Cargar las plagas que ya se hayan guardado para esa planta
+        //    (si el técnico ya la visitó antes al retroceder y avanzar)
+        _cargarPlantaEnSeleccion(plantaRevisadaActual);
+
+        actualizarContador();
+        _actualizarBotonGuardar();
+
+        if (plagasCultivo.length) renderizarPlagas(plagasCultivo);
+
+        // Auto-scroll a las plagas para facilitar la selección
+        const plagasSeccion = document.querySelector('.plagas-seccion');
+        if (plagasSeccion) plagasSeccion.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function decrementar() {
+        if (plantaRevisadaActual <= 0) return;
+
+        // 1. Guardar el estado de la planta actual antes de retroceder
+        _guardarPlantaActual();
+
+        // 2. Retroceder al número de planta anterior
+        plantaRevisadaActual -= 1;
+
+        // 3. Cargar las plagas guardadas de esa planta anterior
+        _cargarPlantaEnSeleccion(plantaRevisadaActual);
+
+        actualizarContador();
+        _actualizarBotonGuardar();
+        if (plagasCultivo.length) renderizarPlagas(plagasCultivo);
+    }
+
+    /**
+     * Guarda la inspección en InspeccionStore y actualiza el DOM.
+     * Determina si la inspección está completa o parcial según plantas revisadas.
      */
     async function guardar() {
         if (!loteActual) return;
 
-        const plagasArray = Array.from(plagasSeleccionadas);
-        InspeccionStore.guardar(loteActual, contadorPlantas, plagasArray, plagasCultivo, cultivoActual);
-        _actualizarLoteEnDOM(loteActual);
+        // Guardar plagas de la última planta si quedaron seleccionadas
+        if (plagasSeleccionadas.size > 0 && plantaRevisadaActual > 0) {
+            plagasPorPlanta.set(plantaRevisadaActual, new Set(plagasSeleccionadas));
+        }
 
-        const resumen = plagasArray.length
-            ? `${contadorPlantas} plantas afectadas · ${plagasArray.length} plaga(s) detectada(s)`
-            : `${contadorPlantas} plantas afectadas · Sin plagas detectadas`;
+        const estaCompleta = plantaRevisadaActual >= totalPlantasSembradas && totalPlantasSembradas > 0;
 
-        mostrarToast(`✅ ${loteActual} guardado — ${resumen}`);
+        // Consolidar todas las plagas únicas detectadas
+        const todasLasPlagas = new Set();
+        plagasPorPlanta.forEach(ids => ids.forEach(id => todasLasPlagas.add(id)));
+        const plagasArray = Array.from(todasLasPlagas);
+
+        // Serializar plagasPorPlanta para guardarlo en el store
+        const plagasPorPlantaSerial = {};
+        plagasPorPlanta.forEach((ids, num) => {
+            plagasPorPlantaSerial[num] = Array.from(ids);
+        });
+
+        InspeccionStore.guardar(
+            loteActual,
+            plantaRevisadaActual,
+            plagasArray,
+            plagasCultivo,
+            cultivoActual,
+            null,
+            { estaCompleta, plagasPorPlanta: plagasPorPlantaSerial }
+        );
+
+        _actualizarLoteEnDOM(loteActual, estaCompleta);
+
+        const afectadas = plagasPorPlanta.size;
+        const resumen = estaCompleta
+            ? `✅ Completado — ${afectadas} planta(s) con plagas de ${totalPlantasSembradas} revisadas`
+            : `⏳ Guardado parcial — ${plantaRevisadaActual}/${totalPlantasSembradas} plantas revisadas`;
+
+        mostrarToast(resumen);
         cerrar();
         verificarFinalizacion();
+        _guardarInspeccionEnLS(_idInspeccionActiva);
 
-        // Persistir en el backend (no bloquea la UI)
-        _sincronizarConBackend(loteActual, plagasArray);
+        _sincronizarConBackend(loteActual, plagasArray, estaCompleta);
     }
 
     /**
-     * Envía los datos de la inspección al backend.
-     * POST si es nueva, PUT si ya tiene idBackend almacenado.
+     * Persiste en el backend.
      */
-    async function _sincronizarConBackend(loteId, plagasArray) {
-        const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-        if (!usuario.Id_tecnico || !_idLugarActivo) return;
-
-        // Leer plantas sembradas del DOM del lote
-        const loteRow = _obtenerFilaLote(loteId);
-        let plantasSembradas = 0;
-        if (loteRow) {
-            loteRow.querySelectorAll('.lote-field').forEach(campo => {
-                const lbl = campo.querySelector('.lote-field__label')?.textContent.trim();
-                const val = campo.querySelector('.lote-field__value')?.textContent.trim();
-                if (lbl === 'Plantas sembradas') {
-                    plantasSembradas = parseInt(val.replace(/[.,\s]/g, '')) || 0;
-                }
-            });
+    async function _sincronizarConBackend(loteId, plagasArray, estaCompleta) {
+        // Usar siempre la inspección creada por el funcionario (no crear una nueva)
+        const idInsp = _idInspeccionActiva;
+        if (!idInsp) {
+            console.warn('No hay inspección activa para sincronizar.');
+            return;
         }
 
         const datos       = InspeccionStore.obtener(loteId);
-        const nivelAlerta = plagasArray.length > 0 ? Math.min(6, plagasArray.length * 2) : 0;
+        // nivelAlerta se calcula al final, después de tener totalAfectadas
+
+        // Calcular plantas_afectadas Y plantas_revisadas reales de todos los lotes inspeccionados.
+        let totalAfectadas = 0;
+        let totalRevisadas = 0;
+        document.querySelectorAll('#seccion-lotes .lote-row').forEach(row => {
+            const id = row.querySelector('.lote-info__numero')?.textContent.trim();
+            if (id) {
+                const d = InspeccionStore.obtener(id);
+                if (d?.plagasPorPlanta) {
+                    totalAfectadas += Object.keys(d.plagasPorPlanta).length;
+                }
+                if (d?.plantasContadas) {
+                    totalRevisadas += d.plantasContadas;
+                }
+            }
+        });
+
+        // Nivel de alerta basado en % de plantas afectadas del lote actual
+        const pctAfectadas = totalPlantasSembradas > 0
+            ? (plagasPorPlanta.size / totalPlantasSembradas) * 100 : 0;
+        const nivelAlerta = pctAfectadas === 0 ? 0
+            : pctAfectadas <= 20 ? 1
+            : pctAfectadas <= 40 ? 2
+            : pctAfectadas <= 60 ? 3
+            : pctAfectadas <= 80 ? 4
+            : 5;
 
         try {
-            if (datos?.idBackend) {
-                // Actualizar inspección existente
-                await fetch(`http://localhost:9000/inspeccion/${datos.idBackend}`, {
-                    method:  'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify({
-                        Plantas_revisadas: plantasSembradas,
-                        Plantas_afectadas: datos.plantasContadas,
-                        Nivel_alerta:      nivelAlerta
-                    })
-                });
-            } else {
-                // Crear nueva inspección
-                const resp = await fetch('http://localhost:9000/inspeccion/add', {
-                    method:  'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify({
-                        Plantas_revisadas: plantasSembradas,
-                        Plantas_afectadas: datos.plantasContadas,
-                        Fecha_inspeccion:  new Date().toISOString().split('T')[0],
-                        Nivel_alerta:      nivelAlerta,
-                        Id_tecnico:        usuario.Id_tecnico,
-                        Id_lugar:          _idLugarActivo
-                    })
-                });
-                if (resp.ok) {
-                    const result = await resp.json();
-                    InspeccionStore.guardar(loteId, datos.plantasContadas, datos.plagasDetectadas,
-                        datos.posiblesPlagas, datos.cultivo, result.data?.id ?? null);
-                }
+            await fetch(`http://localhost:9000/inspeccion/${idInsp}`, {
+                method:  'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({
+                    Plantas_revisadas: totalRevisadas,
+                    Plantas_afectadas: totalAfectadas,
+                    Nivel_alerta:      nivelAlerta
+                })
+            });
+
+            // Guardar el idBackend en el store para referencia futura
+            if (datos) {
+                InspeccionStore.guardar(
+                    loteId,
+                    datos.plantasContadas,
+                    datos.plagasDetectadas,
+                    datos.posiblesPlagas,
+                    datos.cultivo,
+                    idInsp
+                );
             }
         } catch (e) {
             console.error('Error al sincronizar inspección con backend:', e);
@@ -400,35 +663,58 @@ const FormularioLote = (() => {
     }
 
     /**
-     * Actualiza el badge, botón e imagen del lote en el DOM tras guardarlo.
-     * Cambia de "Pendiente" a "Completado" y redirige el onclick al modal Ver/Editar.
+     * Actualiza badge y botón del lote en la lista.
+     * @param {boolean} estaCompleta — true = inspección completa, false = parcial/continuar
      */
-    function _actualizarLoteEnDOM(loteId) {
+    function _actualizarLoteEnDOM(loteId, estaCompleta) {
         const fila = _obtenerFilaLote(loteId);
         if (!fila) return;
 
-        fila.dataset.estado = 'completado';
+        fila.dataset.estado = estaCompleta ? 'completado' : 'pendiente';
 
         const badge = fila.querySelector('.lote-badge');
         if (badge) {
-            badge.className = 'lote-badge lote-badge--comp';
-            badge.innerHTML = '<span class="lote-badge__dot"></span>Completado';
+            badge.className = estaCompleta ? 'lote-badge lote-badge--comp' : 'lote-badge lote-badge--pend';
+            badge.innerHTML = `<span class="lote-badge__dot"></span>${estaCompleta ? 'Completado' : 'En progreso'}`;
         }
 
         const accion = fila.querySelector('.lote-row__action');
         if (accion) {
             const icon  = accion.querySelector('.action-icon');
             const label = accion.querySelector('.action-label');
-            if (icon)  icon.textContent  = '👁️';
-            if (label) label.textContent = 'Ver inspección';
-            accion.onclick = () => ModalVerEditar.abrir(loteId);
+            if (estaCompleta) {
+                if (icon)  icon.textContent  = '👁️';
+                if (label) label.textContent = 'Ver inspección';
+                accion.onclick = () => ModalVerEditar.abrir(loteId);
+            } else {
+                if (icon)  icon.textContent  = '▶️';
+                if (label) label.textContent = 'Continuar';
+                accion.onclick = () => abrirModal(loteId);
+            }
         }
 
         const imgArea = fila.querySelector('.lote-row__img');
-        if (imgArea) imgArea.onclick = () => ModalVerEditar.abrir(loteId);
+        if (imgArea) {
+            imgArea.onclick = estaCompleta
+                ? () => ModalVerEditar.abrir(loteId)
+                : () => abrirModal(loteId);
+        }
     }
 
-    return { abrir, cerrar, incrementar, decrementar, guardar };
+    /**
+     * Recorre todos los lotes del DOM y actualiza badge/botón según InspeccionStore.
+     * Se llama después de restaurar datos desde localStorage al abrir la vista de lotes.
+     */
+    function restaurarEstadoLotesEnDOM() {
+        document.querySelectorAll('#seccion-lotes .lote-row').forEach(row => {
+            const id = row.querySelector('.lote-info__numero')?.textContent.trim();
+            if (!id) return;
+            const datos = InspeccionStore.obtener(id);
+            if (datos) _actualizarLoteEnDOM(id, datos.estaCompleta);
+        });
+    }
+
+    return { abrir, cerrar, incrementar, decrementar, guardar, restaurarEstadoLotesEnDOM };
 })();
 
 
@@ -735,6 +1021,7 @@ const ModalVerEditar = (() => {
         const plagasArr      = Array.from(_plagasEdicion);
 
         InspeccionStore.guardar(_loteId, _contadorEdicion, plagasArr, posiblesPlagas, cultivo, datos?.idBackend ?? null);
+        _guardarInspeccionEnLS(_idInspeccionActiva);
 
         // Persistir edición en el backend si la inspección ya tiene ID
         if (datos?.idBackend) {
@@ -779,7 +1066,7 @@ const ModalVerEditar = (() => {
 // ═════════════════════════════════════════════════════════════════════════════
 const ModalInspeccion = (() => {
 
-    function abrir(nombre, estado) {
+    function abrir(nombre, estado, idInspeccion = 0) {
         const overlay  = document.getElementById('modal-ver-editar-overlay');
         const elTitulo = document.getElementById('mve-titulo');
         const elSub    = document.getElementById('mve-sub');
@@ -790,27 +1077,126 @@ const ModalInspeccion = (() => {
         if (elTitulo) elTitulo.textContent = `Inspección — ${nombre}`;
         if (elSub)    elSub.textContent    = estado === 'completado' ? '✅ Completada' : '🔄 En curso';
 
-        const filas = document.querySelectorAll('#seccion-lotes .lote-row');
-        let html = '';
-        filas.forEach(fila => {
-            const id       = fila.querySelector('.lote-info__numero')?.textContent.trim() ?? '—';
-            const est      = fila.dataset.estado ?? 'pendiente';
-            const datos    = InspeccionStore.obtener(id);
-            const cls      = est === 'completado' ? 'mve-plaga-item--detectada' : '';
-            const etiqueta = est === 'completado'
-                ? `✅ ${datos?.plantasContadas ?? 0} plantas · ${datos?.plagasDetectadas?.length ?? 0} plaga(s)`
-                : '⏳ Pendiente de inspección';
-            html += `<li class="mve-plaga-item ${cls}" style="padding:10px 12px;border-radius:8px;margin-bottom:6px;list-style:none">
-                         <strong>${id}</strong><br>
-                         <span style="font-size:12px;color:#4a6b57">${etiqueta}</span>
-                     </li>`;
-        });
+        // ── Obtener datos de lotes ────────────────────────────────────────────
+        // Estrategia 1: InspeccionStore en memoria (misma sesión, ya navegó a lotes)
+        // Estrategia 2: localStorage (misma sesión, recargó sin cerrar sesión)
+        // Estrategia 3: fetch al backend GET /inspeccion/:id/lotes (nueva sesión)
+        //               El backend devuelve Detalle_lotes guardado al finalizar.
 
-        if (body)   body.innerHTML   = `<ul style="padding:0;margin:0">${html || '<li>Sin lotes registrados.</li>'}</ul>`;
-        if (footer) footer.innerHTML = '';
-
+        // Mostrar spinner mientras se cargan los datos
+        if (body) body.innerHTML = '<p style="padding:20px;color:#888;text-align:center">⏳ Cargando datos...</p>';
         overlay.classList.add('mve--visible');
         document.body.style.overflow = 'hidden';
+
+        // Resolver el idInspeccion con prioridad:
+        // 1. parámetro directo (viene de la card al renderizar)
+        // 2. _idInspeccionActiva (sesión activa)
+        // 3. localStorage como último recurso
+        const _idParaModal = idInspeccion || _idInspeccionActiva || (() => {
+            const dk = Object.keys(localStorage).find(k => k.endsWith('_done') && localStorage.getItem(k) === '1');
+            if (!dk) return 0;
+            const m = dk.match(/sifex_insp_(\d+)_done/);
+            return m ? Number(m[1]) : 0;
+        })();
+
+        // Intentar obtener los datos (async, con fallbacks)
+        _obtenerDatosLotes(_idParaModal).then(lotesData => {
+            _renderModalLotes(body, footer, lotesData);
+        });
+    }
+
+    /**
+     * Obtiene los datos de lotes con tres estrategias en cascada:
+     * memoria → localStorage → backend.
+     * @param {number} idInsp
+     * @returns {Promise<Object|null>}
+     */
+    async function _obtenerDatosLotes(idInsp) {
+        // 1. InspeccionStore en memoria
+        const storeExport = InspeccionStore.exportar();
+        const storeIds    = Object.keys(storeExport).filter(k => !k.startsWith('__'));
+        if (storeIds.length > 0) return storeExport;
+
+        // 2. localStorage
+        if (idInsp) {
+            try {
+                const raw = localStorage.getItem(`sifex_insp_${idInsp}`);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed.lotes && Object.keys(parsed.lotes).length > 0) {
+                        InspeccionStore.importar(parsed.lotes);
+                        return parsed.lotes;
+                    }
+                }
+            } catch (e) { /* ignorar */ }
+        }
+
+        // 3. Backend (fuente persistente — funciona tras cerrar sesión)
+        if (idInsp) {
+            try {
+                const resp = await fetch(`http://localhost:9000/inspeccion/${idInsp}/lotes`);
+                if (resp.ok) {
+                    const json = await resp.json();
+                    const lotes = json.data;
+                    if (lotes && Object.keys(lotes).length > 0) {
+                        InspeccionStore.importar(lotes);
+                        return lotes;
+                    }
+                }
+            } catch (e) {
+                console.error('[ModalInspeccion] Error cargando lotes desde backend:', e);
+            }
+        }
+
+        // Fallback: leer del DOM si la vista de lotes está renderizada
+        const lotesDOM = {};
+        document.querySelectorAll('#seccion-lotes .lote-row').forEach(fila => {
+            const lid   = fila.querySelector('.lote-info__numero')?.textContent.trim();
+            const datos = lid ? InspeccionStore.obtener(lid) : null;
+            if (lid && datos) lotesDOM[lid] = datos;
+        });
+        return Object.keys(lotesDOM).length > 0 ? lotesDOM : null;
+    }
+
+    /**
+     * Renderiza el cuerpo del modal con la lista de lotes.
+     * @param {HTMLElement} body
+     * @param {HTMLElement} footer
+     * @param {Object|null} lotesData
+     */
+    function _renderModalLotes(body, footer, lotesData) {
+        let html = '';
+
+        if (lotesData) {
+            const ids = Object.keys(lotesData)
+                .filter(k => !k.startsWith('__'))
+                .sort((a, b) => {
+                    const na = parseInt(a.replace(/\D/g, '')) || 0;
+                    const nb = parseInt(b.replace(/\D/g, '')) || 0;
+                    return na - nb;
+                });
+
+            ids.forEach(loteId => {
+                const datos          = lotesData[loteId];
+                const completo       = datos?.estaCompleta === true;
+                const cls            = completo ? 'mve-plaga-item--detectada' : '';
+                const plantasContadas  = datos?.plantasContadas ?? 0;
+                const plagasPorPlanta  = datos?.plagasPorPlanta ?? {};
+                const plantasAfectadas = Object.keys(plagasPorPlanta).length;
+
+                const etiqueta = completo
+                    ? `✅ ${plantasContadas} plantas revisadas · ${plantasAfectadas} planta(s) afectada(s)`
+                    : `⏳ Pendiente de inspección`;
+
+                html += `<li class="mve-plaga-item ${cls}" style="padding:10px 12px;border-radius:8px;margin-bottom:6px;list-style:none">
+                             <strong>${loteId}</strong><br>
+                             <span style="font-size:12px;color:#4a6b57">${etiqueta}</span>
+                         </li>`;
+            });
+        }
+
+        if (body)   body.innerHTML   = `<ul style="padding:0;margin:0">${html || '<li style="list-style:none;padding:10px;color:#888">Sin datos de inspección guardados.</li>'}</ul>`;
+        if (footer) footer.innerHTML = '';
     }
 
     function cerrar() {
@@ -846,6 +1232,13 @@ let _lugarActivo = '';
 let _idLugarActivo = 0;
 
 /**
+ * ID de la inspección activa (creada por el funcionario al aceptar la cita).
+ * Se usa para el PUT al iniciar la inspección y al guardar avances.
+ * @type {number}
+ */
+let _idInspeccionActiva = 0;
+
+/**
  * Filtra las cards de inspección por estado.
  * @param {string}      estado — 'todos' | 'pendiente' | 'completado'
  * @param {HTMLElement} btn    — Botón pulsado (se marca como activo).
@@ -858,21 +1251,97 @@ function filtrarInspecciones(estado, btn) {
     });
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// HELPERS DE PERSISTENCIA POR INSPECCIÓN (localStorage por id de inspección)
+//
+// Clave: sifex_insp_{idInspeccion}        → datos de lotes (objeto JSON)
+// Clave: sifex_insp_{idInspeccion}_done   → '1' cuando la inspección fue finalizada
+//
+// Esto permite recuperar el progreso al recargar la página sin modificar la BD.
+// ═════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Guarda el estado actual de InspeccionStore en localStorage para la inspección activa.
+ * @param {number} idInspeccion
+ */
+function _guardarInspeccionEnLS(idInspeccion) {
+    if (!idInspeccion) return;
+    try {
+        const key      = `sifex_insp_${idInspeccion}`;
+        const existing = JSON.parse(localStorage.getItem(key) || '{}');
+        localStorage.setItem(key, JSON.stringify({
+            ...existing,
+            lotes: InspeccionStore.exportar(),
+            ts:    Date.now()
+        }));
+    } catch (e) {
+        console.error('[LS] Error al guardar inspección:', e);
+    }
+}
+
+/**
+ * Restaura el InspeccionStore desde localStorage para la inspección indicada.
+ * @param {number} idInspeccion
+ * @returns {boolean} true si se restauró al menos un lote
+ */
+function _restaurarInspeccionDeLS(idInspeccion) {
+    if (!idInspeccion) return false;
+    try {
+        const raw = localStorage.getItem(`sifex_insp_${idInspeccion}`);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        if (data.lotes && Object.keys(data.lotes).length > 0) {
+            InspeccionStore.importar(data.lotes);
+            return true;
+        }
+    } catch (e) {
+        console.error('[LS] Error al restaurar inspección:', e);
+    }
+    return false;
+}
+
+/**
+ * Actualiza campos de meta (p.ej. totalLotes) en la entrada LS de la inspección.
+ * @param {number} idInspeccion
+ * @param {Object} meta — propiedades a mezclar en data.meta
+ */
+function _actualizarMetaEnLS(idInspeccion, meta) {
+    if (!idInspeccion) return;
+    try {
+        const key      = `sifex_insp_${idInspeccion}`;
+        const existing = JSON.parse(localStorage.getItem(key) || '{}');
+        localStorage.setItem(key, JSON.stringify({
+            ...existing,
+            meta: { ...(existing.meta || {}), ...meta }
+        }));
+    } catch (e) {
+        console.error('[LS] Error al actualizar meta:', e);
+    }
+}
+
+
 /**
  * Transiciona a la vista de lotes de una inspección y carga los lotes
  * reales del lugar de producción desde el backend.
  *
- * @param {string} nombre    — Nombre del predio.
- * @param {string} ubicacion — Texto de ubicación.
- * @param {number} idLugar   — ID del lugar de producción.
+ * @param {string} nombre            — Nombre del predio.
+ * @param {string} ubicacion         — Texto de ubicación.
+ * @param {number} idLugar           — ID del lugar de producción.
+ * @param {number} idInspeccion      — ID de la inspección en BD.
+ * @param {number} plantasRevisadasBD — Valor actual de Plantas_revisadas en BD
+ *                                     (0 = nunca iniciada; >0 = ya fue abierta antes).
  */
-function abrirVistaLotes(nombre, ubicacion, idLugar = 0) {
-    _lugarActivo   = nombre;
-    _idLugarActivo = idLugar;
+function abrirVistaLotes(nombre, ubicacion, idLugar = 0, idInspeccion = 0, plantasRevisadasBD = 0) {
+    _lugarActivo          = nombre;
+    _idLugarActivo        = idLugar;
+    _idInspeccionActiva   = idInspeccion;
 
     document.getElementById('seccion-cards').style.display      = 'none';
     document.getElementById('seccion-formulario').style.display = 'none';
-    document.querySelector('.header').style.display             = 'none';
+    document.querySelector('.header').style.display             = 'flex';
+
+    // Ocultar header al entrar en lotes (mismo comportamiento previo)
+    document.querySelector('.header').style.display = 'none';
 
     const secLotes = document.getElementById('seccion-lotes');
     secLotes.style.display = 'block';
@@ -885,8 +1354,47 @@ function abrirVistaLotes(nombre, ubicacion, idLugar = 0) {
         listaLotes.innerHTML = '<p style="padding:20px;color:var(--text-muted,#888)">⏳ Cargando lotes...</p>';
     }
 
-    // Cargar lotes desde el backend
-    _cargarLotesDelLugar(idLugar).then(() => {
+    // Cargar lotes del lugar de producción
+    _cargarLotesDelLugar(idLugar).then(async (lotes) => {
+
+        // ── 1. Restaurar datos previos desde localStorage ──────────────────
+        const restored = _restaurarInspeccionDeLS(idInspeccion);
+        if (restored) {
+            // Actualizar el DOM de cada lote con el estado guardado
+            FormularioLote.restaurarEstadoLotesEnDOM();
+        }
+
+        // Guardar totalLotes en LS para cálculo de progreso en las cards
+        if (idInspeccion && lotes && lotes.length) {
+            _actualizarMetaEnLS(idInspeccion, { totalLotes: lotes.length });
+        }
+
+        // ── 2. PUT inicial solo si la inspección NUNCA fue abierta (Plantas_revisadas = 0) ──
+        // Si plantasRevisadasBD > 0 significa que ya se abrió antes: no repetir el PUT.
+        if (idInspeccion && lotes && lotes.length && plantasRevisadasBD === 0) {
+            const yaIniciada = InspeccionStore.obtener('__lugar__' + idLugar + '__iniciada__');
+            if (!yaIniciada) {
+                const totalPlantas = lotes.reduce((suma, l) => suma + (Number(l.Total_plantas) || 0), 0);
+                if (totalPlantas > 0) {
+                    try {
+                        await fetch(`http://localhost:9000/inspeccion/${idInspeccion}`, {
+                            method:  'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body:    JSON.stringify({ Plantas_revisadas: totalPlantas })
+                        });
+                        InspeccionStore.guardar(
+                            '__lugar__' + idLugar + '__iniciada__',
+                            totalPlantas, [], [], '', null,
+                            { estaCompleta: false }
+                        );
+                        mostrarToast(`📋 Inspección iniciada — ${totalPlantas} plantas por revisar`);
+                    } catch (e) {
+                        console.error('Error al registrar inicio de inspección:', e);
+                    }
+                }
+            }
+        }
+
         requestAnimationFrame(() => {
             PaginacionLotes.init();
             verificarFinalizacion();
@@ -917,7 +1425,7 @@ async function _cargarLotesDelLugar(idLugar) {
 
         if (!lotes.length) {
             listaLotes.innerHTML = '<p style="padding:20px;color:var(--text-muted,#888)">ℹ️ Este lugar de producción no tiene lotes registrados.</p>';
-            return;
+            return [];
         }
 
         listaLotes.innerHTML = '';
@@ -940,10 +1448,15 @@ async function _cargarLotesDelLugar(idLugar) {
 
             const yaInspeccionado = InspeccionStore.estaInspeccionado(loteId);
 
+            const idCultivo = (typeof lote.datos_cultivo === 'object' && lote.datos_cultivo !== null)
+                ? (lote.datos_cultivo.Id_cultivo || null) : null;
+
             const row = document.createElement('article');
             row.className    = 'lote-row';
             row.dataset.id   = loteId;
-            row.dataset.estado = yaInspeccionado ? 'completado' : 'pendiente';
+            row.dataset.estado    = yaInspeccionado ? 'completado' : 'pendiente';
+            row.dataset.idCultivo = idCultivo || '';
+            row.dataset.totalPlantas = lote.Total_plantas || 0;
 
             row.innerHTML = `
                 <div class="lote-row__img" onclick="${yaInspeccionado ? `ModalVerEditar.abrir('${loteId}')` : `abrirModal('${loteId}')`}">
@@ -995,11 +1508,14 @@ async function _cargarLotesDelLugar(idLugar) {
             listaLotes.appendChild(row);
         });
 
+        return lotes;
+
     } catch (e) {
         console.error('Error al cargar lotes:', e);
         if (listaLotes) {
             listaLotes.innerHTML = '<p style="padding:20px;color:#c0392b">❌ No se pudieron cargar los lotes. Verifica tu conexión.</p>';
         }
+        return [];
     }
 }
 
@@ -1018,7 +1534,9 @@ function volverACards() {
  * @param {string} loteId
  */
 function abrirModal(loteId) {
-    if (InspeccionStore.estaInspeccionado(loteId)) {
+    // Si ya fue completada, abrir modo ver/editar
+    const previo = InspeccionStore.obtener(loteId);
+    if (previo?.estaCompleta) {
         ModalVerEditar.abrir(loteId);
         return;
     }
@@ -1026,20 +1544,25 @@ function abrirModal(loteId) {
     const loteRow = Array.from(document.querySelectorAll('#seccion-lotes .lote-row'))
         .find(row => row.querySelector('.lote-info__numero')?.textContent.trim() === loteId);
 
-    let cultivo = '';
-    let loteNum = loteId;
+    let cultivo      = '';
+    let loteNum      = loteId;
+    let idCultivo    = null;
+    let totalPlantas = 0;
 
     if (loteRow) {
         loteRow.querySelectorAll('.lote-field').forEach(campo => {
-            const lbl = campo.querySelector('.lote-field__label');
-            const val = campo.querySelector('.lote-field__value');
-            if (lbl && val && lbl.textContent.trim() === 'Cultivo') cultivo = val.textContent.trim();
+            const lbl = campo.querySelector('.lote-field__label')?.textContent.trim();
+            const val = campo.querySelector('.lote-field__value')?.textContent.trim();
+            if (lbl === 'Cultivo')            cultivo      = val || '';
+            if (lbl === 'Plantas sembradas')  totalPlantas = parseInt(val) || 0;
         });
         const numEl = loteRow.querySelector('.lote-info__numero');
         if (numEl) loteNum = numEl.textContent.trim();
+        // id_cultivo guardado como data attribute al renderizar
+        idCultivo = parseInt(loteRow.dataset.idCultivo) || null;
     }
 
-    FormularioLote.abrir(loteId, cultivo, loteNum);
+    FormularioLote.abrir(loteId, cultivo, loteNum, idCultivo, totalPlantas);
 }
 
 /**
@@ -1059,7 +1582,10 @@ function verificarFinalizacion() {
 
     filas.forEach(fila => {
         const id = fila.querySelector('.lote-info__numero')?.textContent.trim();
-        if (id && InspeccionStore.estaInspeccionado(id)) inspeccionados++;
+        if (!id) return;
+        const datos = InspeccionStore.obtener(id);
+        // Solo cuenta como inspeccionado si la inspección fue completada (todas las plantas)
+        if (datos?.estaCompleta) inspeccionados++;
     });
 
     const todos = inspeccionados === total && total > 0;
@@ -1111,7 +1637,7 @@ function _obtenerCardActiva() {
  * 5. Muestra un toast de confirmación.
  * 6. Redirige automáticamente a la vista de cards (#seccion-cards).
  */
-function finalizarInspeccion() {
+async function finalizarInspeccion() {
     if (!_lugarActivo) {
         volverACards();
         return;
@@ -1138,19 +1664,67 @@ function finalizarInspeccion() {
         const nombreLugar = _lugarActivo;
         if (btnCard) {
             btnCard.textContent = 'Ver inspección';
-            btnCard.onclick     = () => ModalInspeccion.abrir(nombreLugar, 'completado');
+            btnCard.onclick     = () => ModalInspeccion.abrir(nombreLugar, 'completado', _idInspeccionActiva);
         }
 
         // Barra de progreso al 100% con color de completado
         actualizarProgreso(cardEl, 100, 'completado');
     }
 
-    // [ELIMINADO] Bloque que guardaba el estado del lugar en localStorage:
-    // const lugaresGuardados       = PersistenciaStore.cargarLugares();
-    // lugaresGuardados[_lugarActivo] = { estado: 'completado', progreso: 100 };
-    // PersistenciaStore.guardarLugares(lugaresGuardados);
+    // ── 2. Marcar como finalizada en localStorage ──
+    if (_idInspeccionActiva) {
+        localStorage.setItem(`sifex_insp_${_idInspeccionActiva}_done`, '1');
+    }
 
-    // ── 2. Toast + redirección a #seccion-cards ──
+    // ── 3. PUT final al backend con plantas_revisadas y plantas_afectadas reales ──
+    if (_idInspeccionActiva) {
+        try {
+            let totalRevisadas = 0;
+            let totalAfectadas = 0;
+            document.querySelectorAll('#seccion-lotes .lote-row').forEach(row => {
+                const id = row.querySelector('.lote-info__numero')?.textContent.trim();
+                if (id) {
+                    const d = InspeccionStore.obtener(id);
+                    if (d) {
+                        totalRevisadas += d.plantasContadas || 0;
+                        if (d.plagasPorPlanta) {
+                            totalAfectadas += Object.keys(d.plagasPorPlanta).length;
+                        }
+                    }
+                }
+            });
+            // Construir Detalle_lotes: objeto { [loteId]: { plantasContadas, plagasPorPlanta, estaCompleta } }
+            const detalleLotes = {};
+            document.querySelectorAll('#seccion-lotes .lote-row').forEach(row => {
+                const lid = row.querySelector('.lote-info__numero')?.textContent.trim();
+                if (lid) {
+                    const d = InspeccionStore.obtener(lid);
+                    if (d) {
+                        detalleLotes[lid] = {
+                            plantasContadas:  d.plantasContadas  || 0,
+                            plagasPorPlanta:  d.plagasPorPlanta  || {},
+                            estaCompleta:     d.estaCompleta     || false
+                        };
+                    }
+                }
+            });
+
+            await fetch(`http://localhost:9000/inspeccion/${_idInspeccionActiva}`, {
+                method:  'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({
+                    Plantas_revisadas: totalRevisadas,
+                    Plantas_afectadas: totalAfectadas,
+                    Estado:            'Completado',
+                    Detalle_lotes:     JSON.stringify(detalleLotes)
+                })
+            });
+        } catch (e) {
+            console.error('Error al finalizar inspección en backend:', e);
+        }
+    }
+
+    // ── 4. Toast + redirección a #seccion-cards ──
     mostrarToast(`✅ Inspección de "${_lugarActivo}" finalizada correctamente`);
 
     // Pequeño delay para que el toast sea visible antes de cambiar la vista
@@ -1252,11 +1826,57 @@ function _renderizarCards(inspecciones) {
     }
 
     inspecciones.forEach(insp => {
-        const estaCompleta = (insp.Plantas_revisadas ?? 0) > 0;
-        const estado       = estaCompleta ? 'completado' : 'pendiente';
-        const pct          = estaCompleta ? 100 : 0;
-        const nombre       = insp.Nombre_LugarProduccion || `Lugar #${insp.Id_lugar}`;
-        const productor    = insp.Nombre_Productor || null;
+        const nombre    = insp.Nombre_LugarProduccion || `Lugar #${insp.Id_lugar}`;
+        const productor = insp.Nombre_Productor || null;
+
+        // ── Determinar estado real ─────────────────────────────────────────
+        // Fuente de verdad PRIMARIA: campo Estado devuelto por la BD.
+        //   'Completado' → la inspección fue finalizada (persiste entre sesiones).
+        //   cualquier otro valor → pendiente / en curso.
+        // Fuente SECUNDARIA: localStorage para el % de progreso parcial.
+        const lsKeyBase    = `sifex_insp_${insp.Id_inspeccion}`;
+        const bdCompletado = insp.Estado === 'Completado';
+
+        // Sincronizar LS con BD: si la BD dice completado, reflejarlo en LS
+        // para que ModalInspeccion pueda leer los datos del lote al abrir.
+        if (bdCompletado) {
+            localStorage.setItem(lsKeyBase + '_done', '1');
+        }
+
+        const lsDone = bdCompletado || localStorage.getItem(lsKeyBase + '_done') === '1';
+
+        let pct        = 0;
+        let estado     = 'pendiente';
+        let textoBtnAccion;
+
+        if (lsDone) {
+            // Inspección finalizada — fuente: BD (Estado='Completado') o LS _done
+            pct            = 100;
+            estado         = 'completado';
+            textoBtnAccion = 'Ver inspección ➜';
+        } else {
+            // Intentar calcular progreso real desde los lotes guardados en LS
+            let lsData = null;
+            try {
+                const raw = localStorage.getItem(lsKeyBase);
+                if (raw) lsData = JSON.parse(raw);
+            } catch (e) { /* LS corrupto, ignorar */ }
+
+            if (lsData?.lotes) {
+                const totalLotes     = lsData.meta?.totalLotes || Object.keys(lsData.lotes).length;
+                const lotesCompletos = Object.values(lsData.lotes)
+                    .filter(l => l.estaCompleta === true).length;
+                pct            = totalLotes > 0 ? Math.round((lotesCompletos / totalLotes) * 100) : 0;
+                textoBtnAccion = 'Continuar inspección ➜';
+            } else if ((insp.Plantas_revisadas ?? 0) > 0) {
+                // La BD confirma que ya fue abierta pero el LS fue limpiado
+                pct            = 0;
+                textoBtnAccion = 'Continuar inspección ➜';
+            } else {
+                // Nunca abierta
+                textoBtnAccion = 'Empezar inspección ➜';
+            }
+        }
 
         // Construir texto de ubicación con departamento, municipio y vereda
         const partesUbicacion = [insp.Departamento, insp.Municipio, insp.Vereda].filter(Boolean);
@@ -1266,33 +1886,32 @@ function _renderizarCards(inspecciones) {
             ? new Date(insp.Fecha_inspeccion).toLocaleDateString('es-CO')
             : 'Por definir';
 
-        // Texto del botón según porcentaje
-        let textoBtnAccion;
-        if (estaCompleta) {
-            textoBtnAccion = 'Ver inspección ➜';
-        } else if (pct === 0) {
-            textoBtnAccion = 'Empezar inspección ➜';
-        } else {
-            textoBtnAccion = 'Continuar inspección ➜';
-        }
-
         // Escapar comillas simples para uso seguro en atributos onclick
         const nombreEsc   = nombre.replace(/'/g, "\\'");
         const ubicEsc     = ubicacion.replace(/'/g, "\\'");
+        // Pasar plantasRevisadasBD para que abrirVistaLotes no repita el PUT inicial
+        const plantasRevisadasBD = insp.Plantas_revisadas ?? 0;;
 
         const card = document.createElement('div');
-        card.className        = 'card';
-        card.dataset.estado   = estado;
-        card.dataset.idLugar  = insp.Id_lugar;
-        card.dataset.totalLotes = 1;
+        card.className             = 'card';
+        card.dataset.estado        = estado;
+        card.dataset.idLugar       = insp.Id_lugar;
+        card.dataset.idInspeccion  = insp.Id_inspeccion;
+        card.dataset.totalLotes    = 1;
+
+        // Si la inspección ya fue finalizada, el botón abre directamente el modal
+        // de resumen; de lo contrario abre la vista de lotes para continuar/empezar.
+        const onclickAccion = lsDone
+            ? `ModalInspeccion.abrir('${nombreEsc}', 'completado', ${insp.Id_inspeccion || 0})`
+            : `abrirVistaLotes('${nombreEsc}', '${ubicEsc}', ${insp.Id_lugar}, ${insp.Id_inspeccion || 0}, ${plantasRevisadasBD})`;
 
         card.innerHTML = `
-            <div class="card__accent card__accent--${estaCompleta ? 'aprobado' : 'pendiente'}"></div>
+            <div class="card__accent card__accent--${estado === 'completado' ? 'aprobado' : 'pendiente'}"></div>
             <div class="card__inner">
                 <div class="card-header">
                     <span class="card-codigo">${nombre}</span>
-                    <span class="badge ${estaCompleta ? 'badge-aprobado' : 'badge-revision'}">
-                        ${estaCompleta ? 'Completado' : 'Pendiente'}
+                    <span class="badge ${estado === 'completado' ? 'badge-aprobado' : 'badge-revision'}">
+                        ${estado === 'completado' ? 'Completado' : 'Pendiente'}
                     </span>
                 </div>
                 <div class="card-coords">
@@ -1314,17 +1933,16 @@ function _renderizarCards(inspecciones) {
                 <div class="prog-wrap">
                     <div class="prog-label">
                         <span class="prog-key">Progreso</span>
-                        <span class="prog-val ${estaCompleta ? 'prog-val--comp' : 'prog-val--pend'}">${pct}%</span>
+                        <span class="prog-val ${estado === 'completado' ? 'prog-val--comp' : 'prog-val--pend'}">${pct}%</span>
                     </div>
                     <div class="prog-track">
-                        <div class="prog-bar ${estaCompleta ? 'prog-bar--comp' : 'prog-bar--pend'}"
+                        <div class="prog-bar ${estado === 'completado' ? 'prog-bar--comp' : 'prog-bar--pend'}"
                              style="width:${pct}%"></div>
                     </div>
                 </div>
             </div>
             <div class="card-actions">
-                <button class="btn-detalles"
-                    onclick="abrirVistaLotes('${nombreEsc}', '${ubicEsc}', ${insp.Id_lugar})">
+                <button class="btn-detalles" onclick="${onclickAccion}">
                     ${textoBtnAccion}
                 </button>
             </div>

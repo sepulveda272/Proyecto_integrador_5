@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 26-05-2026 a las 10:37:15
+-- Tiempo de generación: 27-05-2026 a las 10:55:27
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -63,19 +63,21 @@ CREATE TABLE `inspeccion_fitosanitario` (
   `Fecha_inspeccion` date NOT NULL,
   `Nivel_alerta` int(11) DEFAULT NULL COMMENT 'Puede ser un ENUM o tabla de catálogo, pero aquí un INT',
   `Id_tecnico` int(11) NOT NULL,
-  `Id_lugar` int(11) NOT NULL COMMENT 'Este ID hace referencia a Lugar_produccion en db_ubicaciones. No es una FOREIGN KEY física.'
+  `Id_lugar` int(11) NOT NULL COMMENT 'Este ID hace referencia a Lugar_produccion en db_ubicaciones. No es una FOREIGN KEY física.',
+  `Estado` varchar(20) NOT NULL DEFAULT 'Pendiente' COMMENT 'Pendiente | Completado',
+  `Detalle_lotes` longtext DEFAULT NULL COMMENT 'JSON con detalle por lote: plantasContadas, plagasPorPlanta, estaCompleta'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 --
 -- Volcado de datos para la tabla `inspeccion_fitosanitario`
 --
 
-INSERT INTO `inspeccion_fitosanitario` (`Id_inspeccion`, `Plantas_revisadas`, `Plantas_afectadas`, `Fecha_inspeccion`, `Nivel_alerta`, `Id_tecnico`, `Id_lugar`) VALUES
-(5, 0, 0, '2026-06-06', 0, 1, 2),
-(6, 0, 0, '2026-05-27', 0, 1, 4),
-(7, 0, 0, '2026-06-05', 0, 1, 2),
-(8, 0, 0, '2026-05-28', 0, 1, 4),
-(9, 0, 0, '2026-05-30', 0, 1, 12);
+INSERT INTO `inspeccion_fitosanitario` (`Id_inspeccion`, `Plantas_revisadas`, `Plantas_afectadas`, `Fecha_inspeccion`, `Nivel_alerta`, `Id_tecnico`, `Id_lugar`, `Estado`, `Detalle_lotes`) VALUES
+(5, 0, 0, '2026-06-06', 0, 1, 2, 'Pendiente', NULL),
+(6, 0, 0, '2026-05-27', 0, 1, 4, 'Pendiente', NULL),
+(7, 0, 0, '2026-06-05', 0, 1, 2, 'Pendiente', NULL),
+(8, 0, 0, '2026-05-28', 0, 1, 4, 'Pendiente', NULL),
+(9, 31, 10, '2026-05-30', 3, 1, 12, 'Completado', '{\"LOTE-11\":{\"plantasContadas\":10,\"plagasPorPlanta\":{},\"estaCompleta\":true},\"LOTE-12\":{\"plantasContadas\":5,\"plagasPorPlanta\":{\"5\":[8,7]},\"estaCompleta\":true},\"LOTE-13\":{\"plantasContadas\":7,\"plagasPorPlanta\":{\"1\":[4],\"4\":[2,4],\"6\":[4,2],\"7\":[2]},\"estaCompleta\":true},\"LOTE-14\":{\"plantasContadas\":9,\"plagasPorPlanta\":{\"5\":[4],\"6\":[4],\"7\":[7],\"8\":[4],\"9\":[7]},\"estaCompleta\":true}}');
 
 -- --------------------------------------------------------
 
@@ -170,13 +172,13 @@ ALTER TABLE `funcionario_ica`
 -- AUTO_INCREMENT de la tabla `inspeccion_fitosanitario`
 --
 ALTER TABLE `inspeccion_fitosanitario`
-  MODIFY `Id_inspeccion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `Id_inspeccion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT de la tabla `observaciones`
 --
 ALTER TABLE `observaciones`
-  MODIFY `Id_observacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `Id_observacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `tecnico_oficial`

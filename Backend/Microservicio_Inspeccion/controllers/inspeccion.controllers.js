@@ -135,7 +135,8 @@ export const addInspeccion = async (req, res) => {
             Fecha_inspeccion,
             Nivel_alerta,
             Id_tecnico,
-            Id_lugar
+            Id_lugar,
+            Estado: 'Pendiente'   // toda inspección nueva arranca como Pendiente
         };
 
         const connection = await getConnection();
@@ -173,6 +174,36 @@ export const updateInspeccion = async (req, res) => {
             status: "Success",
             message: `Inspección ${id} actualizada correctamente.`,
             data: datosBody
+        });
+    } catch (error) {
+        res.status(500).json({ status: "Error", message: error.message });
+    }
+};
+
+
+export const getLotesInspeccion = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const connection = await getConnection();
+
+        const result = await connection.query(
+            "SELECT Detalle_lotes FROM inspeccion_fitosanitario WHERE Id_inspeccion = ?",
+            [id]
+        );
+
+        if (result.length === 0) {
+            return res.status(404).json({ status: "Error", message: `Inspección con ID ${id} no encontrada.` });
+        }
+
+        // Detalle_lotes es JSON almacenado como TEXT — parsearlo si viene como string
+        let lotes = result[0].Detalle_lotes;
+        if (typeof lotes === 'string') {
+            try { lotes = JSON.parse(lotes); } catch { lotes = null; }
+        }
+
+        res.json({
+            status: "Success",
+            data: lotes || {}
         });
     } catch (error) {
         res.status(500).json({ status: "Error", message: error.message });

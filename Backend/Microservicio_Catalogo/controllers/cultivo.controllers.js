@@ -107,3 +107,33 @@ export const updateCultivo = async (req, res) => {
         res.status(500).json({ status: "Error", message: error.message });
     }
 }
+
+/**
+ * GET /cultivo/:id/plagas
+ * Devuelve todas las plagas relacionadas a un cultivo específico
+ * a través de la tabla `afectado`.
+ */
+export const getPlagasPorCultivo = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const connection = await getConnection();
+
+        const plagas = await connection.query(`
+            SELECT p.Id_plaga, p.Nombre_cientifico, p.Nombre_comun, p.Imagen, p.Descripcion
+            FROM plagas p
+            INNER JOIN afectado a ON p.Id_plaga = a.Id_plaga
+            WHERE a.Id_cultivo = ?
+        `, [id]);
+
+        res.json({
+            status: "Success",
+            message: plagas.length
+                ? `Se encontraron ${plagas.length} plaga(s) para el cultivo ${id}.`
+                : `No hay plagas registradas para el cultivo ${id}.`,
+            total_results: plagas.length,
+            data: plagas
+        });
+    } catch (error) {
+        res.status(500).json({ status: "Error", message: error.message });
+    }
+}

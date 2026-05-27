@@ -95,14 +95,18 @@ async function cargarDatos() {
             const data = await resp.json();
             const inspecciones = data.data || [];
 
-            lugaresCompletados = inspecciones.map(i => ({
-                id:          i.Id_inspeccion,
-                nombre:      `Inspección #${i.Id_inspeccion}${i.Nombre_tecnico ? ' — Técnico: ' + i.Nombre_tecnico + ' ' + (i.Apellido_tecnico || '') : ''}`,
-                departamento: 'General',
-                municipio:    'General',
-                tecnicoId:   i.Id_tecnico
-            }));
+            // Solo las inspecciones con Estado === 'Completado' aparecen en la tabla
+            lugaresCompletados = inspecciones
+                .filter(i => i.Estado === 'Completado')
+                .map(i => ({
+                    id:          i.Id_inspeccion,
+                    nombre:      `Inspección #${i.Id_inspeccion}${i.Nombre_tecnico ? ' — Técnico: ' + i.Nombre_tecnico + ' ' + (i.Apellido_tecnico || '') : ''}`,
+                    departamento: 'General',
+                    municipio:    'General',
+                    tecnicoId:   i.Id_tecnico
+                }));
 
+            // reportesLotes y fechasInspeccion se llenan para todas (por si se consultan luego)
             inspecciones.forEach(i => {
                 reportesLotes[i.Id_inspeccion] = [{
                     lote:            'Inspección principal',
