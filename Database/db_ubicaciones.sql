@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 26-05-2026 a las 10:37:25
+-- Tiempo de generación: 28-05-2026 a las 09:59:03
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -91,18 +91,18 @@ CREATE TABLE `lote` (
 --
 
 INSERT INTO `lote` (`Numero_Lote`, `Area_total`, `Fecha_siembra`, `Fecha_eliminacion`, `Area_siembra`, `Estado_fenologico`, `Total_plantas`, `Id_lugar`, `Id_cultivo`) VALUES
-(2, 10.50, '2024-04-17', NULL, 8.20, 'Crecimiento', 200, 2, 2),
+(2, 10.50, '2024-04-17', NULL, 8.20, 'Crecimiento', 10, 2, 2),
 (4, 2.50, '2026-04-25', NULL, 1.50, 'Cosecha', 200, 4, 1),
 (5, 6.00, '2026-04-22', NULL, 5.40, 'Siembra', 300, 4, 4),
-(6, 2.40, '2026-04-26', NULL, 2.00, 'Germinación', 212, 2, 2),
-(7, 3.20, '2026-04-26', NULL, 2.20, 'Germinación', 120, 2, 3),
-(8, 1.50, '2026-04-26', NULL, 1.00, 'Crecimiento', 500, 2, 3),
-(9, 1.00, '2026-04-26', NULL, 1.00, 'Crecimiento', 320, 2, 3),
+(6, 2.40, '2026-04-26', NULL, 2.00, 'Germinación', 10, 2, 2),
+(7, 3.20, '2026-04-26', NULL, 2.20, 'Germinación', 15, 2, 3),
+(8, 1.50, '2026-04-26', NULL, 1.00, 'Crecimiento', 5, 2, 3),
+(9, 1.00, '2026-04-26', NULL, 1.00, 'Crecimiento', 10, 2, 3),
 (10, 5.30, '2026-04-26', NULL, 2.20, 'Siembra', 201, 4, 3),
-(11, 10.50, '2026-04-26', NULL, 8.50, 'Crecimiento', 600, 12, 3),
-(12, 8.50, '2026-04-14', NULL, 8.40, 'Floración', 456, 12, 5),
-(13, 10.40, '2026-04-15', NULL, 9.80, 'Maduración', 502, 12, 7),
-(14, 5.20, '2026-04-12', NULL, 5.00, 'Germinación', 619, 12, 6),
+(11, 10.50, '2026-04-26', NULL, 8.50, 'Crecimiento', 10, 12, 3),
+(12, 8.50, '2026-04-14', NULL, 8.40, 'Floración', 5, 12, 5),
+(13, 10.40, '2026-04-15', NULL, 9.80, 'Maduración', 7, 12, 7),
+(14, 5.20, '2026-04-12', NULL, 5.00, 'Germinación', 9, 12, 6),
 (20, 2.00, '2026-04-26', NULL, 1.50, 'Siembra', 420, 4, 3),
 (21, 3.40, '2026-04-26', NULL, 3.10, 'Crecimiento', 321, 4, 4),
 (22, 2.00, '2026-04-26', NULL, 1.50, 'Siembra', 150, 4, 3),

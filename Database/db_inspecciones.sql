@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 27-05-2026 a las 10:55:27
+-- Tiempo de generación: 28-05-2026 a las 09:58:53
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -93,6 +93,13 @@ CREATE TABLE `observaciones` (
   `Id_funcionario` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
+--
+-- Volcado de datos para la tabla `observaciones`
+--
+
+INSERT INTO `observaciones` (`Id_observacion`, `Fecha_observacion`, `Observaciones`, `Id_inspeccion`, `Id_funcionario`) VALUES
+(6, '2026-05-28 05:37:33', 'cuide mas sus cultivos para que los pueda exportar', 9, 1);
+
 -- --------------------------------------------------------
 
 --
@@ -178,7 +185,7 @@ ALTER TABLE `inspeccion_fitosanitario`
 -- AUTO_INCREMENT de la tabla `observaciones`
 --
 ALTER TABLE `observaciones`
-  MODIFY `Id_observacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `Id_observacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `tecnico_oficial`
