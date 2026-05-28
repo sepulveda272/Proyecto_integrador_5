@@ -95,30 +95,81 @@ async function cargarDatos() {
             const data = await resp.json();
             const inspecciones = data.data || [];
 
-            // Solo las inspecciones con Estado === 'Completado' aparecen en la tabla
-            lugaresCompletados = inspecciones
-                .filter(i => i.Estado === 'Completado')
-                .map(i => ({
-                    id:          i.Id_inspeccion,
-                    nombre:      `Inspección #${i.Id_inspeccion}${i.Nombre_tecnico ? ' — Técnico: ' + i.Nombre_tecnico + ' ' + (i.Apellido_tecnico || '') : ''}`,
-                    departamento: 'General',
-                    municipio:    'General',
-                    tecnicoId:   i.Id_tecnico
-                }));
+            // Solo las inspecciones con Estado === 'Completado' aparecen en la tabla.
+            // Para cada una se consulta el microservicio de infraestructura (puerto 8003)
+            // para obtener el nombre real del lugar de producción.
+            lugaresCompletados = await Promise.all(
+                inspecciones
+                    .filter(i => i.Estado === 'Completado')
+                    .map(async i => {
+                        let lugarNombre = `Lugar #${i.Id_lugar}`;
+                        let departamento = '—';
+                        let municipio    = '—';
+                        try {
+                            const rLugar = await fetch(`http://localhost:8003/lugarPro/${i.Id_lugar}`);
+                            if (rLugar.ok) {
+                                const dLugar = await rLugar.json();
+                                const lugar  = dLugar.data;
+                                const predio = lugar?.predios?.[0];
+                                lugarNombre  = lugar?.Nombre_LugarProduccion || lugarNombre;
+                                departamento = predio?.Ubicacion?.Departamento || '—';
+                                municipio    = predio?.Ubicacion?.Municipio    || '—';
+                            }
+                        } catch { /* fallback ya está asignado arriba */ }
 
-            // reportesLotes y fechasInspeccion se llenan para todas (por si se consultan luego)
+                        return {
+                            id:          i.Id_inspeccion,
+                            nombre:      lugarNombre,
+                            departamento,
+                            municipio,
+                            tecnicoId:   i.Id_tecnico
+                        };
+                    })
+            );
+
+            // reportesLotes y fechasInspeccion se llenan para todas las inspecciones.
+            // Si la inspección tiene Detalle_lotes (JSON), se parsea lote a lote.
+            // En caso contrario se usa un único registro con los totales globales.
             inspecciones.forEach(i => {
-                reportesLotes[i.Id_inspeccion] = [{
-                    lote:            'Inspección principal',
-                    cultivo:         'No especificado',
-                    plaga:           i.Nivel_alerta > 0 ? `Nivel de alerta ${i.Nivel_alerta}` : 'Ninguna',
-                    cantidadPlagas:  i.Nivel_alerta,
-                    plantasSembradas: i.Plantas_revisadas,
-                    plantasContadas:  i.Plantas_revisadas - i.Plantas_afectadas
-                }];
+                let detalle = i.Detalle_lotes;
+                if (typeof detalle === 'string') {
+                    try { detalle = JSON.parse(detalle); } catch { detalle = null; }
+                }
 
+                if (detalle && typeof detalle === 'object' && Object.keys(detalle).length > 0) {
+                    reportesLotes[i.Id_inspeccion] = Object.entries(detalle).map(([loteKey, d]) => {
+                        const total       = d.plantasContadas || 0;
+                        const plagaMap    = d.plagasPorPlanta  || {};
+                        const numAfect    = Object.keys(plagaMap).length;
+                        const plagaIds    = [...new Set(Object.values(plagaMap).flat())];
+                        return {
+                            loteKey,
+                            cultivo:          'No especificado',
+                            plantasContadas:  total,       // dato real del JSON
+                            plantasAfectadas: numAfect,    // plantas con plagas
+                            cantidadPlagas:   plagaIds.length,
+                            plaga:            plagaIds.length > 0
+                                ? plagaIds.map(id => `Plaga #${id}`).join(', ')
+                                : 'Ninguna',
+                            plagasDetalle:    plagaMap
+                        };
+                    });
+                } else {
+                    // Fallback para inspecciones sin Detalle_lotes
+                    reportesLotes[i.Id_inspeccion] = [{
+                        loteKey:          'General',
+                        cultivo:          'No especificado',
+                        plaga:            i.Nivel_alerta > 0 ? `Nivel de alerta ${i.Nivel_alerta}` : 'Ninguna',
+                        cantidadPlagas:   i.Nivel_alerta || 0,
+                        plantasContadas:  i.Plantas_revisadas || 0,
+                        plantasAfectadas: i.Plantas_afectadas || 0,
+                        plagasDetalle:    {}
+                    }];
+                }
+
+                // Fecha — el API devuelve ISO string ("2026-05-30T00:00:00.000Z")
                 fechasInspeccion[i.Id_inspeccion] = i.Fecha_inspeccion
-                    ? new Date(i.Fecha_inspeccion + 'T00:00:00').toLocaleDateString('es-CO')
+                    ? new Date(i.Fecha_inspeccion).toLocaleDateString('es-CO')
                     : null;
             });
         }
@@ -283,8 +334,9 @@ function _botonesAccion(lugarId) {
             onclick="verReporte(${lugarId})">👁</button>
         <button
             class="action-btn action-btn-descargar"
-            title="Descargar"
-            type="button">
+            title="Descargar reporte PDF"
+            type="button"
+            onclick="descargarReporte(${lugarId})">
             <svg xmlns="http://www.w3.org/2000/svg"
                  width="15" height="15"
                  viewBox="0 0 24 24"
@@ -381,7 +433,7 @@ function renderTablaObs() {
                 <td>${obs.fecha}</td>
                 <td>${obs.texto}</td>
                 ${celdaTecnico}
-                <td><span class="badge badge-calido">${lugar.id}</span></td>
+                <td><span class="badge badge-calido">Inspección #${lugar.id}</span></td>
                 <td>${_botonesAccion(lugar.id)}</td>
             `;
         } else {
@@ -393,7 +445,7 @@ function renderTablaObs() {
                 <td class="td-vacio">—</td>
                 <td class="td-pendiente">Sin observación registrada</td>
                 ${celdaTecnico}
-                <td><span class="badge badge-calido">${lugar.id}</span></td>
+                <td><span class="badge badge-calido">Inspección #${lugar.id}</span></td>
                 <td>${_botonesAccion(lugar.id)}</td>
             `;
         }
@@ -612,21 +664,16 @@ function verReporte(lugarId) {
     fechaContenedor.innerHTML = _htmlFechaInspeccion(fechaLugar);
 
     // Resumen general de plantas
-    const totalSembradas = lotes.reduce((s, l) => s + l.plantasSembradas, 0);
-    const totalContadas  = lotes.reduce((s, l) => s + l.plantasContadas,  0);
-    const totalAfectadas = totalSembradas - totalContadas;
+    const totalRevisadas = lotes.reduce((s, l) => s + l.plantasContadas,  0); // real: sum plantasContadas
+    const totalAfectadas = lotes.reduce((s, l) => s + l.plantasAfectadas, 0); // real: sum plantas con plagas
     const claseAfectadas = totalAfectadas > 0 ? 'reporte-resumen-valor--dano' : '';
 
     document.getElementById('reporte-resumen').innerHTML = lotes.length === 0
         ? ''
         : `
             <div class="reporte-resumen-item">
-                <span class="reporte-resumen-label">🌱 Plantas sembradas</span>
-                <span class="reporte-resumen-valor">${totalSembradas}</span>
-            </div>
-            <div class="reporte-resumen-item">
-                <span class="reporte-resumen-label">🔍 Plantas contadas</span>
-                <span class="reporte-resumen-valor">${totalContadas}</span>
+                <span class="reporte-resumen-label">🔍 Plantas revisadas</span>
+                <span class="reporte-resumen-valor">${totalRevisadas}</span>
             </div>
             <div class="reporte-resumen-item">
                 <span class="reporte-resumen-label">⚠️ Plantas afectadas</span>
@@ -644,10 +691,10 @@ function verReporte(lugarId) {
             </div>`;
     } else {
         contenedor.innerHTML = lotes.map((lote, idx) => {
-            const tituloLote = `Lote ${idx + 1}`;
-            const afectadas  = lote.plantasSembradas - lote.plantasContadas;
+            const tituloLote = lote.loteKey || `Lote ${idx + 1}`;
+            const afectadas  = lote.plantasAfectadas; // dato real del JSON
             const claseAfect = afectadas > 0 ? 'reporte-afectadas--con-dano' : '';
-            const alerta     = calcularNivelAlerta(afectadas, lote.plantasSembradas);
+            const alerta     = calcularNivelAlerta(afectadas, lote.plantasContadas);
             const sinPlagas  = lote.cantidadPlagas === 0 || lote.plaga === 'Ninguna';
             const plagasHTML = sinPlagas
                 ? `<span class="reporte-lote-sin-plagas">Sin plagas detectadas</span>`
@@ -682,10 +729,6 @@ function verReporte(lugarId) {
                                 <span class="reporte-lote-valor">${lote.cultivo || 'No especificado'}</span>
                             </div>
 
-                            <div class="reporte-lote-fila">
-                                <span class="reporte-lote-campo">Plantas sembradas</span>
-                                <span class="reporte-lote-valor">${lote.plantasSembradas}</span>
-                            </div>
                             <div class="reporte-lote-fila">
                                 <span class="reporte-lote-campo">Plantas contadas</span>
                                 <span class="reporte-lote-valor">${lote.plantasContadas}</span>
@@ -722,6 +765,229 @@ function verReporte(lugarId) {
 function toggleLoteCard(cardId) {
     const card = document.getElementById(cardId);
     if (card) card.classList.toggle('open');
+}
+
+/**
+ * Genera y descarga un PDF con el reporte completo de la inspección.
+ * Usa jsPDF + autoTable (cargados vía CDN en observaciones.html).
+ *
+ * @param {string|number} lugarId - Id_inspeccion
+ */
+function descargarReporte(lugarId) {
+    const lugar = _buscarLugar(lugarId);
+    if (!lugar) return;
+
+    const lotes    = reportesLotes[lugarId] ?? [];
+    const fecha    = fechasInspeccion[lugarId] ?? 'Sin fecha';
+    const obs      = observacionesRegistradas.find(o => o.inspeccionId == lugarId);
+    const tecnico  = _buscarTecnicoDeLugar(lugarId);
+
+    // ─── Totales ────────────────────────────────────────────────────────────
+    const totalRevisadas = lotes.reduce((s, l) => s + l.plantasContadas,  0);
+    const totalAfectadas = lotes.reduce((s, l) => s + l.plantasAfectadas, 0);
+    const alertaGlobal   = calcularNivelAlerta(totalAfectadas, totalRevisadas);
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    const VERDE  = [52, 113, 72];    // verde SIFEX
+    const CLARO  = [232, 245, 236];
+    const NEGRO  = [30, 30, 30];
+    const GRIS   = [110, 110, 110];
+    const ROJO   = [200, 60, 60];
+
+    const PW = 210, ML = 14, MR = 14, CTX = PW - ML - MR;
+    let y = 0;
+
+    // ─── Encabezado verde ───────────────────────────────────────────────────
+    doc.setFillColor(...VERDE);
+    doc.rect(0, 0, PW, 26, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text('🌿 SIFEX — Reporte de Inspección Fitosanitaria', ML, 11);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text('Sistema de Información Fitosanitaria de Exportación · ICA', ML, 18);
+    doc.text(`Generado: ${new Date().toLocaleString('es-CO')}`, PW - MR, 18, { align: 'right' });
+    y = 33;
+
+    // ─── Ficha de la inspección ─────────────────────────────────────────────
+    doc.setFillColor(...CLARO);
+    doc.roundedRect(ML, y, CTX, 28, 2, 2, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...NEGRO);
+    doc.setFontSize(11);
+    doc.text(`Inspección #${lugarId}`, ML + 4, y + 7);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...GRIS);
+    const col1x = ML + 4, col2x = ML + CTX / 2;
+    doc.text('Lugar de producción:', col1x, y + 14);
+    doc.setTextColor(...NEGRO);
+    doc.text(lugar.nombre, col1x + 38, y + 14);
+    doc.setTextColor(...GRIS);
+    doc.text('Fecha de inspección:', col1x, y + 20);
+    doc.setTextColor(...NEGRO);
+    doc.text(fecha, col1x + 38, y + 20);
+    doc.setTextColor(...GRIS);
+    doc.text('Ubicación:', col2x, y + 14);
+    doc.setTextColor(...NEGRO);
+    doc.text(`${lugar.municipio}, ${lugar.departamento}`, col2x + 22, y + 14);
+    doc.setTextColor(...GRIS);
+    doc.text('Técnico asignado:', col2x, y + 20);
+    doc.setTextColor(...NEGRO);
+    doc.text(tecnico ? tecnico.nombre : '—', col2x + 35, y + 20);
+    y += 35;
+
+    // ─── Resumen de plantas ─────────────────────────────────────────────────
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...VERDE);
+    doc.setFontSize(10);
+    doc.text('RESUMEN GENERAL', ML, y);
+    y += 5;
+
+    const boxes = [
+        { label: 'Plantas revisadas', val: totalRevisadas,  color: NEGRO },
+        { label: 'Plantas afectadas', val: totalAfectadas,  color: totalAfectadas > 0 ? ROJO : NEGRO }
+    ];
+    const boxW = CTX / 2 - 3; // 2 cajas — redefinir ancho
+    boxes.forEach((b, i2) => {
+        const bx = ML + i2 * (boxW + 2);
+        doc.setFillColor(...CLARO);
+        doc.roundedRect(bx, y, boxW, 16, 2, 2, 'F');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(...GRIS);
+        doc.text(b.label, bx + boxW / 2, y + 5, { align: 'center' });
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.setTextColor(...b.color);
+        doc.text(String(b.val), bx + boxW / 2, y + 13, { align: 'center' });
+    });
+    y += 22;
+
+    // Badge nivel de alerta global + Dictamen de exportación
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...GRIS);
+    doc.text(`Nivel de alerta global: ${alertaGlobal.label}`, ML, y);
+    y += 8;
+
+    // ─── Dictamen de aptitud para exportación ───────────────────────────────
+    // Niveles que permiten la exportación: Sin incidencia, Muy baja, Baja, Moderada
+    const NIVELES_APROBADOS = ['Sin incidencia', 'Muy baja', 'Baja', 'Moderada', 'Sin datos'];
+    const aprobado = NIVELES_APROBADOS.includes(alertaGlobal.label);
+
+    const AMARILLO     = [180, 130, 0];
+    const VERDE_EXPORT = [34, 120, 60];
+    const ROJO_EXPORT  = [180, 40, 40];
+    const BG_VERDE     = [220, 243, 229];
+    const BG_ROJO      = [252, 225, 225];
+
+    const dictamenBg    = aprobado ? BG_VERDE  : BG_ROJO;
+    const dictamenColor = aprobado ? VERDE_EXPORT : ROJO_EXPORT;
+    const dictamenIco   = aprobado ? '✔' : '✘';
+    const dictamenTxt   = aprobado
+        ? 'APROBADO PARA EXPORTACIÓN'
+        : 'NO APROBADO PARA EXPORTACIÓN';
+    const dictamenSub   = aprobado
+        ? `Nivel de alerta "${alertaGlobal.label}" — dentro de los rangos admitidos por el ICA.`
+        : `Nivel de alerta "${alertaGlobal.label}" — supera el umbral admitido para exportación.`;
+
+    doc.setFillColor(...dictamenBg);
+    doc.roundedRect(ML, y, CTX, 18, 2, 2, 'F');
+    doc.setDrawColor(...dictamenColor);
+    doc.setLineWidth(0.8);
+    doc.roundedRect(ML, y, CTX, 18, 2, 2, 'S');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(...dictamenColor);
+    doc.text(`${dictamenIco}  ${dictamenTxt}`, ML + 4, y + 8);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...dictamenColor);
+    doc.text(dictamenSub, ML + 4, y + 14);
+    y += 26;
+
+    // ─── Detalle por lote ───────────────────────────────────────────────────
+    if (lotes.length > 0) {
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...VERDE);
+        doc.setFontSize(10);
+        doc.text('DETALLE POR LOTE', ML, y);
+        y += 4;
+
+        doc.autoTable({
+            startY: y,
+            margin: { left: ML, right: MR },
+            head: [['Lote', 'Plantas revisadas', 'Plantas afectadas', 'Nivel de alerta', 'Plagas detectadas']],
+            body: lotes.map(l => {
+                const afect  = l.plantasAfectadas;
+                const alerta = calcularNivelAlerta(afect, l.plantasContadas);
+                return [
+                    l.loteKey,
+                    l.plantasContadas,
+                    afect,
+                    alerta.label,
+                    l.plaga === 'Ninguna' ? 'Sin plagas' : l.plaga
+                ];
+            }),
+            headStyles:    { fillColor: VERDE, textColor: 255, fontSize: 8, fontStyle: 'bold' },
+            bodyStyles:    { fontSize: 8, textColor: NEGRO },
+            alternateRowStyles: { fillColor: [248, 252, 249] },
+            columnStyles:  { 0: { fontStyle: 'bold' }, 4: { cellWidth: 55 } },
+            theme: 'grid',
+            didDrawPage: d => { y = d.cursor.y; }
+        });
+
+        y = doc.lastAutoTable.finalY + 8;
+    }
+
+    // ─── Observación del funcionario ────────────────────────────────────────
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...VERDE);
+    doc.setFontSize(10);
+    doc.text('OBSERVACIÓN DEL FUNCIONARIO ICA', ML, y);
+    y += 5;
+
+    if (obs) {
+        doc.setFillColor(...CLARO);
+        const obsLines = doc.splitTextToSize(obs.texto, CTX - 8);
+        const obsH     = obsLines.length * 5 + 12;
+        doc.roundedRect(ML, y, CTX, obsH, 2, 2, 'F');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(...GRIS);
+        doc.text(`Fecha: ${obs.fecha}`, ML + 4, y + 7);
+        doc.setTextColor(...NEGRO);
+        doc.text(obsLines, ML + 4, y + 13);
+        y += obsH + 6;
+    } else {
+        doc.setFillColor(255, 249, 230);
+        doc.roundedRect(ML, y, CTX, 12, 2, 2, 'F');
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(9);
+        doc.setTextColor(180, 130, 0);
+        doc.text('Sin observación registrada por el funcionario ICA.', ML + 4, y + 8);
+        y += 18;
+    }
+
+    // ─── Pie de página ───────────────────────────────────────────────────────
+    const pageH = doc.internal.pageSize.getHeight();
+    doc.setDrawColor(...VERDE);
+    doc.setLineWidth(0.5);
+    doc.line(ML, pageH - 14, PW - MR, pageH - 14);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...GRIS);
+    doc.text('SIFEX · Sistema de Información Fitosanitaria de Exportación · ICA Colombia', PW / 2, pageH - 9, { align: 'center' });
+
+    doc.save(`reporte-inspeccion-${lugarId}.pdf`);
 }
 
 /**

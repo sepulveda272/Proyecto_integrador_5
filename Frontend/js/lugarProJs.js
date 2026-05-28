@@ -7,7 +7,8 @@ const API_URL_ADD_LOTE = "http://localhost:8003/lote/add";
 document.addEventListener("DOMContentLoaded", () => {
   // Cargar los datos apenas abra la página
   cargarLugares();
-  cargarCatalogoCultivos()
+  cargarCatalogoCultivos();
+  cargarNotificaciones();
 });
 
 /**
@@ -71,28 +72,622 @@ function renderizarTabla(lugares) {
 
 async function verDetalle(idLugar) {
   try {
-    // 1. Obtener datos del lugar y sus predios
-    const resLugar = await fetch(`${API_URL}/${idLugar}`);
+    // 1. Lugar + predios
+    const resLugar  = await fetch(`${API_URL}/${idLugar}`);
     const dataLugar = await resLugar.json();
 
-    // 2. Obtener todos los lotes
-    // Nota: Si tu API permite filtrar por idLugar en la URL, úsalo.
-    // Si no, filtramos manualmente en el siguiente paso.
-    const resLotes = await fetch(API_URL_LOTE);
+    // 2. Lotes
+    const resLotes  = await fetch(API_URL_LOTE);
     const dataLotes = await resLotes.json();
 
     if (dataLugar.status === "Success" && dataLotes.status === "Success") {
-      // Filtramos los lotes para que solo queden los del lugar seleccionado
-      const lotesFiltrados = dataLotes.data.filter(
-        (lote) => lote.Id_lugar === idLugar,
-      );
-
+      const lotesFiltrados = dataLotes.data.filter(l => l.Id_lugar === idLugar);
       llenarModalDinamico(dataLugar.data, lotesFiltrados);
     }
+
+    // 3. Cargar las tabs nuevas en paralelo (no bloquean el modal)
+    cargarObservacionesModal(idLugar);
+    cargarInspeccionesModal(idLugar);
+
   } catch (error) {
     console.error("Error al cargar detalles:", error);
     showToast("Error al conectar con el servidor", "error");
   }
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  TAB OBSERVACIONES — Modal de detalle (vista productor)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Carga y renderiza las observaciones asociadas a un lugar de producción.
+ *
+ * Flujo:
+ *   1. Consulta GET /inspeccion → filtra por Id_lugar.
+ *   2. Para cada inspección encontrada, consulta GET /observacion
+ *      y filtra por Id_inspeccion.
+ *   3. Renderiza una tarjeta por observación en #lista-observaciones-dinamica.
+ *
+ * @param {number} idLugar - Id_lugar del lugar de producción
+ */
+async function cargarObservacionesModal(idLugar) {
+  const contenedor = document.getElementById('lista-observaciones-dinamica');
+  if (!contenedor) return;
+  contenedor.innerHTML = '<div class="text-center py-4 text-muted">Cargando observaciones…</div>';
+
+  try {
+    // 1. Inspecciones del lugar
+    const resInsp = await fetch('http://localhost:9000/inspeccion');
+    const dataInsp = await resInsp.json();
+    const inspecciones = (dataInsp.data || []).filter(i => i.Id_lugar === idLugar);
+
+    if (inspecciones.length === 0) {
+      contenedor.innerHTML = '<div class="notif-empty">📭 No hay inspecciones registradas para este lugar.</div>';
+      return;
+    }
+
+    const inspIds = new Set(inspecciones.map(i => i.Id_inspeccion));
+
+    // 2. Todas las observaciones → filtrar por las inspecciones del lugar
+    const resObs = await fetch('http://localhost:9000/observacion');
+    const dataObs = await resObs.json();
+    const observaciones = (dataObs.data || []).filter(o => inspIds.has(o.Id_inspeccion));
+
+    if (observaciones.length === 0) {
+      contenedor.innerHTML = '<div class="notif-empty">📭 Aún no hay observaciones registradas por el funcionario ICA para este lugar.</div>';
+      return;
+    }
+
+    // 3. Renderizar
+    contenedor.innerHTML = observaciones.map(obs => {
+      const insp  = inspecciones.find(i => i.Id_inspeccion === obs.Id_inspeccion);
+      const fecha = obs.Fecha_observacion
+        ? new Date(obs.Fecha_observacion).toLocaleDateString('es-CO')
+        : '—';
+      return `
+        <div class="obs-productor-card">
+          <div class="obs-productor-inspeccion">
+            🔍 Inspección #${obs.Id_inspeccion}
+            ${insp ? ` · ${new Date(insp.Fecha_inspeccion).toLocaleDateString('es-CO')}` : ''}
+          </div>
+          <div class="obs-productor-texto">${obs.Observaciones}</div>
+          <div class="obs-productor-fecha">Registrada: ${fecha}</div>
+        </div>`;
+    }).join('');
+
+  } catch (err) {
+    console.error('Error cargando observaciones del lugar:', err);
+    contenedor.innerHTML = '<div class="notif-empty">❌ Error al conectar con el servidor.</div>';
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  TAB HISTORIAL DE INSPECCIONES — Modal de detalle (vista productor)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Calcula el nivel de alerta fitosanitaria (misma escala que funcionario.js).
+ *
+ * @param {number} afectadas
+ * @param {number} contadas
+ * @returns {{ label: string, cssClass: string }}
+ */
+function _calcularAlertaProductor(afectadas, contadas) {
+  if (!contadas || contadas === 0) return { label: 'Sin datos',      cssClass: 'alerta-sin-datos'      };
+  const pct = (afectadas / contadas) * 100;
+  if (pct === 0)  return { label: 'Sin incidencia', cssClass: 'alerta-sin-incidencia' };
+  if (pct <= 5)   return { label: 'Muy baja',       cssClass: 'alerta-muy-baja'       };
+  if (pct <= 10)  return { label: 'Baja',           cssClass: 'alerta-baja'           };
+  if (pct <= 20)  return { label: 'Moderada',       cssClass: 'alerta-moderada'       };
+  if (pct <= 40)  return { label: 'Alta',           cssClass: 'alerta-alta'           };
+  if (pct <= 70)  return { label: 'Muy alta',       cssClass: 'alerta-muy-alta'       };
+  return                 { label: 'Crítica',        cssClass: 'alerta-critica'        };
+}
+
+/**
+ * Carga y renderiza el historial de inspecciones de un lugar de producción.
+ *
+ * Cada tarjeta muestra:
+ *   - ID y fecha de inspección
+ *   - Técnico asignado
+ *   - Plantas revisadas y afectadas
+ *   - Nivel de alerta calculado (badge de color)
+ *
+ * @param {number} idLugar - Id_lugar del lugar de producción
+ */
+async function cargarInspeccionesModal(idLugar) {
+  const contenedor = document.getElementById('lista-inspecciones-dinamica');
+  if (!contenedor) return;
+  contenedor.innerHTML = '<div class="text-center py-4 text-muted">Cargando historial…</div>';
+
+  try {
+    // 1. Inspecciones filtradas por lugar
+    const resInsp = await fetch('http://localhost:9000/inspeccion');
+    const dataInsp = await resInsp.json();
+    const inspecciones = (dataInsp.data || [])
+      .filter(i => i.Id_lugar === idLugar)
+      .sort((a, b) => new Date(b.Fecha_inspeccion) - new Date(a.Fecha_inspeccion)); // más reciente primero
+
+    if (inspecciones.length === 0) {
+      contenedor.innerHTML = '<div class="notif-empty">📋 No hay inspecciones registradas para este lugar.</div>';
+      return;
+    }
+
+    // 2. Técnicos (para mostrar nombre)
+    let tecnicosMap = {};
+    try {
+      const resT = await fetch('http://localhost:9000/tecnico');
+      const dataT = await resT.json();
+      (dataT.data || []).forEach(t => {
+        tecnicosMap[t.Id_tecnico] = `${t.Primer_nombre} ${t.Primer_apellido}`;
+      });
+    } catch { /* si falla, mostramos "—" */ }
+
+    // 3. Renderizar
+    contenedor.innerHTML = inspecciones.map(insp => {
+      const fecha = insp.Fecha_inspeccion
+        ? new Date(insp.Fecha_inspeccion).toLocaleDateString('es-CO')
+        : 'Pendiente';
+      const tecnico  = tecnicosMap[insp.Id_tecnico] || '—';
+      const revisadas = insp.Plantas_revisadas || 0;
+      const afectadas = insp.Plantas_afectadas || 0;
+
+      // Parsear Detalle_lotes para calcular totales reales si existen
+      let detalle = insp.Detalle_lotes;
+      if (typeof detalle === 'string') { try { detalle = JSON.parse(detalle); } catch { detalle = null; } }
+      let totalContadas = revisadas, totalAfect = afectadas;
+      if (detalle && typeof detalle === 'object' && Object.keys(detalle).length > 0) {
+        totalContadas = Object.values(detalle).reduce((s, d) => s + (d.plantasContadas || 0), 0);
+        totalAfect    = Object.values(detalle).reduce((s, d) => s + Object.keys(d.plagasPorPlanta || {}).length, 0);
+      }
+      const alertaFinal = _calcularAlertaProductor(totalAfect, totalContadas);
+
+      // El botón de descarga solo aparece cuando Estado === 'Completado'
+      const esCompletado = (insp.Estado || '').toLowerCase() === 'completado';
+      const btnDescarga  = esCompletado ? `
+        <div class="insp-card-foot">
+          <button class="btn-descargar-insp"
+                  onclick="descargarReporteProductor(${insp.Id_inspeccion})">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13"
+                 viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v13M6 11l6 6 6-6"/>
+              <line x1="3" y1="21" x2="21" y2="21"/>
+            </svg>
+            Descargar reporte PDF
+          </button>
+        </div>` : '';
+
+      return `
+        <div class="insp-card">
+          <div class="insp-card-head">
+            <span class="insp-card-id">Inspección #${insp.Id_inspeccion}</span>
+            <span class="insp-card-fecha">📅 ${fecha}</span>
+          </div>
+          <div class="insp-card-stats">
+            <div class="insp-stat">👨‍🔬 <strong>${tecnico}</strong></div>
+            <div class="insp-stat">🔍 Revisadas: <strong>${totalContadas}</strong></div>
+            <div class="insp-stat">⚠️ Afectadas: <strong>${totalAfect}</strong></div>
+            <div class="insp-stat">Estado: <strong>${insp.Estado || '—'}</strong></div>
+          </div>
+          <div>
+            Nivel de alerta:&nbsp;
+            <span class="badge-alerta ${alertaFinal.cssClass}">${alertaFinal.label}</span>
+          </div>
+          ${btnDescarga}
+        </div>`;
+    }).join('');
+
+  } catch (err) {
+    console.error('Error cargando historial de inspecciones:', err);
+    contenedor.innerHTML = '<div class="notif-empty">❌ Error al conectar con el servidor.</div>';
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  DESCARGA PDF — Vista productor
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Genera y descarga el PDF de una inspección completada.
+ *
+ * Solo es invocable desde tarjetas con Estado === 'Completado'.
+ * Reutiliza la misma paleta y estructura del PDF del funcionario
+ * pero sin la sección "Observación del funcionario ICA" (privada).
+ *
+ * Incluye el dictamen de aprobación/rechazo para exportación
+ * basado en el nivel de alerta global calculado a partir de
+ * las plantas afectadas vs contadas del Detalle_lotes.
+ *
+ * @param {number} inspeccionId - Id_inspeccion
+ */
+async function descargarReporteProductor(inspeccionId) {
+  showToast('⌛ Generando PDF…', 'success');
+
+  try {
+    // 1. Datos de la inspección
+    const resInsp = await fetch('http://localhost:9000/inspeccion');
+    const dataInsp = await resInsp.json();
+    const insp = (dataInsp.data || []).find(i => i.Id_inspeccion === inspeccionId);
+    if (!insp) { showToast('❌ No se encontró la inspección.', 'error'); return; }
+
+    // 2. Datos del lugar
+    let lugarNombre = `Lugar #${insp.Id_lugar}`;
+    let municipio   = '—';
+    let departamento = '—';
+    try {
+      const resL = await fetch(`http://localhost:8003/lugarPro/${insp.Id_lugar}`);
+      const dataL = await resL.json();
+      const lugar  = dataL.data;
+      const predio = lugar?.predios?.[0];
+      lugarNombre  = lugar?.Nombre_LugarProduccion || lugarNombre;
+      municipio    = predio?.Ubicacion?.Municipio    || '—';
+      departamento = predio?.Ubicacion?.Departamento || '—';
+    } catch { /* fallback ya asignado */ }
+
+    // 3. Técnico
+    let tecnicoNombre = '—';
+    try {
+      const resT  = await fetch('http://localhost:9000/tecnico');
+      const dataT = await resT.json();
+      const tec   = (dataT.data || []).find(t => t.Id_tecnico === insp.Id_tecnico);
+      if (tec) tecnicoNombre = `${tec.Primer_nombre} ${tec.Primer_apellido}`;
+    } catch { /* fallback */ }
+
+    // 4. Lotes desde Detalle_lotes
+    let detalle = insp.Detalle_lotes;
+    if (typeof detalle === 'string') { try { detalle = JSON.parse(detalle); } catch { detalle = null; } }
+
+    let lotes = [];
+    if (detalle && typeof detalle === 'object' && Object.keys(detalle).length > 0) {
+      lotes = Object.entries(detalle).map(([loteKey, d]) => {
+        const contadas  = d.plantasContadas || 0;
+        const plagaMap  = d.plagasPorPlanta  || {};
+        const afectadas = Object.keys(plagaMap).length;
+        const plagaIds  = [...new Set(Object.values(plagaMap).flat())];
+        return {
+          loteKey,
+          plantasContadas:  contadas,
+          plantasAfectadas: afectadas,
+          plaga: plagaIds.length > 0 ? plagaIds.map(id => `Plaga #${id}`).join(', ') : 'Sin plagas'
+        };
+      });
+    } else {
+      lotes = [{
+        loteKey:          'General',
+        plantasContadas:  insp.Plantas_revisadas || 0,
+        plantasAfectadas: insp.Plantas_afectadas || 0,
+        plaga:            'Ver reporte del funcionario'
+      }];
+    }
+
+    // 5. Totales y alerta global
+    const totalContadas  = lotes.reduce((s, l) => s + l.plantasContadas,  0);
+    const totalAfectadas = lotes.reduce((s, l) => s + l.plantasAfectadas, 0);
+    const alertaGlobal   = _calcularAlertaProductor(totalAfectadas, totalContadas);
+    const fecha          = insp.Fecha_inspeccion
+      ? new Date(insp.Fecha_inspeccion).toLocaleDateString('es-CO')
+      : 'Sin fecha';
+
+    // 6. Construir PDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    const VERDE  = [52, 113, 72];
+    const CLARO  = [232, 245, 236];
+    const NEGRO  = [30,  30,  30];
+    const GRIS   = [110, 110, 110];
+    const ROJO   = [200,  60,  60];
+    const PW = 210, ML = 14, MR = 14, CTX = PW - ML - MR;
+    let y = 0;
+
+    // Encabezado
+    doc.setFillColor(...VERDE);
+    doc.rect(0, 0, PW, 26, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.text('🌿 SIFEX — Reporte de Inspección Fitosanitaria', ML, 11);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text('Sistema de Información Fitosanitaria de Exportación · ICA', ML, 18);
+    doc.text(`Generado: ${new Date().toLocaleString('es-CO')}`, PW - MR, 18, { align: 'right' });
+    y = 33;
+
+    // Ficha de la inspección
+    doc.setFillColor(...CLARO);
+    doc.roundedRect(ML, y, CTX, 28, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...NEGRO);
+    doc.setFontSize(11);
+    doc.text(`Inspección #${inspeccionId}`, ML + 4, y + 7);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    const col1x = ML + 4, col2x = ML + CTX / 2;
+    doc.setTextColor(...GRIS); doc.text('Lugar de producción:',   col1x, y + 14);
+    doc.setTextColor(...NEGRO); doc.text(lugarNombre,              col1x + 38, y + 14);
+    doc.setTextColor(...GRIS); doc.text('Fecha de inspección:',   col1x, y + 20);
+    doc.setTextColor(...NEGRO); doc.text(fecha,                    col1x + 38, y + 20);
+    doc.setTextColor(...GRIS); doc.text('Ubicación:',             col2x, y + 14);
+    doc.setTextColor(...NEGRO); doc.text(`${municipio}, ${departamento}`, col2x + 22, y + 14);
+    doc.setTextColor(...GRIS); doc.text('Técnico asignado:',      col2x, y + 20);
+    doc.setTextColor(...NEGRO); doc.text(tecnicoNombre,            col2x + 35, y + 20);
+    y += 35;
+
+    // Resumen general
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...VERDE);
+    doc.setFontSize(10);
+    doc.text('RESUMEN GENERAL', ML, y);
+    y += 5;
+
+    const boxW = CTX / 2 - 3;
+    [
+      { label: 'Plantas revisadas', val: totalContadas,  color: NEGRO },
+      { label: 'Plantas afectadas', val: totalAfectadas, color: totalAfectadas > 0 ? ROJO : NEGRO }
+    ].forEach((b, i2) => {
+      const bx = ML + i2 * (boxW + 2);
+      doc.setFillColor(...CLARO);
+      doc.roundedRect(bx, y, boxW, 16, 2, 2, 'F');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(...GRIS);
+      doc.text(b.label, bx + boxW / 2, y + 5, { align: 'center' });
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(...b.color);
+      doc.text(String(b.val), bx + boxW / 2, y + 13, { align: 'center' });
+    });
+    y += 22;
+
+    // Nivel de alerta global
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...GRIS);
+    doc.text(`Nivel de alerta global: ${alertaGlobal.label}`, ML, y);
+    y += 8;
+
+    // Dictamen de exportación
+    const NIVELES_APROBADOS = ['Sin incidencia', 'Muy baja', 'Baja', 'Moderada', 'Sin datos'];
+    const aprobado        = NIVELES_APROBADOS.includes(alertaGlobal.label);
+    const dictamenBg      = aprobado ? [220, 243, 229] : [252, 225, 225];
+    const dictamenColor   = aprobado ? [34, 120, 60]   : [180, 40, 40];
+    const dictamenTxt     = aprobado ? '✔  APROBADO PARA EXPORTACIÓN' : '✘  NO APROBADO PARA EXPORTACIÓN';
+    const dictamenSub     = aprobado
+      ? `Nivel de alerta "${alertaGlobal.label}" — dentro de los rangos admitidos por el ICA.`
+      : `Nivel de alerta "${alertaGlobal.label}" — supera el umbral admitido para exportación.`;
+
+    doc.setFillColor(...dictamenBg);
+    doc.roundedRect(ML, y, CTX, 18, 2, 2, 'F');
+    doc.setDrawColor(...dictamenColor);
+    doc.setLineWidth(0.8);
+    doc.roundedRect(ML, y, CTX, 18, 2, 2, 'S');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(...dictamenColor);
+    doc.text(dictamenTxt, ML + 4, y + 8);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text(dictamenSub, ML + 4, y + 14);
+    y += 26;
+
+    // Detalle por lote
+    if (lotes.length > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...VERDE);
+      doc.setFontSize(10);
+      doc.text('DETALLE POR LOTE', ML, y);
+      y += 4;
+
+      doc.autoTable({
+        startY: y,
+        margin: { left: ML, right: MR },
+        head: [['Lote', 'Plantas revisadas', 'Plantas afectadas', 'Nivel de alerta', 'Plagas detectadas']],
+        body: lotes.map(l => {
+          const al = _calcularAlertaProductor(l.plantasAfectadas, l.plantasContadas);
+          return [l.loteKey, l.plantasContadas, l.plantasAfectadas, al.label, l.plaga];
+        }),
+        headStyles:         { fillColor: VERDE, textColor: 255, fontSize: 8, fontStyle: 'bold' },
+        bodyStyles:         { fontSize: 8, textColor: NEGRO },
+        alternateRowStyles: { fillColor: [248, 252, 249] },
+        columnStyles:       { 0: { fontStyle: 'bold' }, 4: { cellWidth: 55 } },
+        theme: 'grid',
+        didDrawPage: d => { y = d.cursor.y; }
+      });
+
+      y = doc.lastAutoTable.finalY + 8;
+    }
+
+    // Pie de página
+    const pageH = doc.internal.pageSize.getHeight();
+    doc.setDrawColor(...VERDE);
+    doc.setLineWidth(0.5);
+    doc.line(ML, pageH - 14, PW - MR, pageH - 14);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...GRIS);
+    doc.text(
+      'SIFEX · Sistema de Información Fitosanitaria de Exportación · ICA Colombia',
+      PW / 2, pageH - 9, { align: 'center' }
+    );
+
+    doc.save(`reporte-inspeccion-${inspeccionId}.pdf`);
+    showToast('✅ Reporte descargado correctamente.', 'success');
+
+  } catch (err) {
+    console.error('Error generando PDF del productor:', err);
+    showToast('❌ No se pudo generar el reporte.', 'error');
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  NOTIFICACIONES — Panel lateral (vista productor)
+// ═══════════════════════════════════════════════════════════════
+
+// IDs de observaciones ya leídas (persistido en localStorage)
+let _notifsLeidas = new Set(
+  JSON.parse(localStorage.getItem('sifex_notifs_leidas') || '[]')
+);
+
+// Cache de notificaciones cargadas (para no re-fetchar al abrir el panel)
+let _notifsCache = [];
+
+/**
+ * Carga las notificaciones de observaciones del productor al iniciar la página.
+ * Consulta todas las inspecciones del productor y sus observaciones,
+ * actualiza el badge y puebla el panel.
+ *
+ * Invocada desde DOMContentLoaded.
+ */
+async function cargarNotificaciones() {
+  try {
+    const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+    const idProductor = usuario.Id_productor ?? null;
+
+    // 1. Lugares del productor
+    const resLugares = await fetch(API_URL);
+    const dataLugares = await resLugares.json();
+    const lugares = (dataLugares.data || []);
+    const lugarIds = new Set(lugares.map(l => l.Id_lugar));
+
+    // 2. Todas las inspecciones → filtrar por lugares del productor
+    const resInsp = await fetch('http://localhost:9000/inspeccion');
+    const dataInsp = await resInsp.json();
+    const inspecciones = (dataInsp.data || []).filter(i => lugarIds.has(i.Id_lugar));
+    const inspIds = new Set(inspecciones.map(i => i.Id_inspeccion));
+
+    // 3. Todas las observaciones → filtrar por inspecciones del productor
+    const resObs = await fetch('http://localhost:9000/observacion');
+    const dataObs = await resObs.json();
+    const observaciones = (dataObs.data || []).filter(o => inspIds.has(o.Id_inspeccion));
+
+    // 4. Construir notificaciones con contexto de lugar
+    _notifsCache = observaciones.map(obs => {
+      const insp  = inspecciones.find(i => i.Id_inspeccion === obs.Id_inspeccion);
+      const lugar = lugares.find(l => l.Id_lugar === insp?.Id_lugar);
+      return {
+        id:         obs.Id_observacion,
+        inspeccionId: obs.Id_inspeccion,
+        lugarId:    lugar?.Id_lugar ?? null,
+        lugarNombre: lugar?.Nombre_LugarProduccion ?? 'Lugar desconocido',
+        texto:      obs.Observaciones,
+        fecha:      obs.Fecha_observacion
+          ? new Date(obs.Fecha_observacion).toLocaleDateString('es-CO')
+          : '—',
+        leida:      _notifsLeidas.has(obs.Id_observacion)
+      };
+    }).sort((a, b) => (a.leida ? 1 : -1)); // no leídas primero
+
+    renderNotificaciones(_notifsCache);
+    actualizarBadge();
+
+  } catch (err) {
+    console.error('Error cargando notificaciones:', err);
+    const body = document.getElementById('notif-panel-body');
+    if (body) body.innerHTML = '<div class="notif-empty">❌ No se pudieron cargar las notificaciones.</div>';
+  }
+}
+
+/**
+ * Renderiza los ítems del panel de notificaciones.
+ * @param {Array} notifs
+ */
+function renderNotificaciones(notifs) {
+  const body = document.getElementById('notif-panel-body');
+  if (!body) return;
+
+  if (notifs.length === 0) {
+    body.innerHTML = '<div class="notif-empty">🎉 No hay observaciones pendientes.</div>';
+    return;
+  }
+
+  body.innerHTML = notifs.map(n => `
+    <div class="notif-item ${n.leida ? 'leida' : 'no-leida'}"
+         onclick="notifClick(${n.id}, ${n.lugarId})">
+      <div class="notif-item-dot"></div>
+      <div class="notif-item-body">
+        <div class="notif-item-titulo">🌱 ${n.lugarNombre}</div>
+        <div class="notif-item-sub">Observación de inspección #${n.inspeccionId}</div>
+        <div class="notif-item-fecha">${n.fecha}</div>
+      </div>
+    </div>`).join('');
+}
+
+/**
+ * Actualiza el badge de la campana con el conteo de no leídas.
+ */
+function actualizarBadge() {
+  const badge   = document.getElementById('notif-badge');
+  const noLeidas = _notifsCache.filter(n => !n.leida).length;
+  if (!badge) return;
+  if (noLeidas > 0) {
+    badge.textContent = noLeidas > 99 ? '99+' : noLeidas;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+/**
+ * Abre/cierra el panel de notificaciones.
+ */
+function toggleNotifPanel() {
+  const panel   = document.getElementById('notif-panel');
+  const overlay = document.getElementById('notif-overlay');
+  const abierto = panel.classList.contains('open');
+  panel.classList.toggle('open', !abierto);
+  overlay.classList.toggle('open', !abierto);
+}
+
+/**
+ * Marca una notificación como leída, cierra el panel y abre el
+ * modal de detalle del lugar en la pestaña "Observaciones".
+ *
+ * @param {number} notifId  - Id_observacion
+ * @param {number} lugarId  - Id_lugar asociado
+ */
+function notifClick(notifId, lugarId) {
+  // Marcar como leída
+  _notifsLeidas.add(notifId);
+  localStorage.setItem('sifex_notifs_leidas', JSON.stringify([..._notifsLeidas]));
+
+  const notif = _notifsCache.find(n => n.id === notifId);
+  if (notif) notif.leida = true;
+  renderNotificaciones(_notifsCache);
+  actualizarBadge();
+  toggleNotifPanel();
+
+  // Abrir modal en tab Observaciones
+  if (lugarId) {
+    verDetalle(lugarId).then(() => {
+      // Activar la pestaña de observaciones programáticamente
+      const tabEl = document.getElementById('observaciones-tab');
+      if (tabEl) {
+        const tab = new bootstrap.Tab(tabEl);
+        tab.show();
+      }
+      const modal = new bootstrap.Modal(document.getElementById('modalDetalleLugar'));
+      modal.show();
+    });
+  }
+}
+
+/**
+ * Marca todas las notificaciones como leídas y actualiza la UI.
+ */
+function marcarTodasLeidas() {
+  _notifsCache.forEach(n => {
+    n.leida = true;
+    _notifsLeidas.add(n.id);
+  });
+  localStorage.setItem('sifex_notifs_leidas', JSON.stringify([..._notifsLeidas]));
+  renderNotificaciones(_notifsCache);
+  actualizarBadge();
+  showToast('✔ Todas las notificaciones marcadas como leídas', 'success');
 }
 
 function llenarModalDinamico(lugar, lotes) {

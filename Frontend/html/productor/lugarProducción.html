@@ -25,6 +25,236 @@
           - .detalle-list, .detalle-item, .detalle-item-title
           - .predio-extended, .predio-header
     -->
+
+    <!--
+        ESTILOS — Notificaciones, panel lateral y nuevos tabs del modal.
+        Agregados en línea para no alterar main.css sin contexto del equipo.
+        Cuando se integren a main.css deben ir en §19 (Productor — notificaciones).
+    -->
+    <style>
+        /* ── Botón campana en topbar ─────────────────────── */
+        .btn-notif {
+            position: relative;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #000000;
+            padding: 4px 6px;
+            margin-right: 6px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            transition: background .15s;
+        }
+        .btn-notif:hover { background: rgba(255,255,255,.15); }
+
+        .notif-badge {
+            position: absolute;
+            top: -2px; right: -4px;
+            background: #e53935;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 3px;
+            pointer-events: none;
+        }
+        .notif-badge.hidden { display: none; }
+
+        /* ── Overlay y panel lateral ─────────────────────── */
+        .notif-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,.25);
+            z-index: 1040;
+        }
+        .notif-overlay.open { display: block; }
+
+        .notif-panel {
+            position: fixed;
+            top: 0; right: 0;
+            width: 340px; max-width: 95vw;
+            height: 100vh;
+            background: #fff;
+            box-shadow: -4px 0 20px rgba(0,0,0,.14);
+            z-index: 1050;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(110%);
+            transition: transform .28s cubic-bezier(.4,0,.2,1);
+        }
+        .notif-panel.open { transform: translateX(0); }
+
+        .notif-panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 18px 12px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        .notif-panel-titulo { font-weight: 700; font-size: 15px; color: #1a1a1a; }
+        .notif-panel-close {
+            background: none; border: none; cursor: pointer;
+            font-size: 18px; color: #666;
+            line-height: 1; padding: 2px 6px; border-radius: 4px;
+        }
+        .notif-panel-close:hover { background: #f0f0f0; }
+
+        .notif-panel-body { flex: 1; overflow-y: auto; padding: 10px 0; }
+
+        .notif-panel-foot {
+            padding: 12px 18px;
+            border-top: 1px solid #e5e5e5;
+            text-align: right;
+        }
+        .btn-marcar-leidas {
+            background: none; border: 1px solid #c8e6c9;
+            color: #2e7d32; font-size: 12px;
+            padding: 5px 12px; border-radius: 6px; cursor: pointer;
+        }
+        .btn-marcar-leidas:hover { background: #e8f5e9; }
+
+        /* ── Ítems de notificación ───────────────────────── */
+        .notif-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 18px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background .12s;
+        }
+        .notif-item:hover { background: #f9fbe7; }
+        .notif-item.no-leida { background: #f0faf3; }
+        .notif-item.no-leida:hover { background: #e1f5e7; }
+
+        .notif-item-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #43a047;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+        .notif-item.leida .notif-item-dot { background: transparent; }
+
+        .notif-item-body { flex: 1; }
+        .notif-item-titulo { font-weight: 600; font-size: 13px; color: #1a1a1a; }
+        .notif-item-sub { font-size: 12px; color: #666; margin-top: 2px; }
+        .notif-item-fecha { font-size: 11px; color: #999; margin-top: 4px; }
+
+        .notif-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* ── Tarjetas de observaciones (tab modal) ───────── */
+        .obs-productor-card {
+            border: 1px solid #c8e6c9;
+            border-left: 4px solid #43a047;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            background: #f9fbe7;
+        }
+        .obs-productor-inspeccion {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        .obs-productor-texto {
+            font-size: 14px;
+            color: #222;
+            line-height: 1.5;
+        }
+        .obs-productor-fecha {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 6px;
+            text-align: right;
+        }
+
+        /* ── Tarjetas de inspección (tab historial) ──────── */
+        .insp-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            background: #fff;
+        }
+        .insp-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .insp-card-id { font-weight: 700; font-size: 13px; color: #333; }
+        .insp-card-fecha { font-size: 12px; color: #888; }
+
+        .insp-card-stats {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .insp-stat {
+            background: #f5f5f5;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 12px;
+            color: #555;
+        }
+        .insp-stat strong { color: #222; }
+
+        /* Badges de nivel de alerta — reutiliza las mismas clases de funcionario */
+        .badge-alerta {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .3px;
+        }
+        .alerta-sin-incidencia { background: #e8f5e9; color: #2e7d32; }
+        .alerta-sin-datos      { background: #f5f5f5; color: #757575; }
+        .alerta-muy-baja       { background: #f1f8e9; color: #558b2f; }
+        .alerta-baja           { background: #fff9c4; color: #f57f17; }
+        .alerta-moderada       { background: #fff3e0; color: #e65100; }
+        .alerta-alta           { background: #fce4ec; color: #c62828; }
+        .alerta-muy-alta       { background: #f3e5f5; color: #6a1b9a; }
+        .alerta-critica        { background: #b71c1c; color: #fff;    }
+
+        /* ── Botón descarga PDF en tarjeta de inspección ─── */
+        .insp-card-foot {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .btn-descargar-insp {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #2e7d32;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .15s;
+        }
+        .btn-descargar-insp:hover { background: #1b5e20; }
+        .btn-descargar-insp:active { transform: scale(.97); }
+    </style>
 </head>
 
 <body>
@@ -32,7 +262,48 @@
     <div class="topbar">
         <span class="topbar-title">Productor</span>
         <span class="topbar-user">Juan Sebastian Angel Rodriguez</span>
+
+        <!--
+            CAMPANA DE NOTIFICACIONES
+            ─────────────────────────
+            Al hacer clic abre el panel lateral #notif-panel.
+            El badge #notif-badge muestra la cantidad de observaciones
+            no leídas; se oculta con .hidden cuando no hay pendientes.
+            Poblado por cargarNotificaciones() en lugarProJs.js.
+        -->
+        <button class="btn-notif" id="btn-notif" onclick="toggleNotifPanel()" title="Notificaciones" aria-label="Ver notificaciones">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <span class="notif-badge hidden" id="notif-badge">0</span>
+        </button>
+
         <button class="btn-salir">Salir</button>
+    </div>
+
+    <!--
+        PANEL LATERAL DE NOTIFICACIONES
+        ────────────────────────────────
+        Se muestra/oculta con la clase .open.
+        Cada notificación es un .notif-item generado dinámicamente
+        por renderNotificaciones() en lugarProJs.js.
+        Al hacer clic en una notificación se marca como leída
+        y abre el modal de detalle en la pestaña Observaciones.
+    -->
+    <div class="notif-overlay" id="notif-overlay" onclick="toggleNotifPanel()"></div>
+    <div class="notif-panel" id="notif-panel">
+        <div class="notif-panel-head">
+            <span class="notif-panel-titulo">🔔 Notificaciones</span>
+            <button class="notif-panel-close" onclick="toggleNotifPanel()">✕</button>
+        </div>
+        <div class="notif-panel-body" id="notif-panel-body">
+            <div class="notif-empty">Cargando notificaciones…</div>
+        </div>
+        <div class="notif-panel-foot">
+            <button class="btn-marcar-leidas" onclick="marcarTodasLeidas()">✔ Marcar todas como leídas</button>
+        </div>
     </div>
 
     <div class="layout">
@@ -262,6 +533,32 @@
                                 🏡 Predios
                             </button>
                         </li>
+                        <!--
+                            TAB: OBSERVACIONES
+                            ──────────────────
+                            Muestra las observaciones registradas por el funcionario ICA
+                            para las inspecciones asociadas a este lugar de producción.
+                            Contenido inyectado por cargarObservacionesModal(lugarId).
+                        -->
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="observaciones-tab" data-bs-toggle="tab"
+                                data-bs-target="#observaciones" type="button" role="tab">
+                                🔎 Observaciones
+                            </button>
+                        </li>
+                        <!--
+                            TAB: HISTORIAL DE INSPECCIONES
+                            ──────────────────────────────
+                            Muestra el historial de inspecciones fitosanitarias del lugar
+                            con su nivel de alerta calculado a partir de plantas afectadas.
+                            Contenido inyectado por cargarInspeccionesModal(lugarId).
+                        -->
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="inspecciones-tab" data-bs-toggle="tab"
+                                data-bs-target="#inspecciones" type="button" role="tab">
+                                📋 Historial
+                            </button>
+                        </li>
                     </ul>
 
                     <div class="tab-content" id="detalleTabsContent">
@@ -280,6 +577,20 @@
                             </div>
                         </div>
 
+                        <!-- PANEL OBSERVACIONES -->
+                        <div class="tab-pane fade" id="observaciones" role="tabpanel">
+                            <div id="lista-observaciones-dinamica">
+                                <div class="text-center py-4 text-muted">Cargando observaciones…</div>
+                            </div>
+                        </div>
+
+                        <!-- PANEL HISTORIAL DE INSPECCIONES -->
+                        <div class="tab-pane fade" id="inspecciones" role="tabpanel">
+                            <div id="lista-inspecciones-dinamica">
+                                <div class="text-center py-4 text-muted">Cargando historial…</div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -289,6 +600,10 @@
             </div>
         </div>
     </div>
+
+    <!-- jsPDF + autoTable — necesarios para descargarReporteProductor() -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
     <script src="../../js/verificarJs.js"></script>
     <script src="../../js/lugarProJs.js"></script>
