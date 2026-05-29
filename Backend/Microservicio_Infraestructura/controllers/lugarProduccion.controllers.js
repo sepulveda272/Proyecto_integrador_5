@@ -84,7 +84,6 @@ export const addLugarProduccion = async (req, res) => {
         const connection = await getConnection();
 
         // 2. OBTENER DATOS GEOGRÁFICOS
-        // Quitamos la desestructuración [detallesPredios] y lo manejamos directamente
         const resultadoQuery = await connection.query(`
             SELECT p.Id_predio, p.Estado, v.Id_municipio, m.Id_Departamento
             FROM Predio p
@@ -93,8 +92,6 @@ export const addLugarProduccion = async (req, res) => {
             WHERE p.Id_predio IN (?)
         `, [prediosIds]);
 
-        // IMPORTANTE: Algunos drivers devuelven [rows, fields], otros solo rows.
-        // Forzamos a que detallesPredios sea el arreglo de filas.
         const detallesPredios = Array.isArray(resultadoQuery[0]) ? resultadoQuery[0] : resultadoQuery;
 
         // A. Verificar si todos existen y están desocupados
@@ -134,7 +131,6 @@ export const addLugarProduccion = async (req, res) => {
             [Nombre_LugarProduccion, Id_productor]
         );
         
-        // Manejo de insertId según el driver
         const idGenerado = resultLugar.insertId || resultLugar[0].insertId;
 
         // 4. Actualizar Predios
@@ -191,7 +187,7 @@ export const getLugarProduccion = async (req, res) => {
             WHERE pr.Id_lugar = ?
         `, id);
 
-        // 3. Formatear predios con Ubicacion anidada (igual que getLugaresProduccion)
+        // 3. Formatear predios con Ubicacion anidada
         const prediosFormateados = predios.map(p => ({
             ...p,
             Ubicacion: {
@@ -233,7 +229,6 @@ export const updateLugarProduccion = async (req, res) => {
 
             const detallesPredios = Array.isArray(resultadoQuery[0]) ? resultadoQuery[0] : resultadoQuery;
 
-            // A. ¿Existen todos?
             if (detallesPredios.length !== prediosIds.length) {
                 return res.status(400).json({
                     status: "Error",
@@ -241,8 +236,6 @@ export const updateLugarProduccion = async (req, res) => {
                 });
             }
 
-            // B. ¿Están disponibles? 
-            // (Nota: Un predio es válido si está 'Desocupado' O si ya pertenecía a este lugar 'id')
             const todosDisponibles = detallesPredios.every(p => 
                 p.Estado === 'Desocupado' || p.Id_lugar == id
             );
@@ -254,7 +247,6 @@ export const updateLugarProduccion = async (req, res) => {
                 });
             }
 
-            // C. ¿Mismo Municipio y Departamento?
             const refMunicipio = detallesPredios[0].Id_municipio;
             const refDepto = detallesPredios[0].Id_Departamento;
 
@@ -269,9 +261,7 @@ export const updateLugarProduccion = async (req, res) => {
                 });
             }
 
-            // --- SI PASA TODAS LAS VALIDACIONES, PROCEDEMOS A LOS CAMBIOS ---
-
-            // 2. LIBERAR: Predios antiguos (los ponemos en NULL y Desocupado)
+            // 2. LIBERAR: Predios antiguos
             await connection.query(
                 "UPDATE Predio SET Id_lugar = NULL, Estado = 'Desocupado' WHERE Id_lugar = ?",
                 [id]
@@ -320,7 +310,6 @@ export const deleteLugarProduccion = async (req, res) => {
             [id]
         );
 
-        // Dependiendo del driver, lotes puede ser el objeto directo o el primer elemento
         const totalLotes = Array.isArray(lotes) ? lotes[0].total : lotes.total;
 
         if (totalLotes > 0) {
@@ -330,16 +319,15 @@ export const deleteLugarProduccion = async (req, res) => {
             });
         }
 
-        // 2. LIBERAR PREDIOS: Si no hay lotes, procedemos a limpiar la relación en la tabla Predio
+        // 2. LIBERAR PREDIOS
         await connection.query(
             "UPDATE Predio SET Id_lugar = NULL, Estado = 'Desocupado' WHERE Id_lugar = ?", 
             [id]
         );
 
-        // 3. BORRAR LUGAR: Ahora sí borramos el registro de Lugar_produccion
+        // 3. BORRAR LUGAR
         const result = await connection.query("DELETE FROM Lugar_produccion WHERE Id_lugar = ?", id);
 
-        // El resultado puede variar según el driver (mysql2 devuelve [rows, fields])
         const affectedRows = result.affectedRows !== undefined ? result.affectedRows : result[0].affectedRows;
 
         if (affectedRows === 0) {
@@ -360,5 +348,76 @@ export const deleteLugarProduccion = async (req, res) => {
             message: "Error al intentar eliminar el lugar de producción",
             error: error.message 
         });
+    }
+};
+
+// ─────────────────────────────────────────────────────────────────
+// NUEVO: Obtener lugares de producción filtrados por productor
+// Ruta: GET /lugarPro/productor/:idProductor
+// ─────────────────────────────────────────────────────────────────
+export const getLugaresByProductor = async (req, res) => {
+    try {
+        const { idProductor } = req.params;
+        const connection = await getConnection();
+
+        const query = `
+            SELECT 
+                l.Id_lugar, 
+                l.Nombre_LugarProduccion, 
+                l.Id_productor,
+                p.Id_predio,
+                p.Nombre_predio,
+                p.Area_total,
+                p.Estado,
+                v.Nombre_Vereda,
+                m.Nombre_Municipio,
+                d.Nombre_Depart
+            FROM Lugar_produccion l
+            LEFT JOIN Predio p ON l.Id_lugar = p.Id_lugar
+            LEFT JOIN Vereda v ON p.Id_vereda = v.Id_vereda
+            LEFT JOIN Municipio m ON v.Id_municipio = m.Id_municipio
+            LEFT JOIN Departamento d ON m.Id_Departamento = d.Id_Departamento
+            WHERE l.Id_productor = ?
+        `;
+
+        const rows = await connection.query(query, [idProductor]);
+
+        const lugaresAgrupados = rows.reduce((acc, row) => {
+            let lugar = acc.find(item => item.Id_lugar === row.Id_lugar);
+            if (!lugar) {
+                lugar = {
+                    Id_lugar: row.Id_lugar,
+                    Nombre_LugarProduccion: row.Nombre_LugarProduccion,
+                    Id_productor: row.Id_productor,
+                    total_predios: 0,
+                    detalles_predios: []
+                };
+                acc.push(lugar);
+            }
+            if (row.Id_predio) {
+                lugar.detalles_predios.push({
+                    Id_predio: row.Id_predio,
+                    Nombre_predio: row.Nombre_predio,
+                    Area_total: row.Area_total,
+                    Estado: row.Estado,
+                    Ubicacion: {
+                        Vereda: row.Nombre_Vereda,
+                        Municipio: row.Nombre_Municipio,
+                        Departamento: row.Nombre_Depart
+                    }
+                });
+                lugar.total_predios = lugar.detalles_predios.length;
+            }
+            return acc;
+        }, []);
+
+        res.json({
+            status: "Success",
+            message: "Lugares del productor",
+            data: lugaresAgrupados
+        });
+
+    } catch (error) {
+        res.status(500).json({ status: "Error", message: error.message });
     }
 };
