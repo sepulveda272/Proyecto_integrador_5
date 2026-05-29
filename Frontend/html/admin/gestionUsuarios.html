@@ -6,8 +6,8 @@
   <title>SIFEX - Gestión de Usuarios</title>
 
   <!-- Estilos base del proyecto -->
-  <link href="../../css/main.css" rel="stylesheet" />
-  <link href="../../css/admin.css" rel="stylesheet" />
+    <link rel="stylesheet" href="../../css/general.css">
+    <link rel="stylesheet" href="../../css/admin.css">
 
   <!-- Bootstrap 5 (layout y utilidades generales) -->
   <link
@@ -34,22 +34,28 @@
   <div class="layout" id="layout">
 
     <!-- ── Sidebar ─────────────────────────────────────── -->
-    <nav class="sidebar" aria-label="Menú principal">
+    <nav class="sidebar">
       <div class="sidebar-logo">
-        <span class="icon" aria-hidden="true">🌿</span>
+        <span class="icon">🌿</span>
         <span>SIFEX</span>
       </div>
 
-      <!-- Ítem: Gestión de usuarios (activo en esta vista) -->
-      <a class="nav-item active" href="gestionUsuarios.html" aria-current="page">
+      <!-- Ítem: Gestión de usuarios -->
+      <a class="nav-item" href="gestionUsuarios.html">
         <span class="icon" aria-hidden="true">👥</span> Usuarios
       </a>
 
-      <!-- Ítem: Gestión de lugares (nueva sección) -->
-      <a class="nav-item" href="gestionLugares.html">
-        <span class="icon" aria-hidden="true">📍</span> Lugares de producción
+      <!-- Ítem: Gestión de lugares (activo en esta vista) -->
+      <a class="nav-item" href="gestionLugares.html" aria-current="page">
+        <span class="icon" aria-hidden="true">🌱</span> Lugares de producción
       </a>
 
+      <!-- Ítem: Catálogo de plantas y cultivos -->
+      <a class="nav-item" href="catalogo.html">
+        <span class="icon" aria-hidden="true">📋</span> Catálogo
+      </a>
+
+      <!-- Botón ocultar menú — lógica existente en main.css / toggleSidebar -->
       <div class="sidebar-bottom">
         <button class="btn-hide-menu" id="toggleSidebar">← Ocultar menú</button>
       </div>
@@ -66,7 +72,6 @@
             <h1>Gestión de Usuarios</h1>
             <p>Administre técnicos, productores y funcionarios del sistema.</p>
           </div>
-          <!-- Botón crear nuevo usuario -->
           <button class="gu-btn-nuevo" id="gu-btn-nuevo" aria-label="Crear nuevo usuario">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2.5"
@@ -81,7 +86,7 @@
         <!-- ── Tarjeta principal ───────────────────────── -->
         <div class="gu-card">
 
-          <!-- ── Pestañas de filtro por rol ─────────────
+          <!-- ── Pestañas de filtro por rol ──────────────
                data-rol: valor que el JS usa para filtrar.
                La tab "todos" muestra todos los usuarios.
           ──────────────────────────────────────────────── -->
@@ -128,33 +133,32 @@
                 class="gu-search__input"
                 id="gu-busqueda"
                 type="search"
-                placeholder="Buscar por nombre o correo…"
+                placeholder="Buscar por nombre, identificación o correo…"
                 aria-label="Buscar usuarios"
                 autocomplete="off"
               />
             </div>
-            <!-- El JS actualiza este span con el conteo visible -->
             <span class="gu-toolbar__info" id="gu-info-count" aria-live="polite"></span>
           </div>
 
-          <!-- ── Tabla de usuarios ───────────────────────
-               thead: encabezados fijos.
-               tbody: filas generadas dinámicamente por JS (admin.js → renderizarTabla).
-               #gu-empty: visible solo cuando no hay resultados.
-          ──────────────────────────────────────────────── -->
+          <!-- ── Tabla de usuarios ───────────────────────── -->
           <div class="gu-table-wrapper">
             <table class="gu-table" id="gu-tabla"
                    role="grid" aria-label="Lista de usuarios">
-              <thead>
+
+              <thead id="gu-thead">
                 <tr>
                   <th scope="col">Usuario</th>
-                  <th scope="col">Teléfono</th>
-                  <th scope="col">Región</th>
+                  <th scope="col">N.° Identificación</th>
+                  <th scope="col">Tipo ID</th>
+                  <th scope="col">Celular</th>
+                  <th scope="col">Correo</th>
                   <th scope="col">Rol</th>
                   <th scope="col">Estado</th>
                   <th scope="col" class="gu-th-acciones">Acciones</th>
                 </tr>
               </thead>
+
               <tbody id="gu-tbody">
                 <!-- Filas generadas por admin.js -->
               </tbody>
@@ -186,48 +190,19 @@
 
 
   <!-- ╔══════════════════════════════════════════════════════╗
-       ║  MODAL — VER DETALLE DE USUARIO                     ║
-       ╚══════════════════════════════════════════════════════╝ -->
-  <div class="gu-modal-overlay" id="gu-modal-ver"
-       role="dialog" aria-modal="true"
-       aria-labelledby="gu-ver-titulo" hidden>
-    <div class="gu-modal gu-modal--ver">
-
-      <div class="gu-modal__header">
-        <h2 id="gu-ver-titulo">Detalle de usuario</h2>
-        <button class="gu-modal__close" id="gu-ver-close" aria-label="Cerrar">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2.5"
-               stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="gu-modal__body">
-        <!-- El JS rellena con los datos del usuario -->
-        <div id="gu-ver-contenido" class="gu-ver-grid"></div>
-      </div>
-
-      <div class="gu-modal__footer">
-        <button class="gu-btn-cancelar" id="gu-ver-cancelar">Cerrar</button>
-      </div>
-
-    </div>
-  </div>
-
-
-  <!-- ╔══════════════════════════════════════════════════════╗
        ║  MODAL — CREAR / EDITAR USUARIO                     ║
        ╚══════════════════════════════════════════════════════╝ -->
   <div class="gu-modal-overlay" id="gu-modal-form"
        role="dialog" aria-modal="true"
        aria-labelledby="gu-modal-titulo" hidden>
-    <div class="gu-modal">
+
+    <!--
+      .gu-modal--lg → variante ancha para el formulario de usuario.
+      No afecta al modal de confirmación (.gu-modal--sm).
+    -->
+    <div class="gu-modal gu-modal--lg">
 
       <div class="gu-modal__header">
-        <!-- El JS cambia este texto según modo crear / editar -->
         <h2 id="gu-modal-titulo">Nuevo usuario</h2>
         <button class="gu-modal__close" id="gu-modal-close" aria-label="Cerrar modal">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -241,37 +216,98 @@
 
       <div class="gu-modal__body">
 
-        <div class="gu-form-row">
-          <div class="gu-form-group">
-            <label for="f-nombre">Nombre completo <abbr title="Requerido">*</abbr></label>
-            <input id="f-nombre" type="text"
-                   placeholder="Ej. Carlos Ramírez"
-                   maxlength="80" autocomplete="name" />
+        <!--
+          .gu-form-grid: grid de 4 columnas (desktop), 2 (tablet), 1 (móvil).
+
+          Modificadores de span por campo:
+            .gu-col-1  → 1 columna  (por defecto)
+            .gu-col-2  → 2 columnas
+            .gu-col-3  → 3 columnas
+            .gu-col-4  → fila completa (4 columnas)
+
+          Distribución visual en desktop (4 col):
+            Fila 1 │ N.° ID (2) │ Tipo ID (2)                    │
+            Fila 2 │ P.Nombre │ S.Nombre │ P.Apellido │ S.Apellido│
+            Fila 3 │ Celular  │ Correo   │ Rol        │ Estado    │
+            Fila 4 │ Imagen de perfil (4)                         │
+            Fila 5 │ Contraseña (4) — solo al crear               │
+        -->
+        <div class="gu-form-grid">
+
+          <!-- ── Fila 1: Identificación ── -->
+          <div class="gu-form-group gu-col-2">
+            <label for="f-numero-identificacion">
+              N.° de identificación <abbr title="Requerido">*</abbr>
+            </label>
+            <input id="f-numero-identificacion" type="text"
+                   placeholder="Ej. 1098765432"
+                   maxlength="20" autocomplete="off" />
           </div>
-          <div class="gu-form-group">
-            <label for="f-correo">Correo electrónico <abbr title="Requerido">*</abbr></label>
+
+          <div class="gu-form-group gu-col-2">
+            <label for="f-tipo-identificacion">
+              Tipo de identificación <abbr title="Requerido">*</abbr>
+            </label>
+            <select id="f-tipo-identificacion">
+              <option value="">— Seleccione —</option>
+              <option value="Cédula de ciudadanía">Cédula de ciudadanía (CC)</option>
+              <option value="Cédula de extranjería">Cédula de extranjería (CE)</option>
+              <option value="Pasaporte">Pasaporte (PA)</option>
+              <option value="Tarjeta de identidad">Tarjeta de identidad (TI)</option>
+            </select>
+          </div>
+
+          <!-- ── Fila 2: Nombres completos (4 campos × 1 col) ── -->
+          <div class="gu-form-group gu-col-1">
+            <label for="f-primer-nombre">
+              Primer nombre <abbr title="Requerido">*</abbr>
+            </label>
+            <input id="f-primer-nombre" type="text"
+                   placeholder="Ej. Carlos"
+                   maxlength="50" autocomplete="given-name" />
+          </div>
+
+          <div class="gu-form-group gu-col-1">
+            <label for="f-segundo-nombre">Segundo nombre</label>
+            <input id="f-segundo-nombre" type="text"
+                   placeholder="Ej. Andrés"
+                   maxlength="50" autocomplete="additional-name" />
+          </div>
+
+          <div class="gu-form-group gu-col-1">
+            <label for="f-primer-apellido">
+              Primer apellido <abbr title="Requerido">*</abbr>
+            </label>
+            <input id="f-primer-apellido" type="text"
+                   placeholder="Ej. Ramírez"
+                   maxlength="50" autocomplete="family-name" />
+          </div>
+
+          <div class="gu-form-group gu-col-1">
+            <label for="f-segundo-apellido">Segundo apellido</label>
+            <input id="f-segundo-apellido" type="text"
+                   placeholder="Ej. Gómez"
+                   maxlength="50" autocomplete="off" />
+          </div>
+
+          <!-- ── Fila 3: Contacto + Rol + Estado (4 × 1 col) ── -->
+          <div class="gu-form-group gu-col-1">
+            <label for="f-celular">Celular</label>
+            <input id="f-celular" type="tel"
+                   placeholder="310 000 0000"
+                   maxlength="20" autocomplete="tel" />
+          </div>
+
+          <div class="gu-form-group gu-col-1">
+            <label for="f-correo">
+              Correo electrónico <abbr title="Requerido">*</abbr>
+            </label>
             <input id="f-correo" type="email"
                    placeholder="correo@ejemplo.com"
                    maxlength="100" autocomplete="email" />
           </div>
-        </div>
 
-        <div class="gu-form-row">
-          <div class="gu-form-group">
-            <label for="f-telefono">Teléfono</label>
-            <input id="f-telefono" type="tel"
-                   placeholder="310 000 0000"
-                   maxlength="20" autocomplete="tel" />
-          </div>
-          <div class="gu-form-group">
-            <label for="f-region">Región / Departamento</label>
-            <input id="f-region" type="text"
-                   placeholder="Ej. Santander" maxlength="60" />
-          </div>
-        </div>
-
-        <div class="gu-form-row">
-          <div class="gu-form-group">
+          <div class="gu-form-group gu-col-1">
             <label for="f-rol">Rol <abbr title="Requerido">*</abbr></label>
             <select id="f-rol">
               <option value="">— Seleccione —</option>
@@ -280,14 +316,86 @@
               <option value="funcionario">Funcionario ICA</option>
             </select>
           </div>
-          <div class="gu-form-group">
+
+          <div class="gu-form-group gu-col-1">
             <label for="f-estado">Estado</label>
             <select id="f-estado">
-              <option value="activo">Activo</option>
-              <option value="inactivo">Inactivo</option>
+              <option value="Activo">Activo</option>
+              <option value="Inactivo">Inactivo</option>
             </select>
           </div>
-        </div>
+
+          <!-- ── Fila 4: Imagen de perfil (ancho completo) ── -->
+          <div class="gu-form-group gu-col-4">
+            <label for="f-imagen-file">Imagen de perfil</label>
+            <div class="gu-img-upload">
+
+              <!-- Input file real (oculto visualmente, accesible) -->
+              <input
+                id="f-imagen-file"
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp"
+                aria-label="Seleccionar imagen de perfil"
+              />
+
+              <!-- Etiqueta estilizada que activa el input file -->
+              <label for="f-imagen-file" class="gu-img-upload__label" tabindex="0"
+                     role="button" aria-controls="f-imagen-file">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                <span id="f-imagen-btn-text">Seleccionar imagen…</span>
+              </label>
+
+              <span class="gu-img-upload__filename" id="f-imagen-filename"
+                    aria-live="polite"></span>
+
+              <div class="gu-img-preview-wrap" id="gu-img-preview-wrap"
+                   aria-label="Vista previa de imagen">
+                <img
+                  id="gu-img-preview"
+                  class="gu-img-preview"
+                  src=""
+                  alt="Vista previa de la imagen seleccionada"
+                />
+                <div class="gu-img-preview-info">
+                  <strong id="gu-img-preview-name"></strong>
+                  <span id="gu-img-preview-size"></span>
+                  <button type="button" class="gu-img-preview__remove"
+                          id="gu-img-remove" aria-label="Eliminar imagen seleccionada">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2.5"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <line x1="18" y1="6" x2="6" y2="18"/>
+                      <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                    Quitar imagen
+                  </button>
+                </div>
+              </div>
+
+              <span class="gu-img-hint">
+                Formatos aceptados: JPG, JPEG, PNG, WEBP · Máx. 2 MB
+              </span>
+
+            </div><!-- /gu-img-upload -->
+          </div>
+
+          <!-- ── Fila 5: Contraseña (ancho completo, solo al crear) ── -->
+          <div class="gu-form-group gu-col-4" id="gu-row-password">
+            <label for="f-password">
+              Contraseña <abbr title="Requerido al crear">*</abbr>
+            </label>
+            <input id="f-password" type="password"
+                   placeholder="Mínimo 8 caracteres"
+                   maxlength="128" autocomplete="new-password" />
+          </div>
+
+        </div><!-- /gu-form-grid -->
 
       </div><!-- /gu-modal__body -->
 
@@ -296,8 +404,8 @@
         <button class="gu-btn-guardar"  id="gu-form-guardar">Guardar</button>
       </div>
 
-    </div>
-  </div>
+    </div><!-- /gu-modal gu-modal--lg -->
+  </div><!-- /gu-modal-overlay #gu-modal-form -->
 
 
   <!-- ╔══════════════════════════════════════════════════════╗
@@ -320,14 +428,13 @@
             <path d="M9 6V4h6v2"/>
           </svg>
         </div>
-        <h3 id="gu-confirm-titulo">¿Eliminar usuario?</h3>
-        <!-- El JS escribe aquí el nombre del usuario a eliminar -->
-        <p id="gu-confirm-desc">Esta acción no se puede deshacer.</p>
+        <h3 id="gu-confirm-titulo">¿Desactivar usuario?</h3>
+        <p id="gu-confirm-desc">Su estado cambiará a Inactivo.</p>
       </div>
 
       <div class="gu-modal__footer">
         <button class="gu-btn-cancelar"      id="gu-confirm-cancelar">Cancelar</button>
-        <button class="gu-btn-eliminar-conf" id="gu-confirm-ok">Sí, eliminar</button>
+        <button class="gu-btn-eliminar-conf" id="gu-confirm-ok">Sí, desactivar</button>
       </div>
 
     </div>
@@ -341,8 +448,8 @@
        role="alert" aria-live="assertive" aria-atomic="true"></div>
 
 
-  <!-- Scripts: base del proyecto → lógica de esta vista -->
   <script src="../../js/admin.js"></script>
+  <script src="../../js/verificarJs.js"></script>
 
 </body>
 </html>

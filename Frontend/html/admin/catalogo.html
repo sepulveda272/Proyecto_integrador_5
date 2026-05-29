@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIFEX - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="../../css/general.css">
+    <link rel="stylesheet" href="../../css/admin.css">
+
+    <style>
+      /* ── Miniatura circular en la columna "Nombre especie" ── */
+      .cat-img-thumb {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 2px solid #e5e7eb;
+        background: #f3f4f6;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: border-color .2s, box-shadow .2s;
+        padding: 0;
+        outline-offset: 2px;
+      }
+      .cat-img-thumb:hover,
+      .cat-img-thumb:focus-visible {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99,102,241,.18);
+      }
+      .cat-img-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        border-radius: 50%;
+      }
+      .cat-img-thumb__fallback {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .85rem;
+        font-weight: 700;
+        color: #6b7280;
+        background: #e5e7eb;
+        border-radius: 50%;
+        user-select: none;
+      }
+
+      /* ── Visor de imagen ampliada (#cat-zoom-overlay) ── */
+      #cat-zoom-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, .72);
+        backdrop-filter: blur(4px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .22s ease;
+      }
+      #cat-zoom-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      #cat-zoom-overlay[hidden] { display: none; }
+
+      .cat-zoom-box {
+        position: relative;
+        max-width: min(90vw, 680px);
+        max-height: 90vh;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 24px 64px rgba(0,0,0,.5);
+        background: #111;
+        transform: scale(.9);
+        transition: transform .22s ease;
+      }
+      #cat-zoom-overlay.visible .cat-zoom-box { transform: scale(1); }
+
+      .cat-zoom-img {
+        display: block;
+        max-width: 100%;
+        max-height: 85vh;
+        object-fit: contain;
+        border-radius: 12px;
+      }
+      .cat-zoom-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(0,0,0,.55);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background .18s;
+        padding: 0;
+      }
+      .cat-zoom-close:hover,
+      .cat-zoom-close:focus-visible {
+        background: rgba(0,0,0,.85);
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+      }
+
+      /* ── Carga de imagen desde dispositivo ── */
+      .cat-file-upload {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .cat-file-upload__input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .cat-file-upload__label {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        cursor: pointer;
+        padding: 10px 16px;
+        border: 1.5px dashed #d1d5db;
+        border-radius: 8px;
+        background: #f9fafb;
+        font-size: .875rem;
+        color: #6b7280;
+        user-select: none;
+        align-self: flex-start;
+        transition: border-color .18s, background .18s, color .18s;
+      }
+      .cat-file-upload__label:hover {
+        border-color: #1a6e3c;
+        background: #e8f5ed;
+        color: #1a6e3c;
+      }
+      .cat-file-upload__label svg { flex-shrink: 0; }
+
+      .cat-file-upload__filename {
+        font-size: .78rem;
+        color: #9ca3af;
+        word-break: break-all;
+        min-height: 1em;
+      }
+      .cat-file-upload__hint {
+        font-size: .74rem;
+        color: #9ca3af;
+      }
+
+      .cat-file-preview {
+        display: none;
+        align-items: center;
+        gap: 14px;
+        padding: 10px;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        margin-top: 4px;
+      }
+      .cat-file-preview.visible { display: flex; }
+
+      .cat-file-preview__img {
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid #e5e7eb;
+        background: #e5e7eb;
+        flex-shrink: 0;
+        display: block;
+      }
+      .cat-file-preview__info {
+        font-size: .8rem;
+        color: #6b7280;
+        flex: 1;
+        min-width: 0;
+      }
+      .cat-file-preview__info strong {
+        display: block;
+        color: #374151;
+        margin-bottom: 2px;
+        word-break: break-all;
+        font-size: .82rem;
+      }
+      .cat-file-preview__remove {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #d63b3b;
+        font-size: .78rem;
+        font-family: inherit;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 4px;
+      }
+      .cat-file-preview__remove:hover { text-decoration: underline; }
+
+      /* ── Mensaje de error inline para el campo "Cultivo asociado" ── */
+      .plag-field-error {
+        display: block;
+        font-size: .78rem;
+        color: #d63b3b;
+        margin-top: 4px;
+        font-weight: 500;
+      }
+      .plag-field-error[hidden] { display: none; }
+
+      /* ── Combobox de cultivo con búsqueda ── */
+      .plag-combo { position: relative; }
+
+      .plag-combo__input {
+        width: 100%;
+        padding: 8px 36px 8px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: .9rem;
+        font-family: inherit;
+        color: #111827;
+        background: #fff;
+        box-sizing: border-box;
+        outline: none;
+        transition: border-color .18s, box-shadow .18s;
+        cursor: text;
+      }
+      .plag-combo__input:focus {
+        border-color: #1a6e3c;
+        box-shadow: 0 0 0 3px rgba(26,110,60,.12);
+      }
+      .plag-combo__input.error { border-color: #d63b3b; }
+
+      .plag-combo__chevron {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: #9ca3af;
+        transition: transform .18s;
+      }
+      .plag-combo.open .plag-combo__chevron {
+        transform: translateY(-50%) rotate(180deg);
+      }
+
+      .plag-combo__dropdown {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #fff;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0,0,0,.12);
+        z-index: 200;
+        max-height: 220px;
+        overflow-y: auto;
+        display: none;
+        padding: 4px 0;
+      }
+      .plag-combo.open .plag-combo__dropdown { display: block; }
+
+      .plag-combo__option {
+        padding: 9px 14px;
+        font-size: .875rem;
+        color: #374151;
+        cursor: pointer;
+        transition: background .12s;
+        line-height: 1.4;
+      }
+      .plag-combo__option:hover,
+      .plag-combo__option.activa {
+        background: #e8f5ed;
+        color: #1a6e3c;
+      }
+      .plag-combo__empty {
+        padding: 10px 14px;
+        font-size: .85rem;
+        color: #9ca3af;
+        font-style: italic;
+      }
+    </style>
+
+</head>
+<body>
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <span class="topbar-title">Admin</span>
+        <span class="topbar-user">Juan David Sepulveda Rojas</span>
+        <button class="btn-salir">Salir</button>
+    </div>
+
+    <div class="layout">
+
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+        <div class="sidebar-logo">
+            <span class="icon">🌿</span>
+            <span>SIFEX</span>
+        </div>
+
+        <!-- Ítem: Gestión de usuarios -->
+        <a class="nav-item" href="gestionUsuarios.html">
+            <span class="icon" aria-hidden="true">👥</span> Usuarios
+        </a>
+
+        <!-- Ítem: Gestión de lugares (activo en esta vista) -->
+        <a class="nav-item" href="gestionLugares.html" aria-current="page">
+            <span class="icon" aria-hidden="true">🌱</span> Lugares de producción
+        </a>
+
+        <!-- Ítem: Catálogo de plantas y cultivos -->
+        <a class="nav-item" href="catalogo.html">
+            <span class="icon" aria-hidden="true">📋</span> Catálogo
+        </a>
+
+        <!-- Botón ocultar menú — lógica existente en main.css / toggleSidebar -->
+        <div class="sidebar-bottom">
+            <button class="btn-hide-menu" id="toggleSidebar">← Ocultar menú</button>
+        </div>
+        </nav>
+
+        <!-- MAIN -->
+        <main class="main">
+            <div class="contenido-principal">
+                <div id="contenido">
+
+                    <div class="gu-wrapper">
+
+                        <!-- Encabezado -->
+                        <div class="gu-header">
+                            <div class="gu-header__titles">
+                                <h1>Catálogo</h1>
+                                <p>Administre los cultivos y las plagas registrados en el sistema.</p>
+                            </div>
+                            <button class="gu-btn-nuevo" id="cat-btn-nuevo" aria-label="Agregar registro">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="2.5"
+                                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                Agregar cultivo
+                            </button>
+                        </div>
+
+                        <!-- Tarjeta principal -->
+                        <div class="gu-card">
+
+                            <!-- Pestañas -->
+                            <div class="gu-tabs" role="tablist" aria-label="Filtrar catálogo por tipo">
+                                <button class="gu-tab activa" data-filtro="cultivos"
+                                        role="tab" aria-selected="true" id="cat-tab-cultivos">
+                                    <span aria-hidden="true">🌱</span> Cultivos
+                                    <span class="gu-tab__badge" id="cat-badge-cultivos">0</span>
+                                </button>
+                                <button class="gu-tab" data-filtro="plagas"
+                                        role="tab" aria-selected="false" id="cat-tab-plagas">
+                                    <span aria-hidden="true">🐛</span> Plagas
+                                    <span class="gu-tab__badge" id="cat-badge-plagas">0</span>
+                                </button>
+                            </div>
+
+                            <!-- Barra de herramientas -->
+                            <div class="gu-toolbar">
+                                <div class="gu-search">
+                                    <span class="gu-search__icon" aria-hidden="true">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                             stroke="currentColor" stroke-width="2"
+                                             stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="11" cy="11" r="8"/>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                        </svg>
+                                    </span>
+                                    <input
+                                        class="gu-search__input"
+                                        id="cat-busqueda"
+                                        type="search"
+                                        placeholder="Buscar…"
+                                        aria-label="Buscar registros del catálogo"
+                                        autocomplete="off"
+                                    />
+                                </div>
+                                <span class="gu-toolbar__info" id="cat-info-count" aria-live="polite"></span>
+                            </div>
+
+                            <!-- Tabla dinámica -->
+                            <div class="gu-table-wrapper">
+                                <table class="gu-table" id="cat-tabla"
+                                       role="grid" aria-label="Lista del catálogo">
+                                    <thead id="cat-thead"></thead>
+                                    <tbody id="cat-tbody"></tbody>
+                                </table>
+
+                                <!-- Estado vacío -->
+                                <div class="gu-empty" id="cat-empty"
+                                     role="status" aria-live="polite" hidden>
+                                    <svg width="56" height="56" viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="1.3"
+                                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                        <polyline points="9 22 9 12 15 12 15 22"/>
+                                    </svg>
+                                    <p>No se encontraron registros para este filtro.</p>
+                                </div>
+                            </div>
+
+                        </div><!-- /gu-card -->
+
+                    </div><!-- /gu-wrapper -->
+
+
+                    <!-- MODAL — CREAR / EDITAR CULTIVO -->
+                    <div class="gu-modal-overlay" id="cat-modal-form"
+                         role="dialog" aria-modal="true"
+                         aria-labelledby="cat-modal-titulo" hidden>
+                        <div class="gu-modal">
+
+                            <div class="gu-modal__header">
+                                <h2 id="cat-modal-titulo">Nuevo cultivo</h2>
+                                <button class="gu-modal__close" id="cat-modal-close" aria-label="Cerrar modal">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2.5"
+                                         stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"/>
+                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div class="gu-modal__body">
+
+                                <!-- Fila 1: nombre especie y variedad -->
+                                <div class="gu-form-row">
+                                    <div class="gu-form-group">
+                                        <label for="cat-f-nombre-especie">
+                                            Nombre de la especie <abbr title="Requerido">*</abbr>
+                                        </label>
+                                        <input id="cat-f-nombre-especie" type="text"
+                                               placeholder="Ej. Coffea arabica" maxlength="120" />
+                                    </div>
+                                    <div class="gu-form-group">
+                                        <label for="cat-f-variedad">
+                                            Variedad <abbr title="Requerido">*</abbr>
+                                        </label>
+                                        <input id="cat-f-variedad" type="text"
+                                               placeholder="Ej. Café Arábica" maxlength="100" />
+                                    </div>
+                                </div>
+
+                                <!-- Fila 2: imagen -->
+                                <div class="gu-form-group">
+                                    <label>Imagen <abbr title="Requerido">*</abbr></label>
+                                    <div class="cat-file-upload">
+                                        <input id="cat-f-imagen-file" class="cat-file-upload__input"
+                                               type="file" accept="image/*"
+                                               aria-label="Seleccionar imagen del cultivo" />
+                                        <label for="cat-f-imagen-file" class="cat-file-upload__label">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                                 stroke="currentColor" stroke-width="2"
+                                                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                                <polyline points="21 15 16 10 5 21"/>
+                                            </svg>
+                                            Seleccionar imagen
+                                        </label>
+                                        <span class="cat-file-upload__filename" id="cat-f-imagen-filename">
+                                            Ningún archivo seleccionado
+                                        </span>
+                                        <div class="cat-file-preview" id="cat-f-imagen-preview">
+                                            <img id="cat-f-imagen-preview-img" src=""
+                                                 alt="Vista previa de la imagen seleccionada"
+                                                 class="cat-file-preview__img" />
+                                            <div class="cat-file-preview__info">
+                                                <strong id="cat-f-imagen-preview-name"></strong>
+                                                <span id="cat-f-imagen-preview-size"></span>
+                                                <button type="button" class="cat-file-preview__remove"
+                                                        id="cat-f-imagen-remove"
+                                                        aria-label="Quitar imagen seleccionada">
+                                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                                                         stroke="currentColor" stroke-width="2.5"
+                                                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                        <line x1="18" y1="6" x2="6" y2="18"/>
+                                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                                    </svg>
+                                                    Quitar imagen
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <span class="cat-file-upload__hint">
+                                            Formatos: JPG, PNG, GIF, WebP. Tamaño máximo recomendado: 5 MB.
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Fila 3: descripción -->
+                                <div class="gu-form-group">
+                                    <label for="cat-f-descripcion">Descripción</label>
+                                    <input id="cat-f-descripcion" type="text"
+                                           placeholder="Breve descripción del cultivo (opcional)"
+                                           maxlength="300" />
+                                </div>
+
+                            </div><!-- /gu-modal__body -->
+
+                            <div class="gu-modal__footer">
+                                <button class="gu-btn-cancelar" id="cat-form-cancelar">Cancelar</button>
+                                <button class="gu-btn-guardar"  id="cat-form-guardar">Guardar</button>
+                            </div>
+
+                        </div>
+                    </div>
+
+
+                    <!-- MODAL — CONFIRMAR ELIMINACIÓN (CULTIVO) -->
+                    <div class="gu-modal-overlay" id="cat-modal-confirm"
+                         role="alertdialog" aria-modal="true"
+                         aria-labelledby="cat-confirm-titulo"
+                         aria-describedby="cat-confirm-desc" hidden>
+                        <div class="gu-modal gu-modal--sm">
+                            <div class="gu-confirm__body">
+                                <div class="gu-confirm__icon" aria-hidden="true">
+                                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="3 6 5 6 21 6"/>
+                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                        <path d="M10 11v6"/><path d="M14 11v6"/>
+                                        <path d="M9 6V4h6v2"/>
+                                    </svg>
+                                </div>
+                                <h3 id="cat-confirm-titulo">¿Eliminar registro?</h3>
+                                <p id="cat-confirm-desc">Esta acción no se puede deshacer.</p>
+                            </div>
+                            <div class="gu-modal__footer">
+                                <button class="gu-btn-cancelar"      id="cat-confirm-cancelar">Cancelar</button>
+                                <button class="gu-btn-eliminar-conf" id="cat-confirm-ok">Sí, eliminar</button>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- MODAL — CREAR / EDITAR PLAGA -->
+                    <div class="gu-modal-overlay" id="plag-modal-form"
+                         role="dialog" aria-modal="true"
+                         aria-labelledby="plag-modal-titulo" hidden>
+                        <div class="gu-modal">
+
+                            <div class="gu-modal__header">
+                                <h2 id="plag-modal-titulo">Nueva plaga</h2>
+                                <button class="gu-modal__close" id="plag-modal-close" aria-label="Cerrar modal de plaga">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2.5"
+                                         stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"/>
+                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div class="gu-modal__body">
+
+                                <!-- Fila 1: nombre científico y nombre común -->
+                                <div class="gu-form-row">
+                                    <div class="gu-form-group">
+                                        <label for="plag-f-nombre-cientifico">
+                                            Nombre científico <abbr title="Requerido">*</abbr>
+                                        </label>
+                                        <input id="plag-f-nombre-cientifico" type="text"
+                                               placeholder="Ej. Hypothenemus hampei" maxlength="120" />
+                                    </div>
+                                    <div class="gu-form-group">
+                                        <label for="plag-f-nombre-comun">
+                                            Nombre común <abbr title="Requerido">*</abbr>
+                                        </label>
+                                        <input id="plag-f-nombre-comun" type="text"
+                                               placeholder="Ej. Broca del café" maxlength="100" />
+                                    </div>
+                                </div>
+
+                                <!-- Cultivo asociado (combobox con búsqueda) -->
+                                <div class="gu-form-group">
+                                    <label for="plag-f-cultivo-input">
+                                        Cultivo asociado <abbr title="Requerido">*</abbr>
+                                    </label>
+                                    <div class="plag-combo" id="plag-cultivo-combo">
+                                        <input type="text" id="plag-f-cultivo-input"
+                                               class="plag-combo__input"
+                                               placeholder="Buscar cultivo…"
+                                               autocomplete="off"
+                                               aria-autocomplete="list"
+                                               aria-controls="plag-f-cultivo-list"
+                                               aria-expanded="false"
+                                               role="combobox" />
+                                        <svg class="plag-combo__chevron" width="14" height="14"
+                                             viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                             stroke-width="2.5" stroke-linecap="round"
+                                             stroke-linejoin="round" aria-hidden="true">
+                                            <polyline points="6 9 12 15 18 9"/>
+                                        </svg>
+                                        <div class="plag-combo__dropdown" id="plag-f-cultivo-list"
+                                             role="listbox" aria-label="Cultivos disponibles"></div>
+                                    </div>
+                                    <!-- Input hidden que guarda el ID del cultivo seleccionado -->
+                                    <input type="hidden" id="plag-f-cultivo" value="" />
+                                    <span class="plag-field-error" id="plag-f-cultivo-error"
+                                          role="alert" aria-live="polite" hidden>
+                                        Debes seleccionar un cultivo.
+                                    </span>
+                                </div>
+
+                                <!-- Imagen de la plaga -->
+                                <div class="gu-form-group">
+                                    <label>Imagen <abbr title="Requerido">*</abbr></label>
+                                    <div class="cat-file-upload">
+                                        <input id="plag-f-imagen-file" class="cat-file-upload__input"
+                                               type="file" accept="image/*"
+                                               aria-label="Seleccionar imagen de la plaga" />
+                                        <label for="plag-f-imagen-file" class="cat-file-upload__label">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                                 stroke="currentColor" stroke-width="2"
+                                                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                                <polyline points="21 15 16 10 5 21"/>
+                                            </svg>
+                                            Seleccionar imagen
+                                        </label>
+                                        <span class="cat-file-upload__filename" id="plag-f-imagen-filename">
+                                            Ningún archivo seleccionado
+                                        </span>
+                                        <div class="cat-file-preview" id="plag-f-imagen-preview">
+                                            <img id="plag-f-imagen-preview-img" src=""
+                                                 alt="Vista previa de la imagen de la plaga"
+                                                 class="cat-file-preview__img" />
+                                            <div class="cat-file-preview__info">
+                                                <strong id="plag-f-imagen-preview-name"></strong>
+                                                <span id="plag-f-imagen-preview-size"></span>
+                                                <button type="button" class="cat-file-preview__remove"
+                                                        id="plag-f-imagen-remove"
+                                                        aria-label="Quitar imagen seleccionada">
+                                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                                                         stroke="currentColor" stroke-width="2.5"
+                                                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                        <line x1="18" y1="6" x2="6" y2="18"/>
+                                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                                    </svg>
+                                                    Quitar imagen
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <span class="cat-file-upload__hint">
+                                            Formatos: JPG, PNG, GIF, WebP. Tamaño máximo recomendado: 5 MB.
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Descripción -->
+                                <div class="gu-form-group">
+                                    <label for="plag-f-descripcion">Descripción</label>
+                                    <input id="plag-f-descripcion" type="text"
+                                           placeholder="Breve descripción de la plaga (opcional)"
+                                           maxlength="300" />
+                                </div>
+
+                            </div><!-- /gu-modal__body -->
+
+                            <div class="gu-modal__footer">
+                                <button class="gu-btn-cancelar" id="plag-form-cancelar">Cancelar</button>
+                                <button class="gu-btn-guardar"  id="plag-form-guardar">Guardar</button>
+                            </div>
+
+                        </div>
+                    </div>
+
+
+                    <!-- MODAL — CONFIRMAR ELIMINACIÓN (PLAGA) -->
+                    <div class="gu-modal-overlay" id="plag-modal-confirm"
+                         role="alertdialog" aria-modal="true"
+                         aria-labelledby="plag-confirm-titulo"
+                         aria-describedby="plag-confirm-desc" hidden>
+                        <div class="gu-modal gu-modal--sm">
+                            <div class="gu-confirm__body">
+                                <div class="gu-confirm__icon" aria-hidden="true">
+                                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="3 6 5 6 21 6"/>
+                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                        <path d="M10 11v6"/><path d="M14 11v6"/>
+                                        <path d="M9 6V4h6v2"/>
+                                    </svg>
+                                </div>
+                                <h3 id="plag-confirm-titulo">¿Eliminar plaga?</h3>
+                                <p id="plag-confirm-desc">Esta acción no se puede deshacer.</p>
+                            </div>
+                            <div class="gu-modal__footer">
+                                <button class="gu-btn-cancelar"      id="plag-confirm-cancelar">Cancelar</button>
+                                <button class="gu-btn-eliminar-conf" id="plag-confirm-ok">Sí, eliminar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TOAST — Notificaciones -->
+                    <div class="gu-toast" id="cat-toast"
+                         role="alert" aria-live="assertive" aria-atomic="true"></div>
+
+                </div><!-- /contenido -->
+            </div>
+        </main>
+
+    </div><!-- /layout -->
+
+
+    <!-- VISOR DE IMAGEN AMPLIADA -->
+    <div id="cat-zoom-overlay" role="dialog" aria-modal="true"
+         aria-label="Vista ampliada de imagen" hidden>
+        <div class="cat-zoom-box">
+            <img id="cat-zoom-img" src="" alt="Imagen ampliada" class="cat-zoom-img">
+            <button class="cat-zoom-close" aria-label="Cerrar vista ampliada">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script src="../../js/adminCatalogo.js"></script>
+    <script src="../../js/verificarJs.js"></script>
+</body>
+</html>

@@ -1,0 +1,1312 @@
+/* ============================================================
+   SIFEX — shared.css
+   Estilos compartidos y unificados para todos los roles
+   y vistas del sistema.
+
+   ARQUITECTURA:
+   ┌─────────────────────────────────────────────────────┐
+   │  shared.css     ← Este archivo (tokens + base)      │
+   │  admin.css      ← Solo estilos exclusivos de admin  │
+   │  funcionario.css← Solo estilos exclusivos           │
+   │  productor.css  ← Solo estilos exclusivos           │
+   │  inspecciones.css← Solo estilos exclusivos          │
+   └─────────────────────────────────────────────────────┘
+
+   ÍNDICE
+   0.  Importación de fuentes
+   1.  Variables globales unificadas (design tokens)
+   2.  Reset base
+   3.  Body y layout principal (topbar · sidebar · main)
+   4.  Tipografía base
+   5.  Botones — sistema completo
+   6.  Badges y estados
+   7.  Inputs, selects y labels
+   8.  Tablas
+   9.  Cards y contenedores
+   10. Accordions (lote-edit-card / dl-card)
+   11. Modales — overlay, box, header, body, footer
+   12. Toast de notificación
+   13. Estado vacío
+   14. Paginación
+   15. Utilidades flex/grid
+   16. Animaciones y transiciones
+   17. Media queries compartidas
+   ============================================================ */
+
+
+/* ── 0. IMPORTACIÓN DE FUENTES ─────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&family=Sora:wght@600;700;800&display=swap');
+
+
+/* ── 1. VARIABLES GLOBALES UNIFICADAS ──────────────────── */
+/*
+   DECISIÓN DE UNIFICACIÓN:
+   Los 4 archivos definen `:root` con nombres distintos para los
+   mismos valores. Aquí se normalizan bajo un prefijo `--sx-`
+   (SIFEX) para evitar colisiones y mantener compatibilidad
+   con los archivos específicos que pueden seguir usando sus
+   propios alias.
+*/
+:root {
+  /* ── Paleta verde institucional ── */
+  --sx-green-900:     #1b2e23;   /* texto oscuro / títulos */
+  --sx-green-800:     #2d6a4f;   /* primario oscuro (botones, acentos) */
+  --sx-green-700:     #3d6b55;   /* primario medio */
+  --sx-green-500:     #52b788;   /* verde brillante / hover */
+  --sx-green-200:     #d8f3dc;   /* verde claro / fondos de chip */
+  --sx-green-100:     #f0faf3;   /* verde muy claro / hover-background */
+
+  /* ── Texto ── */
+  --sx-text-dark:     #1b2e23;
+  --sx-text-mid:      #4a6b57;
+  --sx-text-light:    #8fb09a;
+  --sx-text-muted:    #548375;
+
+  /* ── Neutros (usados en admin) ── */
+  --sx-n50:           #f7f8fa;
+  --sx-n100:          #eff1f5;
+  --sx-n200:          #dde1ea;
+  --sx-n500:          #8892a4;
+  --sx-n700:          #3d4757;
+  --sx-n900:          #1a1f2b;
+
+  /* ── Acentos ── */
+  --sx-accent-gold:   #f4a261;
+  --sx-accent-pend:   #e0931f;   /* pendiente / ámbar */
+  --sx-accent-red:    #e63946;   /* danger / rechazo */
+  --sx-danger:        #c0392b;
+  --sx-danger-pale:   #fdf0f0;
+  --sx-danger-bg:     #f8d7da;
+
+  /* ── Layout ── */
+  --sx-white:         #ffffff;
+  --sx-border:        #c6e6cc;
+  --sx-bg-page:       #eef5f0;
+  --sx-sidebar-bg:    linear-gradient(160deg, #3a7d5a 0%, #2d5a3d 100%);
+
+  /* ── Sombras ── */
+  --sx-sh-sm:         0 2px 8px  rgba(45,106,79,.08);
+  --sx-sh-md:         0 6px 24px rgba(45,106,79,.13);
+  --sx-sh-lg:         0 16px 48px rgba(45,106,79,.18);
+
+  /* ── Radios ── */
+  --sx-r-sm:          6px;
+  --sx-r-md:          8px;
+  --sx-r-lg:          12px;
+  --sx-r-xl:          16px;
+  --sx-r-pill:        999px;
+
+  /* ── Tipografía ── */
+  --sx-font:          "DM Sans", "Segoe UI", sans-serif;
+  --sx-font-mono:     "DM Mono", monospace;
+  --sx-font-display:  "Sora", "DM Sans", sans-serif;
+
+  /* ── Transiciones ── */
+  --sx-t-fast:        0.15s ease;
+  --sx-t-base:        0.22s ease;
+  --sx-t-slow:        0.30s ease;
+
+  /* ── Topbar / Sidebar ── */
+  --sx-topbar-h:      52px;
+  --sx-sidebar-w:     210px;
+}
+
+/*
+   ALIAS DE COMPATIBILIDAD — permiten que los archivos específicos
+   sigan usando sus variables sin cambios de inmediato.
+   Se puede eliminar esta sección una vez migrados los archivos.
+*/
+:root {
+  --green-dark:       var(--sx-green-800);
+  --green-mid:        var(--sx-green-500);
+  --green-light:      var(--sx-green-200);
+  --green-xlight:     var(--sx-green-100);
+  --text-dark:        var(--sx-text-dark);
+  --text-mid:         var(--sx-text-mid);
+  --text-light:       var(--sx-text-light);
+  --white:            var(--sx-white);
+  --border:           var(--sx-border);
+  --shadow-sm:        var(--sx-sh-sm);
+  --shadow-md:        var(--sx-sh-md);
+  --shadow-lg:        var(--sx-sh-lg);
+  --radius-sm:        var(--sx-r-sm);
+  --radius-md:        var(--sx-r-md);
+  --radius-lg:        var(--sx-r-lg);
+  --radius-xl:        var(--sx-r-xl);
+  --font-base:        var(--sx-font);
+  --font-dm:          var(--sx-font);
+  --font-sora:        var(--sx-font-display);
+  --t-fast:           var(--sx-t-fast);
+  --t-base:           var(--sx-t-base);
+  --color-primary:    var(--sx-green-700);
+  --color-primary-dark: var(--sx-green-800);
+  --color-danger:     var(--sx-danger);
+  --accent-gold:      var(--sx-accent-gold);
+  --accent-red:       var(--sx-accent-red);
+  --accent-rose:      #f8c8cc;
+  --sidebar-bg:       var(--sx-sidebar-bg);
+  --color-border:     rgba(83,158,101,.3);
+  --color-text:       var(--sx-text-dark);
+  --color-text-muted: var(--sx-text-muted);
+}
+
+
+/* ── 2. RESET BASE ─────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Anillo de foco accesible */
+:focus-visible {
+  outline: 3px solid var(--sx-green-800);
+  outline-offset: 3px;
+}
+
+
+/* ── 3. BODY Y LAYOUT PRINCIPAL ────────────────────────── */
+/*
+   DUPLICADO EXACTO en: funcionario.css §5 + productor.css §5
+   → Unificado aquí. Eliminar de ambos archivos origen.
+*/
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--sx-bg-page);
+  color: var(--sx-text-dark);
+  font-family: var(--sx-font);
+}
+
+.layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Topbar */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 24px;
+  height: var(--sx-topbar-h);
+  background: var(--sx-white);
+  border-bottom: 1px solid var(--sx-border);
+  box-shadow: var(--sx-sh-sm);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topbar-title {
+  font-family: var(--sx-font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sx-text-mid);
+}
+
+.topbar-user {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--sx-text-mid);
+}
+
+/* Sidebar */
+.sidebar {
+  width: var(--sx-sidebar-w);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 24px 0 16px;
+  background: var(--sx-sidebar-bg);
+  flex-shrink: 0;
+}
+
+.sidebar-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px 20px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255,255,255,.15);
+}
+
+.sidebar-logo span {
+  font-family: var(--sx-font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--sx-white);
+  letter-spacing: .5px;
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  padding: 0 20px;
+}
+
+/* Nav items */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  margin-right: 12px;
+  border-radius: 0 var(--sx-r-md) var(--sx-r-md) 0;
+  font-size: 13.5px;
+  color: rgba(255,255,255,.82);
+  cursor: pointer;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+  transition: background var(--sx-t-fast), color var(--sx-t-fast);
+}
+
+.nav-item:hover {
+  background: rgba(255,255,255,.10);
+  color: var(--sx-white);
+  border-left-color: rgba(255,255,255,.35);
+}
+
+.nav-item.active {
+  background: rgba(255,255,255,.15);
+  color: var(--sx-white);
+  border-left-color: var(--sx-green-500);
+  font-weight: 600;
+}
+
+.nav-item .icon { font-size: 16px; }
+
+/* Main */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+#contenido {
+  width: 100%;
+  height: 100%;
+  padding: 25px;
+}
+
+/* Botón ocultar menú lateral */
+.btn-hide-menu {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(255,255,255,.12);
+  border: none;
+  border-radius: var(--sx-r-sm);
+  color: rgba(255,255,255,.7);
+  font-family: var(--sx-font);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--sx-t-fast);
+}
+
+.btn-hide-menu:hover { background: rgba(255,255,255,.2); }
+
+
+/* ── 4. TIPOGRAFÍA BASE ────────────────────────────────── */
+.page-title,
+.section-title {
+  font-family: var(--sx-font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--sx-green-800);
+}
+
+.page-subtitle,
+.section-subtitle {
+  font-size: 13px;
+  color: var(--sx-text-light);
+  margin-top: 2px;
+}
+
+/* Header de vista (título + controles) */
+.view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+
+/* ── 5. BOTONES — SISTEMA COMPLETO ─────────────────────── */
+/*
+   DUPLICADO EXACTO en: funcionario.css §2 + productor.css §2
+   Líneas afectadas: ~120 líneas × 2 archivos = 240 líneas eliminadas.
+*/
+
+/* Base compartida */
+.btn,
+.btn-primary, .btn-agregar, .btn-save, .btn-solicitar, .btn-generar,
+.btn-secondary, .btn-sec,
+.btn-danger, .btn-eliminar,
+.btn-cancel,
+.btn-salir {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: var(--sx-r-md);
+  padding: 9px 20px;
+  font-family: var(--sx-font);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background  var(--sx-t-fast),
+    box-shadow  var(--sx-t-fast),
+    opacity     var(--sx-t-fast),
+    transform   var(--sx-t-fast);
+}
+
+/* Primario — verde oscuro */
+.btn--primary,
+.btn-primary, .btn-agregar, .btn-save, .btn-solicitar, .btn-generar {
+  background: var(--sx-green-800);
+  color: var(--sx-white);
+  box-shadow: var(--sx-sh-sm);
+}
+
+.btn--primary:hover:not(:disabled),
+.btn-primary:hover:not(:disabled),
+.btn-agregar:hover,
+.btn-save:hover,
+.btn-solicitar:not(:disabled):hover,
+.btn-generar:hover {
+  background: #1e4d38;
+  box-shadow: var(--sx-sh-md);
+}
+
+/* Secundario — borde verde */
+.btn--secondary,
+.btn-secondary, .btn-sec {
+  background: var(--sx-white);
+  color: var(--sx-text-mid);
+  border: 1.5px solid var(--sx-border);
+}
+
+.btn--secondary:hover, .btn-secondary:hover, .btn-sec:hover {
+  border-color: var(--sx-green-500);
+  background: var(--sx-green-100);
+}
+
+/* Peligro — rojo suave */
+.btn--danger,
+.btn-danger, .btn-eliminar {
+  background: var(--sx-danger-bg);
+  color: #721c24;
+}
+
+.btn--danger:hover, .btn-danger:hover, .btn-eliminar:hover {
+  background: #f1aeb5;
+}
+
+/* Ghost — solo borde */
+.btn--ghost,
+.btn-cancel {
+  background: transparent;
+  border: 1px solid var(--sx-border);
+  color: var(--sx-text-mid);
+}
+
+.btn--ghost:hover, .btn-cancel:hover {
+  border-color: var(--sx-green-500);
+  color: var(--sx-green-800);
+}
+
+/* Salir — rojo sólido */
+.btn--exit,
+.btn-salir {
+  background: var(--sx-accent-red);
+  color: var(--sx-white);
+  border-radius: var(--sx-r-sm);
+  padding: 6px 18px;
+  font-size: 13px;
+}
+
+.btn--exit:hover, .btn-salir:hover { background: #c1121f; }
+
+/* Deshabilitado */
+.btn:disabled,
+.btn-primary:disabled,
+.btn-solicitar:disabled {
+  background: #a8c9b5;
+  cursor: not-allowed;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+/* Botón "volver" (flecha) */
+/* DUPLICADO EXACTO en: productor.css §2 + inspecciones.css §4 */
+.btn-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--sx-white);
+  border: 1.5px solid var(--sx-border);
+  border-radius: var(--sx-r-md);
+  color: var(--sx-text-mid);
+  font-size: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color var(--sx-t-fast), background var(--sx-t-fast);
+}
+
+.btn-back:hover {
+  border-color: var(--sx-green-500);
+  background: var(--sx-green-100);
+}
+
+/* Botones de acción en tabla (iconos 32×32) */
+/* DUPLICADO EXACTO en: funcionario.css §2 + productor.css §2 */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--sx-r-sm);
+  font-size: 15px;
+  cursor: pointer;
+  transition: opacity var(--sx-t-fast), transform var(--sx-t-fast);
+}
+
+.action-btn:hover { opacity: .8; transform: scale(1.08); }
+
+.action-edit { background: var(--sx-green-800); color: var(--sx-white); margin-right: 4px; }
+.action-del  { background: #f8c8cc;             color: #c0394a;         margin-right: 4px; }
+.action-eye  { background: var(--sx-accent-gold); color: var(--sx-white); }
+.action-lote { background: var(--sx-green-500);  color: var(--sx-white); margin-left: 4px; }
+
+/* Botón eliminar ítem (32×32 versión roja) */
+.btn-del-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #f8c8cc;
+  border: none;
+  color: var(--sx-danger);
+  border-radius: var(--sx-r-sm);
+  font-size: 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--sx-t-fast);
+}
+
+.btn-del-item:hover { background: #f9d5d5; }
+
+
+/* ── 6. BADGES Y ESTADOS ───────────────────────────────── */
+/*
+   DUPLICADO EXACTO (base) en: funcionario.css §3 + productor.css §3
+*/
+
+/* Base badge */
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--sx-r-sm);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  white-space: nowrap;
+  color: black;
+}
+
+/* Variantes de estado */
+.badge-aprobado {
+  background: rgba(61,107,85,.15);
+  color: var(--sx-green-700);
+  border: 1px solid rgba(61,107,85,.3);
+}
+
+.badge-revision {
+  background: rgb(255 232 170 / 51%);
+  color: #ffb900;
+  border: 1px solid rgba(212,160,23,.3);
+}
+
+.badge-rechazado {
+  background: rgba(230,57,70,.15);
+  color: var(--sx-accent-red);
+  border: 1px solid rgba(230,57,70,.3);
+}
+
+/* Badge de nivel de alerta fitosanitaria */
+.badge-alerta {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: var(--sx-r-sm);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+
+.alerta-sin-incidencia { background: var(--sx-green-200); color: #1b4332; }
+.alerta-muy-baja       { background: #d3f9d8;              color: #2d6a2d; }
+.alerta-baja           { background: #fff3cd;              color: #856404; }
+.alerta-moderada       { background: #ffe8cc;              color: #7c4a00; }
+.alerta-alta           { background: #fde8d0;              color: #c05e10; }
+.alerta-muy-alta       { background: #fdd5d8;              color: #9b1c2a; }
+.alerta-critica        { background: var(--sx-accent-red); color: var(--sx-white); }
+.alerta-sin-datos      { background: #f0f0f0;              color: var(--sx-text-light); }
+
+/* Badge con punto de color */
+.badge-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: var(--sx-r-pill);
+}
+
+.badge-dot__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.badge-dot--pend { background: #fff4e0; color: #a05e00; }
+.badge-dot--pend .badge-dot__dot { background: var(--sx-accent-pend); }
+.badge-dot--comp { background: var(--sx-green-200); color: var(--sx-green-800); }
+.badge-dot--comp .badge-dot__dot { background: var(--sx-green-500); }
+
+
+/* ── 7. INPUTS, SELECTS Y LABELS ───────────────────────── */
+/*
+   DUPLICADO EXACTO en: funcionario.css §4 + productor.css §4
+*/
+
+/* Input / select / textarea base */
+.form-input,
+.form-select,
+.obs-textarea,
+.cita-fecha-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--sx-border);
+  border-radius: var(--sx-r-md);
+  font-family: var(--sx-font);
+  font-size: 13.5px;
+  color: var(--sx-text-dark);
+  background: var(--sx-white);
+  outline: none;
+  transition: border-color var(--sx-t-fast), box-shadow var(--sx-t-fast);
+}
+
+.form-input:focus,
+.form-select:focus,
+.obs-textarea:focus,
+.cita-fecha-input:focus {
+  border-color: var(--sx-green-500);
+  box-shadow: 0 0 0 3px rgba(82,183,136,.15);
+}
+
+.form-input::placeholder { color: #b8cfc1; }
+
+.form-input.readonly {
+  background: var(--sx-green-100);
+  color: var(--sx-text-mid);
+  cursor: default;
+}
+
+.form-input[readonly]  { pointer-events: none; }
+.form-input.error      { border-color: var(--sx-accent-red); }
+
+.obs-textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-size: 13px;
+}
+
+.obs-textarea:disabled,
+.cita-fecha-input:disabled {
+  background: #f7faf7;
+  color: var(--sx-text-light);
+  cursor: not-allowed;
+}
+
+/* Label base */
+.form-label,
+.lote-field-label,
+.modal-obs-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sx-text-mid);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 5px;
+}
+
+.label-hint {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--sx-text-light);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: 4px;
+}
+
+.form-label--obs { margin-top: 14px; }
+
+/* Campo vertical */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+
+/* ── 8. TABLAS ─────────────────────────────────────────── */
+/*
+   DUPLICADO EXACTO en: funcionario.css §7 + productor.css §6
+   Con diferencias mínimas de color resueltas aquí.
+*/
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--sx-white);
+  border-radius: var(--sx-r-md);
+  overflow: hidden;
+  box-shadow: var(--sx-sh-sm);
+}
+
+th {
+  padding: 12px 16px;
+  background: var(--sx-green-200);
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--sx-green-800);
+  letter-spacing: .3px;
+  text-transform: uppercase;
+  border-bottom: 2px solid #b7d5c2;
+}
+
+tbody tr {
+  border-top: 1px solid var(--sx-green-100);
+  transition: background var(--sx-t-fast);
+}
+
+tbody tr:hover { background: var(--sx-green-100); }
+
+td {
+  padding: 13px 16px;
+  font-size: 13.5px;
+  color: var(--sx-text-dark);
+  border-bottom: 1px solid #eee;
+  vertical-align: middle;
+}
+
+tr:last-child td { border-bottom: none; }
+
+/* Variantes de celda */
+.td-vacio    { color: var(--sx-text-light); }
+.td-pendiente { color: var(--sx-text-light); font-style: italic; }
+.td-meta     { color: #7a9e82; }
+.reporte-num { text-align: center; font-variant-numeric: tabular-nums; }
+
+/* Acento lateral de fila por estado */
+tbody tr.tr--pendiente {
+  box-shadow: inset 4px 0 0 var(--sx-accent-gold);
+  background-color: rgba(244,162,97,.04);
+}
+tbody tr.tr--pendiente:hover { background-color: rgba(244,162,97,.09); }
+
+tbody tr.tr--completado {
+  box-shadow: inset 4px 0 0 var(--sx-green-500);
+  background-color: rgba(82,183,136,.04);
+}
+tbody tr.tr--completado:hover { background-color: rgba(82,183,136,.09); }
+
+
+/* ── 9. CARDS Y CONTENEDORES ───────────────────────────── */
+
+/* Card base (sección con sombra) */
+.card-base {
+  background: var(--sx-white);
+  border-radius: var(--sx-r-lg);
+  border: 1px solid var(--sx-border);
+  overflow: hidden;
+  box-shadow: var(--sx-sh-sm);
+  transition: box-shadow var(--sx-t-base), transform var(--sx-t-base);
+}
+
+.card-base:hover {
+  box-shadow: var(--sx-sh-md);
+  transform: translateY(-2px);
+}
+
+/* Acento superior de estado */
+.card__accent               { height: 4px; width: 100%; flex-shrink: 0; }
+.card__accent--pendiente    { background: var(--sx-accent-pend); }
+.card__accent--aprobado     { background: var(--sx-green-500); }
+.card__accent--rechazado    { background: var(--sx-accent-red); }
+
+/* Grilla de cards */
+.cards-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.cards-grid .card {
+  background: var(--sx-white);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 360px;
+  min-width: 280px;
+  box-shadow: var(--sx-sh-sm);
+  transition: box-shadow var(--sx-t-base), transform var(--sx-t-base);
+}
+
+.cards-grid .card:hover {
+  box-shadow: var(--sx-sh-md);
+  transform: translateY(-2px);
+}
+
+/* Stat card (estadística numérica) */
+.stat-card {
+  background: var(--sx-white);
+  border: 1px solid var(--sx-n100, var(--sx-border));
+  border-radius: var(--sx-r-lg);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 120px;
+}
+
+.stat-label {
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--sx-text-light);
+}
+
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--sx-text-dark);
+  line-height: 1.1;
+}
+
+/* Lista detalle + rows */
+.detalle-list { display: flex; flex-direction: column; gap: 10px; }
+
+.detalle-item {
+  background: var(--sx-white);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-r-lg);
+  padding: 16px 20px;
+}
+
+.detalle-item-title {
+  font-weight: 700;
+  color: var(--sx-green-800);
+  font-size: .9rem;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.detalle-item-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--sx-green-100);
+  color: var(--sx-text-dark);
+}
+
+.detalle-item-row:last-child            { border-bottom: none; }
+.detalle-item-row span:first-child      { color: var(--sx-text-mid); font-size: .88rem; font-weight: 500; }
+.detalle-item-row span:last-child       { font-weight: 600; }
+
+.detalle-empty {
+  font-size: .9rem;
+  color: var(--sx-text-light);
+  font-style: italic;
+  padding: 12px 0;
+}
+
+
+/* ── 10. ACCORDIONS ────────────────────────────────────── */
+/*
+   DUPLICADO EXACTO en:
+   · funcionario.css (.lote-edit-card) §12
+   · productor.css (.lote-edit-card + .dl-card) §15 + §14
+   · admin.css (.lote-edit-card + .dl-card) §18 + §19
+   Ambas clases son idénticas → se unifica bajo .accordion-card.
+   Los archivos específicos pueden usar un alias.
+*/
+.accordion-card,
+.lote-edit-card,
+.dl-card {
+  border: 1.5px solid var(--sx-border);
+  border-radius: var(--sx-r-md);
+  overflow: hidden;
+  margin-bottom: 10px;
+  background: var(--sx-white);
+  transition: border-color var(--sx-t-fast);
+  animation: sxFadeIn .25s ease;
+}
+
+.accordion-card.open,
+.lote-edit-card.open,
+.dl-card.open {
+  border-color: var(--sx-green-500);
+}
+
+/* Header del accordion */
+.accordion-header,
+.lote-edit-header,
+.dl-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--sx-green-100);
+  cursor: pointer;
+  user-select: none;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--sx-green-800);
+  transition: background var(--sx-t-fast);
+}
+
+.accordion-card.open .accordion-header,
+.lote-edit-card.open .lote-edit-header,
+.dl-card.open .dl-card-header,
+.accordion-header:hover,
+.lote-edit-header:hover,
+.dl-card-header:hover {
+  background: var(--sx-green-200);
+}
+
+/* Chevron */
+.accordion-chevron,
+.lote-edit-chevron,
+.dl-card-chevron {
+  font-size: 13px;
+  color: var(--sx-text-light);
+  transition: transform var(--sx-t-fast);
+}
+
+.accordion-card.open .accordion-chevron,
+.lote-edit-card.open .lote-edit-chevron,
+.dl-card.open .dl-card-chevron {
+  transform: rotate(180deg);
+}
+
+/* Body del accordion */
+.accordion-body,
+.lote-edit-body,
+.dl-card-body {
+  display: none;
+  padding: 16px;
+  background: var(--sx-white);
+  border-top: 1px solid var(--sx-border);
+}
+
+.accordion-card.open .accordion-body,
+.lote-edit-card.open .lote-edit-body,
+.dl-card.open .dl-card-body {
+  display: block;
+  animation: sxSlideUp .2s ease;
+}
+
+/* Nota dentro del accordion */
+.accordion-note,
+.lote-edit-note {
+  font-size: 11px;
+  color: var(--sx-text-light);
+  margin-top: 8px;
+}
+
+/* Fila de datos dentro del accordion */
+.dl-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--sx-green-100);
+  color: var(--sx-text-dark);
+}
+
+.dl-row:last-child            { border-bottom: none; }
+.dl-row span:first-child      { color: var(--sx-text-mid); font-size: 12px; }
+.dl-row span:last-child       { font-weight: 600; }
+
+
+/* ── 11. MODALES ───────────────────────────────────────── */
+/*
+   DUPLICADO en: funcionario.css §10 + productor.css §13
+   (idénticos al 95%). Unificados aquí.
+*/
+
+/* Overlay */
+.modal-overlay,
+.modal-base,
+.modal-cita-overlay,
+.modal-obs-edit-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 1055;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--sx-t-base);
+}
+
+.modal-overlay.show,
+.modal-base.show,
+.modal-cita-overlay.show,
+.modal-obs-edit-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Box interior */
+.modal-box,
+.modal-base__box,
+.modal-cita-box {
+  background: var(--sx-white);
+  border-radius: var(--sx-r-xl);
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateY(12px);
+  transition: transform var(--sx-t-base);
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+}
+
+.modal-overlay.show .modal-box,
+.modal-base.show .modal-base__box,
+.modal-cita-overlay.show .modal-cita-box {
+  transform: translateY(0);
+}
+
+/* Tamaños de modal */
+.modal-box--sm  { max-width: 380px; }
+.modal-box--md  { max-width: 480px; }
+.modal-box--lg  { max-width: 640px; }
+.modal-box--xl  { max-width: 780px; }
+
+/* Cabecera */
+.modal__head,
+.modal-cita-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--sx-border);
+  flex-shrink: 0;
+}
+
+/* Títulos */
+.modal__title,
+.modal-title,
+.modal-cita-titulo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sx-text-dark);
+}
+
+.modal__subtitle,
+.modal-subtitle,
+.modal-cita-sub {
+  font-size: 12px;
+  color: var(--sx-text-light);
+  margin-top: 2px;
+}
+
+/* Botón cerrar */
+.modal__close,
+.modal-close,
+.modal-cita-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--sx-text-light);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  transition: color var(--sx-t-fast);
+}
+
+.modal__close:hover,
+.modal-close:hover,
+.modal-cita-close:hover { color: var(--sx-text-dark); }
+
+/* Cuerpo */
+.modal__body,
+.modal-cita-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+.modal__body::-webkit-scrollbar,
+.modal-cita-body::-webkit-scrollbar { width: 4px; }
+
+.modal__body::-webkit-scrollbar-thumb,
+.modal-cita-body::-webkit-scrollbar-thumb {
+  background: var(--sx-border);
+  border-radius: 4px;
+}
+
+/* Pie */
+.modal__foot,
+.modal-cita-foot,
+.modal-footer-custom {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--sx-border);
+  background: #f9fbf9;
+  flex-shrink: 0;
+}
+
+/* Mensaje de éxito dentro del modal */
+.modal-success,
+.cita-success-msg {
+  display: none;
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: #e8f5ee;
+  border: 1.5px solid var(--sx-green-500);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sx-green-800);
+}
+
+.modal-success.show,
+.cita-success-msg.show { display: block; }
+
+
+/* ── 12. TOAST ─────────────────────────────────────────── */
+/*
+   DUPLICADO EXACTO en: funcionario.css §14 + productor.css §16
+*/
+.toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 9999;
+  padding: 13px 22px;
+  background: var(--sx-green-800);
+  color: var(--sx-white);
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  box-shadow: var(--sx-sh-lg);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px);
+  transition: opacity var(--sx-t-base), transform var(--sx-t-base);
+}
+
+.toast.show     { opacity: 1; transform: translateY(0); }
+.toast--success { background: var(--sx-green-800); }
+.toast--error   { background: var(--sx-accent-red); }
+.toast--warning { background: var(--sx-accent-pend); }
+
+
+/* ── 13. ESTADO VACÍO ──────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 24px;
+  color: var(--sx-text-light);
+  text-align: center;
+}
+
+.empty-state__icon { opacity: .3; }
+
+.empty-state p {
+  font-size: .92rem;
+  max-width: 280px;
+  line-height: 1.6;
+}
+
+.edit-empty-msg {
+  font-size: 13px;
+  color: var(--sx-text-light);
+  font-style: italic;
+  margin: 4px 0 10px;
+}
+
+
+/* ── 14. PAGINACIÓN ────────────────────────────────────── */
+/*
+   SIMILAR en: admin.css (.pag-btn) + productor.css (.pag-btn)
+   Con diferencias menores de padding/color → unificado.
+*/
+.pag-nav,
+.detalle-paginacion {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 0 4px;
+  flex-wrap: wrap;
+}
+
+.pag-btn {
+  border: 1.5px solid var(--sx-border);
+  background: var(--sx-white);
+  color: var(--sx-green-800);
+  border-radius: var(--sx-r-sm);
+  padding: 7px 13px;
+  cursor: pointer;
+  font-family: var(--sx-font);
+  font-size: .875rem;
+  font-weight: 600;
+  transition:
+    background var(--sx-t-fast),
+    border-color var(--sx-t-fast),
+    color var(--sx-t-fast);
+}
+
+.pag-btn:hover:not(:disabled) {
+  border-color: var(--sx-green-800);
+  background: var(--sx-green-100);
+  color: var(--sx-green-800);
+}
+
+.pag-btn:disabled     { opacity: .4; cursor: default; pointer-events: none; }
+.pag-btn--activa      { background: var(--sx-green-800); border-color: var(--sx-green-800); color: var(--sx-white); }
+
+
+/* ── 15. UTILIDADES FLEX / GRID ────────────────────────── */
+
+/* Flex helpers */
+.flex          { display: flex; }
+.flex-col      { display: flex; flex-direction: column; }
+.items-center  { align-items: center; }
+.justify-between { justify-content: space-between; }
+.justify-end   { justify-content: flex-end; }
+.flex-wrap     { flex-wrap: wrap; }
+.flex-1        { flex: 1; }
+.gap-2         { gap: 8px; }
+.gap-3         { gap: 12px; }
+.gap-4         { gap: 16px; }
+
+/* Espaciados comunes */
+.mb-0  { margin-bottom: 0; }
+.mb-1  { margin-bottom: 4px; }
+.mb-2  { margin-bottom: 8px; }
+.mb-3  { margin-bottom: 12px; }
+.mb-4  { margin-bottom: 16px; }
+.mt-2  { margin-top: 8px; }
+.mt-3  { margin-top: 12px; }
+
+/* Stats flex */
+.stats-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+/* Divisor de sección en modales */
+.section-divider {
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--sx-text-light);
+  padding: 18px 0 8px;
+  border-top: 1px solid var(--sx-border);
+  margin-top: 12px;
+}
+
+
+/* ── 16. ANIMACIONES ───────────────────────────────────── */
+/*
+   DUPLICADO EXACTO en: funcionario.css §15 + productor.css §17
+*/
+@keyframes sxSlideUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sxFadeIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Aliases de compatibilidad (mantener hasta migrar JS) */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+
+/* ── 17. MEDIA QUERIES COMPARTIDAS ─────────────────────── */
+@media (max-width: 900px) {
+  .sidebar {
+    width: 60px;
+    overflow: hidden;
+  }
+
+  .nav-item span:not(.icon) { display: none; }
+  .sidebar-logo span         { display: none; }
+  .sidebar-logo              { padding: 0 0 20px; justify-content: center; }
+  .sidebar-bottom            { display: none; }
+}
+
+@media (max-width: 640px) {
+  .cards-grid .card { flex: 1 1 100%; }
+  .stats-row        { flex-direction: column; }
+  .modal-box        { max-width: 100%; border-radius: var(--sx-r-lg) var(--sx-r-lg) 0 0; align-self: flex-end; }
+  .modal-overlay    { align-items: flex-end; }
+  .topbar           { padding: 0 16px; }
+  #contenido        { padding: 16px; }
+}

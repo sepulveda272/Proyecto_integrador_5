@@ -1,0 +1,621 @@
+/* ============================================================
+   SIFEX — productor.css  (refactorizado)
+
+   CSS modular para el rol Productor.
+   Requiere: general.css (variables, reset, layout, botones,
+             badges, inputs, tablas, cards, accordions, modales,
+             toast, paginación, animaciones, media queries)
+
+   ÍNDICE
+   1.  Tipografía de sección
+   2.  Encabezados y títulos de sección
+   3.  Tabla de lugares (lugarProducción.html)
+   4.  Formularios multi-paso (lugarProducción.html)
+   5.  Panel de resumen de citas (citas.html)
+   6.  Modal solicitar cita — opciones de lugar
+   7.  Modal detalle — tabs, panels, stats
+   ============================================================ */
+
+
+/* ============================================================
+   1. TIPOGRAFÍA DE SECCIÓN
+   ============================================================ */
+h1 { font-size: 28px; margin-bottom: 5px; }
+h2 { color: var(--green-dark); }
+
+
+/* ============================================================
+   2. ENCABEZADOS Y TÍTULOS DE SECCIÓN
+   ============================================================ */
+
+/* Header de página con título + acción */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 25px;
+    margin: 24px 0;
+}
+
+/* Título principal de página */
+.page-title {
+    font-family: var(--font-sora);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--green-dark);
+    margin-bottom: 6px;
+}
+
+.page-title--sm { font-size: 22px; }
+
+/* Etiqueta de sección con línea decorativa (perfil + formularios) */
+.toprow-title,
+.section-head {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .7px;
+    text-transform: uppercase;
+    color: #6b8c72;
+}
+
+.section-head {
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-head::after {
+    content: '';
+    flex: 1;
+    height: 0.5px;
+    background: #c3deca;
+}
+
+/* Título de sección en formularios multi-paso */
+.section-title {
+    font-family: var(--font-sora);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--green-dark);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    margin-left: 8px;
+}
+
+/* Sufijo aclaratorio junto a un label (ej. "(solo lectura)") */
+.label-hint {
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--text-light);
+    text-transform: none;
+    letter-spacing: 0;
+    margin-left: 4px;
+}
+
+
+/* ============================================================
+   3. TABLA DE LUGARES (lugarProducción.html)
+   Las reglas base (table, th, td, tr:hover) están en general.css.
+   ============================================================ */
+
+/* Tarjeta contenedora de tabla */
+.table-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Fila vacía (sin registros) */
+.empty-row td {
+    padding: 32px;
+    text-align: center;
+    font-size: 13.5px;
+    color: var(--text-light);
+}
+
+
+/* ============================================================
+   4. FORMULARIOS MULTI-PASO (lugarProducción.html)
+   Vistas (view-table / view-form / view-lotes / view-edit),
+   predios dinámicos y tarjetas de lotes accordion.
+   ============================================================ */
+
+/* ── Visibilidad de vistas ── */
+.view        { display: none; }
+.view.active { display: block; }
+
+/* ── Encabezado de vista con botón volver ── */
+.form-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+}
+
+/* ── Tarjeta de formulario ── */
+.form-card {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+    animation: slideUp .3s ease;
+}
+
+/* ── Layout de campos ── */
+.form-row        { display: grid; grid-template-columns: 1fr 1fr;     gap: 16px; margin-bottom: 16px; }
+.form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+.form-group      { display: flex; flex-direction: column; gap: 5px; }
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+/* ── Predios dinámicos (view-form) ── */
+.predio-fields,
+.lote-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.predio-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: fadeIn .2s ease;
+}
+
+.predio-label {
+    min-width: 80px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-mid);
+    white-space: nowrap;
+}
+
+/* ── Accordion de lotes (view-lotes — creación) ── */
+.lote-card {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color var(--t-fast);
+    animation: fadeIn .25s ease;
+}
+
+.lote-card.open { border-color: var(--green-mid); }
+
+.lote-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--green-xlight);
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--t-fast);
+}
+
+.lote-card.open .lote-card-header,
+.lote-card-header:hover { background: var(--green-light); }
+
+.lote-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--green-dark);
+}
+
+.lote-card-body { display: none; padding: 16px; background: var(--white); }
+.lote-card.open .lote-card-body { display: block; animation: slideUp .2s ease; }
+
+/* Punto de estado del lote */
+.lote-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background var(--t-fast);
+}
+
+.lote-card.complete .lote-status-dot { background: var(--green-mid); }
+
+.lote-chevron {
+    font-size: 13px;
+    color: var(--text-light);
+    transition: transform var(--t-fast);
+}
+
+.lote-card.open .lote-chevron { transform: rotate(180deg); }
+
+/* ── Vista de edición — predios editables (view-edit) ── */
+.predios-edit-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.predio-edit-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--green-xlight);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    animation: fadeIn .2s ease;
+}
+
+.predio-edit-label {
+    min-width: 70px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--green-dark);
+    white-space: nowrap;
+}
+
+.predio-edit-code {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-dark);
+}
+
+/* Fila agregar nuevo predio */
+.predio-add-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 6px;
+}
+
+.predio-add-row .form-input { flex: 1; }
+
+/* Botón eliminar predio/lote */
+.btn-del-predio {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--accent-rose);
+    border: none;
+    color: var(--color-danger);
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    cursor: pointer;
+    transition: opacity var(--t-fast), transform var(--t-fast);
+}
+
+.btn-del-predio:hover { opacity: .8; transform: scale(1.08); }
+
+/* Fieldset de predio en formulario de creación */
+.predio-extended {
+    background: #f8fdf9;
+    border: 1px solid #c8e6d0;
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+}
+
+.predio-header {
+    font-weight: 700;
+    color: var(--green-dark);
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+
+/* ============================================================
+   5. PANEL DE RESUMEN DE CITAS (citas.html)
+   Contadores de estado: total / pendiente / completado / rechazado.
+   ============================================================ */
+.resumen-panel {
+    margin: 0 25px 24px;
+    padding: 20px 24px;
+    background: var(--white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.resumen-titulo {
+    font-family: var(--font-sora);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.resumen-titulo::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+.resumen-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.resumen-stat {
+    flex: 1 1 140px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    transition: transform var(--t-fast), box-shadow var(--t-fast);
+}
+
+.resumen-stat:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.resumen-stat__icono {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.resumen-stat__cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.resumen-stat__valor {
+    font-family: var(--font-sora);
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1;
+    transition: color var(--t-base);
+}
+
+.resumen-stat__etiqueta {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--text-mid);
+    white-space: nowrap;
+}
+
+/* Variantes de color por estado */
+.resumen-stat--total                          { background: var(--green-xlight); border-color: rgba(83,158,101,0.2); }
+.resumen-stat--total .resumen-stat__icono     { background: var(--green-light); }
+.resumen-stat--total .resumen-stat__valor     { color: var(--green-dark); }
+
+.resumen-stat--pendiente                      { background: rgb(255 248 235); border-color: rgba(212,160,23,0.25); }
+.resumen-stat--pendiente .resumen-stat__icono { background: rgb(255 232 170 / 60%); }
+.resumen-stat--pendiente .resumen-stat__valor { color: #c68a00; }
+
+.resumen-stat--completado                      { background: rgba(61,107,85,0.06); border-color: rgba(61,107,85,0.18); }
+.resumen-stat--completado .resumen-stat__icono { background: rgba(61,107,85,0.12); }
+.resumen-stat--completado .resumen-stat__valor { color: var(--color-primary); }
+
+.resumen-stat--rechazado                      { background: rgba(230,57,70,0.05); border-color: rgba(230,57,70,0.18); }
+.resumen-stat--rechazado .resumen-stat__icono { background: rgba(230,57,70,0.10); }
+.resumen-stat--rechazado .resumen-stat__valor { color: var(--accent-red); }
+
+/* Mensaje cuando no hay técnicos disponibles (inyectado por JS) */
+.cita-sin-tecnicos {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-light);
+    font-size: 13px;
+}
+
+
+/* ============================================================
+   6. MODAL SOLICITAR CITA — OPCIONES DE LUGAR
+   El overlay, box, cabecera, cuerpo y pie usan general.css.
+   ============================================================ */
+
+/* Opción de lugar seleccionable */
+.lugar-option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    user-select: none;
+    transition:
+        border-color var(--t-fast),
+        background   var(--t-fast),
+        box-shadow   var(--t-fast),
+        transform    var(--t-fast);
+}
+
+.lugar-option:hover {
+    background: var(--green-xlight);
+    border-color: var(--green-mid);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.lugar-option.selected {
+    border-color: var(--green-dark);
+    background: #e8f5ee;
+    box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.12);
+}
+
+/* Indicador de selección visual (checkbox custom) */
+.lugar-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: transparent;
+    transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+}
+
+.lugar-option.selected .lugar-check {
+    background: var(--green-dark);
+    border-color: var(--green-dark);
+    color: var(--white);
+}
+
+.lugar-info { flex: 1; }
+
+.lugar-id {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 2px;
+}
+
+.lugar-nombre {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+/* Encabezado de la lista de lugares dentro del modal */
+.modal-cita-lugares-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 10px;
+    padding: 0 2px;
+}
+
+
+/* ============================================================
+   7. MODAL DETALLE — TABS, PANELS, STATS
+   ============================================================ */
+
+/* Caja del modal detalle (ancho mayor al estándar) */
+.modal-detalle-box {
+    max-width: 680px;
+    width: 95vw;
+    max-height: 82vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+}
+
+.detalle-head {
+    padding: 22px 28px 0;
+    flex-shrink: 0;
+}
+
+.detalle-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 28px 20px;
+}
+
+.detalle-body::-webkit-scrollbar { width: 4px; }
+.detalle-body::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+/* ── Tabs de navegación ── */
+.detalle-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border);
+    margin: 16px 0 20px;
+}
+
+.detalle-tab {
+    flex: 1;
+    padding: 10px 0;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    font-family: var(--font-dm);
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-light);
+    cursor: pointer;
+    text-align: center;
+    transition: color var(--t-fast), border-color var(--t-fast);
+    letter-spacing: 0.02em;
+}
+
+.detalle-tab:hover  { color: var(--green-dark); }
+.detalle-tab.active { color: var(--green-dark); border-bottom-color: var(--green-dark); }
+
+.detalle-panel        { display: none; }
+.detalle-panel.active { display: block; animation: slideUp .2s ease; }
+
+/* ── Stats de resumen en el panel de detalle ── */
+.detalle-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.detalle-stat {
+    flex: 1;
+    min-width: 130px;
+    background: var(--green-xlight);
+    border: 1px solid #b7e4c7;
+    border-radius: var(--radius-lg);
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-dark);
+}

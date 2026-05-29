@@ -1,0 +1,404 @@
+/* ============================================================
+   SIFEX — funcionario.css  (refactorizado)
+
+   CSS modular para el rol Funcionario ICA.
+   Requiere: general.css (variables, reset, layout, botones,
+             badges, inputs, tablas, cards, accordions, modales,
+             toast, paginación, animaciones, media queries)
+
+   ÍNDICE
+   1.  Tipografía de sección
+   2.  Tabla de observaciones — variantes de celda
+   3.  Botones de acción exclusivos del funcionario
+   4.  Modal agregar / editar observación
+   5.  Modal ver reporte — resumen + acordeón de lotes
+   6.  Modal verificar cita — lista de técnicos
+   ============================================================ */
+
+
+/* ============================================================
+   1. TIPOGRAFÍA DE SECCIÓN
+   ============================================================ */
+h1 { font-size: 28px; margin-bottom: 5px; }
+h2 { color: var(--green-dark); }
+
+
+/* ============================================================
+   2. TABLA DE OBSERVACIONES — VARIANTES DE CELDA
+   Las reglas base (table, th, td, tr:hover, acentos de fila)
+   están en general.css. Solo se definen variantes exclusivas.
+   ============================================================ */
+
+/* Subtexto de municipio/departamento dentro de la celda de lugar */
+.td-meta { color: #7a9e82; }
+
+/* Números centrados con ancho de figura fijo */
+.reporte-num {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* ============================================================
+   3. BOTONES DE ACCIÓN EXCLUSIVOS DEL FUNCIONARIO
+   ============================================================ */
+
+/* Botón "Descargar" en tabla (icono, sin onclick) */
+.action-btn.action-btn-descargar {
+    background-color: var(--green-dark);
+    color: var(--white);
+    cursor: default;
+    margin-left: 4px;
+}
+
+.action-btn.action-btn-descargar:hover {
+    background-color: var(--green-mid);
+    opacity: 1;
+    transform: none;
+}
+
+
+/* ============================================================
+   4. MODAL AGREGAR / EDITAR OBSERVACIÓN (observaciones.html)
+   El overlay base reutiliza .modal-obs-edit-overlay de general.css.
+   Solo se definen los elementos exclusivos de este modal.
+   ============================================================ */
+
+/* Caja interior */
+.modal-obs-edit-box {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(12px);
+    transition: transform var(--t-base);
+    box-shadow: 0 20px 60px rgba(0,0,0,.18);
+}
+
+.modal-obs-edit-overlay.show .modal-obs-edit-box {
+    transform: translateY(0);
+}
+
+/* Bloque informativo del lugar (solo lectura) */
+.obs-edit-lugar-info {
+    background: var(--green-xlight);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    margin-bottom: 4px;
+}
+
+.obs-edit-lugar-nombre {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 2px;
+}
+
+.obs-edit-lugar-meta {
+    font-size: 11px;
+    color: #7a9e82;
+}
+
+/* Contador de caracteres */
+.obs-edit-counter {
+    display: block;
+    font-size: 11px;
+    color: var(--text-light);
+    margin-top: 5px;
+    text-align: right;
+}
+
+/* Espaciado del label del textarea */
+.form-label--obs { margin-top: 14px; }
+
+
+/* ============================================================
+   5. MODAL VER REPORTE (observaciones.html)
+   Chip de fecha, resumen de plantas y acordeón de lotes.
+   ============================================================ */
+
+/* Caja interna (más ancha que el estándar) */
+.modal-reporte-box {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    width: 95vw;
+    max-width: 720px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(12px);
+    transition: transform var(--t-base);
+    box-shadow: 0 20px 60px rgba(0,0,0,.18);
+}
+
+#modal-reporte-overlay.show .modal-reporte-box {
+    transform: translateY(0);
+}
+
+/* ── Chip de fecha de inspección ── */
+.reporte-fecha-inspeccion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 14px;
+    margin-bottom: 14px;
+    background: var(--green-xlight);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green-mid);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+}
+
+.reporte-fecha-inspeccion--pendiente {
+    border-left-color: var(--accent-gold);
+    background: #fffdf5;
+}
+
+.reporte-fecha-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.reporte-fecha-valor {
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 13px;
+}
+
+.reporte-fecha-valor--pendiente {
+    color: var(--accent-gold);
+    font-style: italic;
+    font-weight: 500;
+}
+
+/* ── Resumen general de plantas ── */
+.reporte-resumen {
+    display: flex;
+    gap: 0;
+    background: var(--green-xlight);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 18px;
+}
+
+.reporte-resumen-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 14px 12px;
+    border-right: 1px solid var(--border);
+}
+
+.reporte-resumen-item:last-child { border-right: none; }
+
+.reporte-resumen-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+}
+
+.reporte-resumen-valor {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--green-dark);
+    font-variant-numeric: tabular-nums;
+}
+
+.reporte-resumen-valor--dano { color: var(--color-danger); }
+
+/* ── Separador "Detalle por lote" ── */
+.reporte-lotes-titulo {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 10px;
+}
+
+/* ── Acordeón de lotes ── */
+
+/* Lado derecho del encabezado de lote: badge + chevron */
+.lote-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Filas de datos por lote */
+.reporte-lote-datos {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.reporte-lote-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid #f0f4f2;
+    font-size: 13px;
+}
+
+.reporte-lote-fila:last-child { border-bottom: none; }
+
+.reporte-lote-fila--plagas {
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.reporte-lote-campo {
+    color: var(--text-mid);
+    font-size: 12px;
+    min-width: 130px;
+}
+
+.reporte-lote-valor {
+    font-weight: 600;
+    color: var(--text-dark);
+    text-align: right;
+}
+
+.reporte-afectadas--con-dano {
+    color: var(--color-danger);
+    font-weight: 600;
+}
+
+/* Tag de nombre de plaga */
+.reporte-lote-plaga-tag {
+    display: inline-block;
+    padding: 3px 9px;
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid rgba(212,160,23,.3);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Indicador "Sin plagas detectadas" */
+.reporte-lote-sin-plagas {
+    font-size: 12px;
+    color: var(--text-light);
+    font-style: italic;
+    font-weight: 400;
+}
+
+
+/* ============================================================
+   6. MODAL VERIFICAR CITA (solicitudes.html)
+   Lista de técnicos filtrada por departamento/municipio.
+   ============================================================ */
+
+/* Label con paso numerado */
+.modal-cita-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #4a6e53;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+}
+
+/* Número de paso circular */
+.modal-cita-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--green-dark);
+    color: var(--white);
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+/* Lista contenedora de técnicos */
+.cita-tecnicos-lista { display: flex; flex-direction: column; gap: 8px; }
+
+/* Ítem de técnico */
+.cita-tecnico-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border: 1px solid #d4eadb;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.cita-tecnico-item:hover { background: #f0faf2; border-color: #7ab88a; }
+.cita-tecnico-item.sel   { border-color: var(--green-dark); background: #e6f5ea; }
+
+/* Indicador de selección circular */
+.cita-tecnico-chk {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid #c5dcc9;
+    flex-shrink: 0;
+    transition: all 0.15s;
+}
+
+.cita-tecnico-item.sel .cita-tecnico-chk {
+    background: var(--green-dark);
+    border-color: var(--green-dark);
+}
+
+/* Info del técnico */
+.cita-tecnico-info   { flex: 1; min-width: 0; }
+.cita-tecnico-nombre { font-size: 13.5px; font-weight: 600; color: #1e3222; }
+
+.cita-tecnico-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    color: #7a9e82;
+    margin-top: 2px;
+}
+
+/* Tags de disponibilidad */
+.cita-tecnico-tag {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--green-light);
+    color: var(--green-dark);
+}
+
+.cita-tecnico-tag--cercano { background: #fff4e0; color: #b45e00; }
+
+/* Mensaje cuando no hay técnicos disponibles */
+.cita-sin-tecnicos {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-light);
+    font-size: 13px;
+}

@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SIFEX - Gestión de Lugares</title>
 
-  <!-- Estilos base del proyecto -->
-  <link href="../../css/main.css" rel="stylesheet" />
-  <link href="../../css/admin.css" rel="stylesheet" />
+  <!-- Estilos base del proyecto — deben cargarse ANTES que Bootstrap
+       para que las variables CSS del proyecto estén disponibles. -->
+    <link rel="stylesheet" href="../../css/general.css">
+    <link rel="stylesheet" href="../../css/admin.css">
 
-  <!-- Bootstrap 5 (layout y utilidades generales) -->
+  <!-- Bootstrap 5 — utilidades de layout -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
     rel="stylesheet"
@@ -28,15 +29,16 @@
     <button class="btn-salir">Salir</button>
   </div>
 
+
   <!-- ╔══════════════════════════════════════════════════════╗
        ║  LAYOUT: sidebar + contenido principal              ║
        ╚══════════════════════════════════════════════════════╝ -->
   <div class="layout" id="layout">
 
     <!-- ── Sidebar ─────────────────────────────────────── -->
-    <nav class="sidebar" aria-label="Menú principal">
+    <nav class="sidebar">
       <div class="sidebar-logo">
-        <span class="icon" aria-hidden="true">🌿</span>
+        <span class="icon">🌿</span>
         <span>SIFEX</span>
       </div>
 
@@ -46,14 +48,21 @@
       </a>
 
       <!-- Ítem: Gestión de lugares (activo en esta vista) -->
-      <a class="nav-item active" href="gestionLugares.html" aria-current="page">
-        <span class="icon" aria-hidden="true">📍</span> Lugares de producción
+      <a class="nav-item" href="gestionLugares.html" aria-current="page">
+        <span class="icon" aria-hidden="true">🌱</span> Lugares de producción
       </a>
 
+      <!-- Ítem: Catálogo de plantas y cultivos -->
+      <a class="nav-item" href="catalogo.html">
+        <span class="icon" aria-hidden="true">📋</span> Catálogo
+      </a>
+
+      <!-- Botón ocultar menú — lógica existente en main.css / toggleSidebar -->
       <div class="sidebar-bottom">
         <button class="btn-hide-menu" id="toggleSidebar">← Ocultar menú</button>
       </div>
     </nav>
+
 
     <!-- ── Área principal ──────────────────────────────── -->
     <main class="main" id="contenido-principal">
@@ -61,8 +70,8 @@
       <div class="gu-wrapper">
 
         <!-- ── Encabezado de sección ──────────────────────
-             El botón se muestra u oculta dinámicamente
-             según el filtro activo (ver gestionLugares.js).
+             El botón «Agregar predio» solo es visible cuando
+             el filtro activo es «Predios» (controlado por JS).
         ──────────────────────────────────────────────────── -->
         <div class="gu-header">
           <div class="gu-header__titles">
@@ -70,24 +79,25 @@
             <p>Administre predios y lugares de producción registrados en el sistema.</p>
           </div>
 
-          <!-- Botón de acción: solo visible en la pestaña "Predios" -->
+          <!-- Botón de acción: visible únicamente en la pestaña «Predios» -->
           <button class="gu-btn-nuevo" id="gl-btn-nuevo" aria-label="Agregar predio">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2.5"
                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
+              <line x1="5"  y1="12" x2="19" y2="12"/>
             </svg>
             Agregar predio
           </button>
         </div>
 
+
         <!-- ── Tarjeta principal ───────────────────────── -->
         <div class="gu-card">
 
           <!-- ── Pestañas de filtro ──────────────────────
-               data-filtro: valor que el JS usa para
-               determinar qué tabla y botón renderizar.
+               data-filtro: valor que adminLugares.js usa para
+               determinar qué conjunto de datos y columnas renderizar.
           ──────────────────────────────────────────────── -->
           <div class="gu-tabs" role="tablist" aria-label="Filtrar lugares por tipo">
 
@@ -106,6 +116,7 @@
             </button>
 
           </div><!-- /gu-tabs -->
+
 
           <!-- ── Barra de herramientas: búsqueda + contador ── -->
           <div class="gu-toolbar">
@@ -127,24 +138,24 @@
                 autocomplete="off"
               />
             </div>
-            <!-- El JS actualiza este span con el conteo visible -->
+            <!-- El JS actualiza este span con el conteo de registros visibles -->
             <span class="gu-toolbar__info" id="gl-info-count" aria-live="polite"></span>
           </div>
 
+
           <!-- ── Tabla dinámica ──────────────────────────
-               El JS reconstruye thead y tbody completos
-               al cambiar de filtro (ver gestionLugares.js
-               → renderizarTabla).
+               thead y tbody se reconstruyen por completo en
+               adminLugares.js → renderizarTabla() cada vez
+               que cambia el filtro o la búsqueda.
           ──────────────────────────────────────────────── -->
           <div class="gu-table-wrapper">
             <table class="gu-table" id="gl-tabla"
                    role="grid" aria-label="Lista de lugares">
-              <!-- thead y tbody se generan por JS -->
               <thead id="gl-thead"></thead>
               <tbody id="gl-tbody"></tbody>
             </table>
 
-            <!-- Estado vacío: visible cuando no hay resultados -->
+            <!-- Estado vacío: se muestra cuando no hay resultados -->
             <div class="gu-empty" id="gl-empty"
                  role="status" aria-live="polite" hidden>
               <svg width="56" height="56" viewBox="0 0 24 24" fill="none"
@@ -168,7 +179,12 @@
 
 
   <!-- ╔══════════════════════════════════════════════════════╗
-       ║  MODAL — VER DETALLE DE LUGAR                       ║
+       ║  MODAL — VER DETALLE                                ║
+       ║                                                      ║
+       ║  · Predios: muestra todos los campos del modelo.     ║
+       ║  · Lugares de producción: muestra predios y lotes    ║
+       ║    usando la misma estructura de tabs + accordion     ║
+       ║    que lugarProducción.html (renderModalDetalle).     ║
        ╚══════════════════════════════════════════════════════╝ -->
   <div class="gu-modal-overlay" id="gl-modal-ver"
        role="dialog" aria-modal="true"
@@ -181,15 +197,18 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2.5"
                stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="18" y1="6"  x2="6"  y2="18"/>
+            <line x1="6"  y1="6"  x2="18" y2="18"/>
           </svg>
         </button>
       </div>
 
+      <!-- El JS rellena este contenedor según el tipo de registro:
+           · Predios      → cuadrícula gu-ver-grid con label/valor
+           · Lugares prod → tabs (Predios / Lotes) con accordions,
+                            idénticos a lugarProducción.html         -->
       <div class="gu-modal__body">
-        <!-- El JS rellena con los datos del registro seleccionado -->
-        <div id="gl-ver-contenido" class="gu-ver-grid"></div>
+        <div id="gl-ver-contenido"></div>
       </div>
 
       <div class="gu-modal__footer">
@@ -202,9 +221,7 @@
 
   <!-- ╔══════════════════════════════════════════════════════╗
        ║  MODAL — CREAR / EDITAR PREDIO                      ║
-       ║  (Solo disponible cuando el filtro activo           ║
-       ║   es "Predios". Para lugares de producción          ║
-       ║   no existe botón de creación.)                     ║
+       ║  Solo accesible desde la pestaña «Predios».         ║
        ╚══════════════════════════════════════════════════════╝ -->
   <div class="gu-modal-overlay" id="gl-modal-form"
        role="dialog" aria-modal="true"
@@ -212,21 +229,34 @@
     <div class="gu-modal">
 
       <div class="gu-modal__header">
-        <!-- El JS cambia este texto según modo crear / editar -->
+        <!-- El JS cambia este título entre «Nuevo predio» y «Editar predio: …» -->
         <h2 id="gl-modal-titulo">Nuevo predio</h2>
         <button class="gu-modal__close" id="gl-modal-close" aria-label="Cerrar modal">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2.5"
                stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="18" y1="6"  x2="6"  y2="18"/>
+            <line x1="6"  y1="6"  x2="18" y2="18"/>
           </svg>
         </button>
       </div>
 
       <div class="gu-modal__body">
 
-        <!-- Fila 1: nombre y municipio -->
+        <!--
+          Modelo «Predio» — campos del formulario:
+            · Nombre      (gl-f-nombre)      — obligatorio (*)
+            · Vereda      (gl-f-vereda)      — opcional
+            · Municipio   (gl-f-municipio)   — obligatorio (*)
+            · Departamento(gl-f-departamento)— opcional
+            · Área (ha)   (gl-f-area)        — opcional
+            · Propietario (gl-f-propietario) — obligatorio (*)
+            · Latitud     (gl-f-latitud)     — opcional (par con longitud)
+            · Longitud    (gl-f-longitud)    — opcional (par con latitud)
+            · Estado      (gl-f-estado)      — select requerido
+        -->
+
+        <!-- Fila 1: nombre del predio y vereda -->
         <div class="gu-form-row">
           <div class="gu-form-group">
             <label for="gl-f-nombre">Nombre del predio <abbr title="Requerido">*</abbr></label>
@@ -235,37 +265,64 @@
                    maxlength="100" />
           </div>
           <div class="gu-form-group">
+            <label for="gl-f-vereda">Vereda</label>
+            <input id="gl-f-vereda" type="text"
+                   placeholder="Ej. Vereda El Palmar"
+                   maxlength="100" />
+          </div>
+        </div>
+
+        <!-- Fila 2: municipio y departamento -->
+        <div class="gu-form-row">
+          <div class="gu-form-group">
             <label for="gl-f-municipio">Municipio <abbr title="Requerido">*</abbr></label>
             <input id="gl-f-municipio" type="text"
                    placeholder="Ej. Bucaramanga"
                    maxlength="80" />
           </div>
-        </div>
-
-        <!-- Fila 2: departamento y área -->
-        <div class="gu-form-row">
           <div class="gu-form-group">
             <label for="gl-f-departamento">Departamento</label>
             <input id="gl-f-departamento" type="text"
                    placeholder="Ej. Santander"
                    maxlength="80" />
           </div>
+        </div>
+
+        <!-- Fila 3: área (ha) y propietario -->
+        <div class="gu-form-row">
           <div class="gu-form-group">
             <label for="gl-f-area">Área (ha)</label>
             <input id="gl-f-area" type="number"
                    placeholder="Ej. 12.5"
                    min="0" step="0.01" />
           </div>
-        </div>
-
-        <!-- Fila 3: propietario y estado -->
-        <div class="gu-form-row">
           <div class="gu-form-group">
             <label for="gl-f-propietario">Propietario <abbr title="Requerido">*</abbr></label>
             <input id="gl-f-propietario" type="text"
                    placeholder="Nombre completo"
                    maxlength="100" />
           </div>
+        </div>
+
+        <!-- Fila 4: coordenadas geográficas (opcionales, deben ir juntas).
+             El JS valida: latitud [-90, 90], longitud [-180, 180].   -->
+        <div class="gu-form-row">
+          <div class="gu-form-group">
+            <label for="gl-f-latitud">Latitud</label>
+            <input id="gl-f-latitud" type="number"
+                   placeholder="Ej. 7.119349"
+                   min="-90" max="90" step="0.000001" />
+          </div>
+          <div class="gu-form-group">
+            <label for="gl-f-longitud">Longitud</label>
+            <input id="gl-f-longitud" type="number"
+                   placeholder="Ej. -73.122788"
+                   min="-180" max="180" step="0.000001" />
+          </div>
+        </div>
+
+        <!-- Fila 5: estado del predio -->
+        <div class="gu-form-row">
           <div class="gu-form-group">
             <label for="gl-f-estado">Estado</label>
             <select id="gl-f-estado">
@@ -287,7 +344,116 @@
 
 
   <!-- ╔══════════════════════════════════════════════════════╗
-       ║  MODAL — CONFIRMAR ELIMINACIÓN                      ║
+       ║  MODAL — EDITAR LUGAR DE PRODUCCIÓN                 ║
+       ║                                                      ║
+       ║  Permite modificar:                                  ║
+       ║    · Información general (nombre, municipio, etc.)   ║
+       ║    · Predios asociados (solo eliminar existentes)    ║
+       ║    · Lotes asociados (editar todos los campos)       ║
+       ║                                                      ║
+       ║  Reutiliza las clases de main.css:                   ║
+       ║    form-card, section-title, form-row, form-group,   ║
+       ║    form-input, form-select, form-label,              ║
+       ║    predios-edit-list, predio-edit-row, btn-del-predio,
+       ║    lote-edit-card, lote-edit-header,                 ║
+       ║    lote-edit-body, edit-empty-msg, lote-edit-note.   ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <div class="gu-modal-overlay" id="gl-modal-editar-lugar"
+       role="dialog" aria-modal="true"
+       aria-labelledby="gl-editar-lugar-titulo" hidden>
+    <div class="gu-modal gu-modal--lg">
+
+      <div class="gu-modal__header">
+        <!-- El JS escribe aquí «Editar lugar: [nombre]» -->
+        <h2 id="gl-editar-lugar-titulo">Editar lugar de producción</h2>
+        <button class="gu-modal__close" id="gl-editar-lugar-close" aria-label="Cerrar modal">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6"  x2="6"  y2="18"/>
+            <line x1="6"  y1="6"  x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="gu-modal__body">
+
+        <!-- Campo oculto que persiste el ID del lugar en edición -->
+        <input type="hidden" id="gl-edit-lugar-id" value="">
+
+        <!-- ── Sección 1: Información general del lugar ── -->
+        <div class="form-card">
+          <div class="section-title">📍 Información general</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="gl-el-nombre">Nombre del lugar <abbr title="Requerido">*</abbr></label>
+              <input id="gl-el-nombre" class="form-input" type="text"
+                     placeholder="Ej. Galpón Norte" maxlength="100">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="gl-el-tipo">Tipo</label>
+              <input id="gl-el-tipo" class="form-input" type="text"
+                     placeholder="Ej. Avícola" maxlength="80">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="gl-el-municipio">Municipio</label>
+              <input id="gl-el-municipio" class="form-input" type="text"
+                     placeholder="Ej. Bucaramanga" maxlength="80">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="gl-el-capacidad">Capacidad</label>
+              <input id="gl-el-capacidad" class="form-input" type="number"
+                     placeholder="Ej. 5000" min="0">
+            </div>
+          </div>
+          <div class="form-row single">
+            <div class="form-group">
+              <label class="form-label" for="gl-el-estado">Estado</label>
+              <select id="gl-el-estado" class="form-select">
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Sección 2: Predios asociados ─────────────
+             El JS inyecta la lista editable de predios en
+             #gl-edit-predios-container mediante
+             renderPrediosEditLugar(lugarId).              -->
+        <div class="form-card">
+          <div class="section-title">🏡 Predios asociados</div>
+          <div id="gl-edit-predios-container">
+            <!-- Inyectado dinámicamente por renderPrediosEditLugar() -->
+          </div>
+        </div>
+
+        <!-- ── Sección 3: Lotes asociados ───────────────
+             El JS inyecta las tarjetas accordion de lotes en
+             #gl-edit-lotes-container mediante
+             renderLotesEditLugar(lugarId).                -->
+        <div class="form-card">
+          <div class="section-title">🌾 Lotes asociados</div>
+          <div id="gl-edit-lotes-container">
+            <!-- Inyectado dinámicamente por renderLotesEditLugar() -->
+          </div>
+        </div>
+
+      </div><!-- /gu-modal__body -->
+
+      <div class="gu-modal__footer">
+        <button class="gu-btn-cancelar" id="gl-editar-lugar-cancelar">Cancelar</button>
+        <button class="gu-btn-guardar"  id="gl-editar-lugar-guardar">Guardar cambios</button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║  MODAL — CONFIRMAR ELIMINACIÓN (solo Predios)       ║
        ╚══════════════════════════════════════════════════════╝ -->
   <div class="gu-modal-overlay" id="gl-modal-confirm"
        role="alertdialog" aria-modal="true"
@@ -327,8 +493,9 @@
        role="alert" aria-live="assertive" aria-atomic="true"></div>
 
 
-  <!-- Scripts: base del proyecto → lógica de gestión de lugares -->
+  <!-- Script principal de la vista -->
   <script src="../../js/adminLugares.js"></script>
+  <script src="../../js/verificarJs.js"></script>
 
 </body>
 </html>

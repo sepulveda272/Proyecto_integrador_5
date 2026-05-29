@@ -2,62 +2,45 @@
    SIFEX — inspecciones.css
 
    Hoja de estilos específica para la vista de inspecciones
-   (inspeccion.html). Se carga junto con main.css y Bootstrap.
+   (inspeccion.html).
+   Requiere: general.css (variables, reset, body/layout,
+             btn-back, paginación, animaciones slideUp/fadeIn)
 
    ÍNDICE
-   0.  Variables y tokens de diseño
-   1.  Reset base
+   1.  Variables exclusivas de la vista (--transition alias)
    2.  Contenedor de página  (.page)
    3.  Encabezado de página  (.page__header / __title / __sub)
-   4.  Botón volver          (.btn-back)
-   5.  Fila de lote          (.lote-row) + acento de estado
-       5a. Columna imagen    (.lote-row__img)
-       5b. Columna info      (.lote-row__info / .lote-info__*)
-       5c. Badges de estado  (.lote-badge / .lote-badge__dot)
-       5d. Grid de campos    (.lote-fields / .lote-field / .fenologico-pill)
-       5e. Barra de progreso (.prog-wrap / .prog-bar)  — tarjetas #seccion-cards
-       5f. Columna acción    (.lote-row__action / .action-icon / .action-label)
-   6.  Imagen de cultivo     (.img-cultivo)
-   7.  Animaciones           (@keyframes slideUp)
-   ── Estilos migrados desde el bloque <style> de inspeccion.html ──
-   8.  Secciones ocultas por JS   (#seccion-lotes / #seccion-formulario)
-   9.  Encabezado del formulario   (.form-lote__header / __title / __sub)
-   10. Contador de plantas         (.contador-bloque / .contador-btn / #contador-valor)
-   11. Sección de plagas           (.plagas-seccion / #plagas-grid / .plaga-card)
-   12. Barra de acciones del form  (.form-lote__actions / .btn-cancelar-form / .btn-guardar-form)
-   13. Paginación de lotes         (#lotes-paginacion / .pag-btn)
-   14. Utilidad de grid            (.lote-field--span-end)
+   4.  Fila de lote          (.lote-row) + acento de estado
+       4a. Columna imagen    (.lote-row__img)
+       4b. Columna info      (.lote-row__info / .lote-info__*)
+       4c. Badges de estado  (.lote-badge / .lote-badge__dot)
+       4d. Grid de campos    (.lote-fields / .lote-field / .fenologico-pill)
+       4e. Barra de progreso (.prog-wrap / .prog-bar)
+       4f. Columna acción    (.lote-row__action / .action-icon / .action-label)
+   5.  Imagen de cultivo     (.img-cultivo)
+   6.  Secciones ocultas por JS
+   7.  Encabezado del formulario de lote
+   8.  Contador de plantas   (.contador-bloque)
+   9.  Sección de plagas     (.plagas-seccion / .plaga-card)
+   10. Barra de acciones del form
+   11. Paginación de lotes   (#lotes-paginacion / .pag-btn local)
+   12. Utilidad de grid      (.lote-field--span-end)
+   13. Modal de inspección completada
+   14. Botón "Finalizar Inspección"
+   15. Modal Ver / Editar inspección de lote  (#modal-ver-editar-overlay)
    ============================================================ */
 
 
 /* ============================================================
-   0. VARIABLES
+   1. VARIABLES EXCLUSIVAS
+   La paleta completa, radios, sombras, fuentes y transiciones
+   están en general.css. Solo se define el alias --transition
+   que usa este archivo.
    ============================================================ */
 :root {
-  --green-dark:   #2d6a4f;
-  --green-mid:    #52b788;
-  --green-light:  #d8f3dc;
-  --green-xlight: #f0faf3;
-  --text-dark:    #1b2e23;
-  --text-mid:     #4a6b57;
-  --text-light:   #8fb09a;
-  --white:        #ffffff;
-  --border:       #c6e6cc;
-  --accent-pend:  #e0931f;
-  --radius-md:    8px;
-  --radius-lg:    12px;
-  --shadow-sm:    0 2px 8px rgba(45,106,79,.08);
-  --transition:   0.2s ease;
-  --font-dm:      "DM Sans","Segoe UI",sans-serif;
-  --font-sora:    "Sora","Segoe UI",sans-serif;
+  --transition: 0.2s ease;   /* alias local equivalente a --sx-t-base */
+  --accent-pend: #e0931f;    /* ámbar pendiente — exclusivo de inspecciones */
 }
-
-
-/* ============================================================
-   1. RESET BASE
-   ============================================================ */
-*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark); }
 
 
 /* ============================================================
@@ -76,39 +59,28 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
 /* ============================================================
    3. ENCABEZADO DE PÁGINA
    ============================================================ */
-.page__header { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
-.page__title  { font-family: var(--font-sora); font-size: 20px; font-weight: 700; color: var(--green-dark); }
-.page__sub    { font-size: 13px; color: var(--text-light); margin-top: 2px; }
-
-
-/* ============================================================
-   4. BOTÓN VOLVER
-   ============================================================ */
-.btn-back {
-  display: flex; align-items: center; justify-content: center;
-  width: 36px; height: 36px;
-  background: var(--white);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-md);
-  color: var(--text-mid);
-  font-size: 18px;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: border-color var(--transition), background var(--transition);
+.page__header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
 }
-.btn-back:hover { border-color: var(--green-mid); background: var(--green-xlight); }
+
+.page__title { font-family: var(--font-sora); font-size: 20px; font-weight: 700; color: var(--green-dark); }
+.page__sub   { font-size: 13px; color: var(--text-light); margin-top: 2px; }
+
+/* Contenedor de título y subtítulo */
+.page__header-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
 
 
 /* ============================================================
-   5. FILA DE LOTE
-   Grid de 3 columnas (imagen | info | acción) con franja de
-   color en la primera fila que indica el estado del lote.
-
-   NOTA (corrección §5a y §5f): align-items en CSS Grid es
-   "stretch" por defecto, lo que hace que las tres columnas
-   (imagen, info, acción) igualen su altura a la más alta
-   (.lote-row__info). Las alturas fijas que sobreescribían
-   ese comportamiento fueron eliminadas en §5a y §5f.
+   4. FILA DE LOTE
    ============================================================ */
 .lote-row {
   display: grid;
@@ -122,12 +94,13 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   transition: box-shadow var(--transition);
   animation: slideUp .3s ease both;
 }
+
 .lote-row:nth-child(2) { animation-delay: .07s; }
 .lote-row:nth-child(3) { animation-delay: .14s; }
 
 .lote-row:hover { box-shadow: 0 6px 24px rgba(45,106,79,.13); }
 
-/* Franja de color superior — estado por defecto */
+/* Franja de color superior — estado */
 .lote-row::before {
   content: '';
   display: block;
@@ -135,47 +108,30 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   grid-row: 1;
   background: var(--border);
 }
+
 .lote-row[data-estado="pendiente"]::before  { background: var(--accent-pend); }
 .lote-row[data-estado="completado"]::before { background: var(--green-mid); }
-/* Nota: estado "rechazado" no se usa en el HTML actual; omitido intencionadamente. */
 
 
-/* ── 5a. Columna imagen ──
- *
- * CORRECCIÓN: se eliminó height: 130px del contenedor y height: 232.7px
- * de la <img>.
- *
- * CAUSA DEL PROBLEMA: el contenedor .lote-row__img tenía una altura fija
- * de 130 px, pero la imagen interior tenía height: 232.7px — más del doble.
- * Como overflow no estaba definido en el contenedor, la imagen se desbordaba
- * hacia abajo y "empujaba" visualmente las filas siguientes, creando el
- * espacio en blanco visible debajo de la columna de acción.
- *
- * SOLUCIÓN: se agrega overflow: hidden al contenedor para recortar la imagen
- * dentro de sus límites, y se cambia la altura de la <img> a height: 100%
- * para que llene exactamente el espacio del contenedor. La altura real de
- * la fila queda determinada por .lote-row__info (que crece con el contenido),
- * y las otras dos columnas la siguen por el align-items: stretch del grid
- * (ver corrección en la regla .lote-row).
- * ─────────────────────────────────────────────────────────────────────── */
+/* ── 4a. Columna imagen ── */
 .lote-row__img {
   position: relative;
   background: var(--green-xlight);
   cursor: pointer;
   border-right: 0.5px solid var(--border);
   grid-row: 2;
-  overflow: hidden; /* CORRECCIÓN: recorta la imagen dentro del contenedor */
+  overflow: hidden;
 }
 
 .lote-row__img img {
   width: 100%;
-  height: 100%;       /* CORRECCIÓN: era 232.7px fijos — ahora llena el contenedor */
+  height: 100%;
   object-fit: cover;
   display: block;
 }
 
 
-/* ── 5b. Columna info ── */
+/* ── 4b. Columna info ── */
 .lote-row__info {
   padding: 16px 20px;
   display: flex;
@@ -201,7 +157,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
 }
 
 
-/* ── 5c. Badges de estado ── */
+/* ── 4c. Badges de estado ── */
 .lote-badge {
   display: inline-flex;
   align-items: center;
@@ -211,16 +167,16 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   padding: 3px 9px;
   border-radius: 20px;
 }
+
 .lote-badge--pend { background: #fff4e0; color: #a05e00; }
 .lote-badge--comp { background: var(--green-light); color: var(--green-dark); }
-/* Nota: .lote-badge--rech omitido — estado no usado en el HTML actual. */
 
 .lote-badge__dot { width: 6px; height: 6px; border-radius: 50%; }
 .lote-badge--pend .lote-badge__dot { background: #e0931f; }
 .lote-badge--comp .lote-badge__dot { background: var(--green-mid); }
 
 
-/* ── 5d. Grid de campos ── */
+/* ── 4d. Grid de campos ── */
 .lote-fields {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -238,6 +194,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
 }
 
 .lote-field__value { font-size: 13px; font-weight: 600; color: var(--text-dark); }
+
 .lote-field__value--italic {
   font-style: italic;
   font-weight: 400;
@@ -245,7 +202,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   font-size: 12px;
 }
 
-/* Etiqueta de estado fenológico con borde */
+/* Etiqueta fenológica */
 .fenologico-pill {
   display: inline-flex;
   align-items: center;
@@ -260,29 +217,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
 }
 
 
-/* ── 5e. Barra de progreso de tarjeta de inspección (#seccion-cards) ──
- *
- * RESTAURADO: estilos eliminados previamente por error.
- * Ámbito: exclusivo de las tarjetas .card dentro de #seccion-cards.
- *
- * Clases restauradas:
- *   .prog-wrap        — contenedor flex vertical de la barra
- *   .prog-label       — fila horizontal "Progreso · X%"
- *   .prog-key         — etiqueta "PROGRESO" en mayúsculas
- *   .prog-val         — valor porcentual (base)
- *   .prog-val--pend   — color ámbar para estado Pendiente
- *   .prog-val--comp   — color verde para estado Completado
- *   .prog-track       — riel de fondo de la barra
- *   .prog-bar         — barra de relleno animada
- *   .prog-bar--pend   — fill ámbar
- *   .prog-bar--comp   — fill verde
- *
- * Integración: las clases son exclusivas de #seccion-cards.
- *   Verificación: búsqueda en inspeccion.html, inspecciones.js,
- *   tecnicos.js y main.css confirma que ningún otro componente
- *   usa estas clases (lotes, formulario, paginación, perfil, etc.)
- *   quedan completamente intactos.
- * ──────────────────────────────────────────────────────────────── */
+/* ── 4e. Barra de progreso (#seccion-cards) ── */
 .prog-wrap { display: flex; flex-direction: column; gap: 5px; }
 
 .prog-label {
@@ -299,9 +234,9 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   letter-spacing: .05em;
 }
 
-.prog-val           { font-size: 11px; font-weight: 600; }
-.prog-val--pend     { color: #a05e00; }
-.prog-val--comp     { color: var(--green-dark); }
+.prog-val       { font-size: 11px; font-weight: 600; }
+.prog-val--pend { color: #a05e00; }
+.prog-val--comp { color: var(--green-dark); }
 
 .prog-track {
   height: 6px;
@@ -310,28 +245,12 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   overflow: hidden;
 }
 
-.prog-bar { height: 100%; border-radius: 20px; transition: width .4s ease; }
+.prog-bar       { height: 100%; border-radius: 20px; transition: width .4s ease; }
 .prog-bar--pend { background: var(--accent-pend); }
 .prog-bar--comp { background: var(--green-mid); }
 
 
-/* ── 5f. Columna acción ──
- *
- * CORRECCIÓN 1 — Espacio en blanco: se eliminó height: 130px.
- *   CAUSA: la altura fija de 130 px era menor que la altura real de
- *   .lote-row__info (que crece con los campos del lote). El grid extendía
- *   la fila para acomodar la columna más alta (.lote-row__info), pero
- *   .lote-row__action se quedaba en 130 px y dejaba espacio vacío debajo.
- *   SOLUCIÓN: sin height fijo, la columna usa align-items: stretch del grid
- *   y ocupa exactamente la misma altura que las demás columnas.
- *
- * CORRECCIÓN 2 — Texto girado: se eliminaron writing-mode, text-orientation
- *   y transform: rotate(180deg) de .action-label.
- *   CAUSA: writing-mode: vertical-lr rotaba el eje de escritura 90°, y
- *   rotate(180deg) lo giraba otros 180°, resultando en texto invertido.
- *   SOLUCIÓN: texto horizontal normal con word-break para que el label
- *   se rompa en varias líneas si es necesario dentro del espacio disponible.
- * ─────────────────────────────────────────────────────────────────────── */
+/* ── 4f. Columna acción ── */
 .lote-row__action {
   display: flex;
   flex-direction: column;
@@ -344,9 +263,8 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   transition: background var(--transition);
   text-align: center;
   grid-row: 2;
-  /* CORRECCIÓN: height: 130px eliminado — la columna ahora se estira
-     automáticamente a la misma altura que .lote-row__info */
 }
+
 .lote-row__action:hover { background: var(--green-light); }
 
 .action-icon {
@@ -366,48 +284,25 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   font-weight: 600;
   color: var(--green-dark);
   line-height: 1.4;
-  /* CORRECCIÓN: writing-mode: vertical-lr, text-orientation: mixed y
-     transform: rotate(180deg) eliminados — causaban texto girado 270°.
-     El texto ahora es horizontal y se rompe en líneas si es necesario. */
   word-break: break-word;
 }
 
 
 /* ============================================================
-   6. IMAGEN DE CULTIVO
+   5. IMAGEN DE CULTIVO
    ============================================================ */
-/* CORRECCIÓN: height: 275.3px eliminado.
-   CAUSA: esta altura fija sobredimensionada reforzaba el desborde
-   de la imagen más allá del contenedor .lote-row__img, agravando
-   el espacio en blanco. La imagen ahora hereda height: 100% definido
-   en .lote-row__img img (§5a) y object-fit: cover recorta el exceso.
-   VERIFICACIÓN: .img-cultivo solo se usa en los <img> de .lote-row__img;
-   ningún otro componente de la aplicación utiliza esta clase. */
 .img-cultivo { width: 100%; }
 
 
 /* ============================================================
-   7. ANIMACIONES
-   ============================================================ */
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-
-/* ============================================================
-   8. SECCIONES OCULTAS POR JS
-   #seccion-lotes y #seccion-formulario arrancan ocultos.
-   JavaScript los muestra llamando a .style.display directamente.
-   Definirlo aquí evita usar atributos style inline en el HTML.
+   6. SECCIONES OCULTAS POR JS
    ============================================================ */
 #seccion-lotes      { display: none; }
 #seccion-formulario { display: none; padding: 0 0 2rem; }
 
 
 /* ============================================================
-   9. ENCABEZADO DEL FORMULARIO DE LOTE
-   Muestra el botón "volver" + identificación del lote activo.
+   7. ENCABEZADO DEL FORMULARIO DE LOTE
    ============================================================ */
 .form-lote__header {
   display: flex;
@@ -418,10 +313,8 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   margin-bottom: 1.75rem;
 }
 
-/* El .btn-back dentro del encabezado no debe crecer con el flex */
 .form-lote__header .btn-back { flex-shrink: 0; }
 
-/* Título principal: "Inspección — LOTE-00X" */
 .form-lote__title {
   font-size: 1.25rem;
   font-weight: 700;
@@ -430,7 +323,6 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   line-height: 1.2;
 }
 
-/* Subtítulo: nombre del cultivo */
 .form-lote__sub {
   font-size: 0.8125rem;
   color: #6b8f71;
@@ -439,7 +331,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
 
 
 /* ============================================================
-   10. CONTADOR DE PLANTAS AFECTADAS
+   8. CONTADOR DE PLANTAS AFECTADAS
    ============================================================ */
 .contador-bloque {
   background: var(--white);
@@ -454,7 +346,6 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   box-shadow: 0 2px 8px rgba(45,106,79,.06);
 }
 
-/* Etiqueta superior del bloque */
 .contador-bloque__label {
   font-size: 0.8125rem;
   font-weight: 600;
@@ -463,14 +354,12 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   color: #6b8f71;
 }
 
-/* Fila horizontal: botón− | número | botón+ */
 .contador-control {
   display: flex;
   align-items: center;
   gap: 1.5rem;
 }
 
-/* Botones circulares − y + */
 .contador-btn {
   width: 48px;
   height: 48px;
@@ -487,11 +376,11 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   align-items: center;
   justify-content: center;
 }
+
 .contador-btn:hover:not(:disabled)  { background: var(--green-dark); color: var(--white); }
 .contador-btn:active:not(:disabled) { transform: scale(.93); }
 .contador-btn:disabled              { border-color: #c4d9c9; color: #c4d9c9; cursor: not-allowed; }
 
-/* Número grande en el centro */
 #contador-valor {
   font-size: 3.5rem;
   font-weight: 800;
@@ -502,15 +391,12 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   font-variant-numeric: tabular-nums;
 }
 
-/* Texto auxiliar: total de plantas sembradas */
 .contador-bloque__hint { font-size: 0.75rem; color: #9ab89f; }
 
 
 /* ============================================================
-   11. SECCIÓN DE TARJETAS DE PLAGAS
+   9. SECCIÓN DE TARJETAS DE PLAGAS
    ============================================================ */
-
-/* Títulos del bloque */
 .plagas-seccion__title {
   font-size: 1rem;
   font-weight: 700;
@@ -524,14 +410,12 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   margin-bottom: 1.25rem;
 }
 
-/* Contenedor donde JS inyecta dinámicamente las .plaga-card */
 #plagas-grid {
   display: flex;
   flex-direction: column;
   gap: 0.875rem;
 }
 
-/* Mensaje vacío cuando el cultivo no tiene plagas en catálogo */
 #plagas-empty {
   display: none;
   text-align: center;
@@ -553,17 +437,16 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   outline: none;
   position: relative;
 }
-.plaga-card:hover        { border-color: var(--green-mid); box-shadow: 0 4px 14px rgba(45,106,79,.12); }
+
+.plaga-card:hover         { border-color: var(--green-mid); box-shadow: 0 4px 14px rgba(45,106,79,.12); }
 .plaga-card:focus-visible { box-shadow: 0 0 0 3px rgba(82,183,136,.4); }
 
-/* Estado seleccionado */
 .plaga-card--seleccionada {
   border-color: var(--green-dark);
   background: #f0f9f4;
   box-shadow: 0 4px 16px rgba(45,106,79,.15);
 }
 
-/* Imagen de la plaga */
 .plaga-card__img {
   flex-shrink: 0;
   width: 80px;
@@ -576,9 +459,9 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   align-items: center;
   justify-content: center;
 }
+
 .plaga-card__img img { width: 100%; height: 100%; object-fit: cover; }
 
-/* Ícono de check superpuesto — oculto hasta selección */
 .plaga-card__check {
   position: absolute;
   top: 4px;
@@ -598,9 +481,9 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   transition: opacity .18s, transform .18s;
   pointer-events: none;
 }
+
 .plaga-card--seleccionada .plaga-card__check { opacity: 1; transform: scale(1); }
 
-/* Cuerpo de texto */
 .plaga-card__body { flex: 1; min-width: 0; }
 
 .plaga-card__nombre {
@@ -610,6 +493,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   margin-bottom: 0.375rem;
   line-height: 1.2;
 }
+
 .plaga-card--seleccionada .plaga-card__nombre { color: var(--green-dark); }
 
 .plaga-card__sintomas {
@@ -621,7 +505,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
 
 
 /* ============================================================
-   12. BARRA DE ACCIONES DEL FORMULARIO
+   10. BARRA DE ACCIONES DEL FORMULARIO
    ============================================================ */
 .form-lote__actions {
   display: flex;
@@ -632,7 +516,6 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   border-top: 1px solid #e2e8e2;
 }
 
-/* Cancelar — secundario con borde verde */
 .btn-cancelar-form {
   padding: 0.6rem 1.4rem;
   border: 1.5px solid var(--green-dark);
@@ -644,9 +527,9 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   cursor: pointer;
   transition: background .15s, color .15s;
 }
+
 .btn-cancelar-form:hover { background: #f0f9f4; }
 
-/* Guardar — primario verde sólido */
 .btn-guardar-form {
   padding: 0.6rem 1.6rem;
   border: none;
@@ -658,24 +541,28 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   cursor: pointer;
   transition: background .15s, transform .1s;
 }
+
 .btn-guardar-form:hover  { background: #245c43; }
 .btn-guardar-form:active { transform: scale(.97); }
 
 
 /* ============================================================
-   13. PAGINACIÓN DE LOTES
-   #lotes-paginacion arranca oculto; PaginacionLotes.init() lo
-   activa cuando hay más de 3 lotes y construye los controles.
+   11. PAGINACIÓN DE LOTES (#lotes-paginacion)
+   Nota: .pag-btn global está en general.css.
+   Aquí se sobreescribe únicamente dentro de #lotes-paginacion
+   porque usa colores verde oscuro (--green-dark) en lugar del
+   esquema estándar de general.css.
    ============================================================ */
 #lotes-paginacion {
-  display: none; /* JS lo muestra cuando hay suficientes lotes */
+  display: none;
   justify-content: center;
   align-items: center;
   gap: 0.5rem;
   padding: 1.5rem 0 0.5rem;
 }
 
-.pag-btn {
+/* Sobreescritura local del .pag-btn para esta vista */
+#lotes-paginacion .pag-btn {
   border: 1.5px solid var(--green-dark);
   background: var(--white);
   color: var(--green-dark);
@@ -686,61 +573,31 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   font-weight: 500;
   transition: background .15s, color .15s;
 }
-.pag-btn:hover:not(:disabled) { background: var(--green-dark); color: var(--white); }
-.pag-btn:disabled              { opacity: .45; cursor: default; }
-.pag-btn--activa               { background: var(--green-dark); color: var(--white); font-weight: 700; }
 
-/* Modificador numérico — ancho mínimo para consistencia visual */
-.pag-btn--num { min-width: 36px; text-align: center; }
+#lotes-paginacion .pag-btn:hover:not(:disabled) { background: var(--green-dark); color: var(--white); }
+#lotes-paginacion .pag-btn:disabled             { opacity: .45; cursor: default; }
+#lotes-paginacion .pag-btn--activa              { background: var(--green-dark); color: var(--white); font-weight: 700; }
+#lotes-paginacion .pag-btn--num                 { min-width: 36px; text-align: center; }
 
 
 /* ============================================================
-   14. UTILIDADES
+   12. UTILIDADES
    ============================================================ */
-
-/* Extiende un .lote-field hasta el final del grid de columnas.
-   Reemplaza el estilo inline style="grid-column:3/-1" que
-   aparecía en las filas de progreso de cada lote. */
 .lote-field--span-end { grid-column: 3 / -1; }
 
+
 /* ============================================================
-   15. MODAL DE INSPECCIÓN COMPLETADA
-   ============================================================
-   NUEVO: estilos para el modal que se abre con "Ver inspección".
-
-   ESTRUCTURA DE CAPAS:
-     #modal-inspeccion-overlay   — overlay semitransparente de fondo.
-     #modal-inspeccion-box       — caja blanca centrada, con scroll propio.
-       .modal-insp__header       — cabecera fija (título + botón ×).
-       .modal-insp__resumen      — fila de estadísticas rápidas.
-       #modal-insp-lotes         — lista de tarjetas acordeón.
-         .modal-lote-card        — tarjeta colapsada por defecto.
-         .modal-lote-card--open  — modificador que expande la tarjeta.
-
-   ANIMACIÓN DE ACORDEÓN:
-     Se usa max-height + overflow:hidden en .modal-lote-card__body.
-     Valor colapsado: max-height: 0.
-     Valor expandido: max-height: 600px (suficientemente grande para
-     cualquier contenido; la transición CSS hace la animación suave).
-     Decisión técnica: se evita JS para animar — solo CSS, más performant.
-
-   AISLAMIENTO:
-     Todos los selectores llevan el prefijo .modal-insp o #modal-insp
-     para garantizar que no colisionen con los estilos existentes del
-     sistema (cards, lotes, formulario, etc.).
+   13. MODAL DE INSPECCIÓN COMPLETADA (#modal-inspeccion-overlay)
    ============================================================ */
-
-/* ── Overlay de fondo ── */
 #modal-inspeccion-overlay {
   position: fixed;
-  inset: 0;                          /* top/right/bottom/left = 0 */
+  inset: 0;
   background: rgba(27, 46, 35, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 20px;
-  /* Oculto por defecto — JS añade .modal-insp--visible para mostrarlo */
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.22s ease;
@@ -751,7 +608,6 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   pointer-events: all;
 }
 
-/* ── Caja central del modal ── */
 #modal-inspeccion-box {
   background: var(--white);
   border-radius: 16px;
@@ -762,7 +618,6 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* Entra con ligera escala para sensación de "pop" */
   transform: scale(0.95);
   transition: transform 0.22s ease;
 }
@@ -771,7 +626,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   transform: scale(1);
 }
 
-/* ── Cabecera del modal ── */
+/* Cabecera del modal */
 .modal-insp__header {
   display: flex;
   align-items: flex-start;
@@ -779,7 +634,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   gap: 12px;
   padding: 20px 24px 16px;
   border-bottom: 1px solid var(--border);
-  flex-shrink: 0;                    /* nunca se comprime con el scroll */
+  flex-shrink: 0;
 }
 
 .modal-insp__titulo {
@@ -813,12 +668,13 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   transition: background var(--transition), border-color var(--transition);
   margin-top: 2px;
 }
+
 .modal-insp__close:hover {
   background: var(--green-xlight);
   border-color: var(--green-mid);
 }
 
-/* ── Fila de resumen numérico ── */
+/* Fila de resumen numérico */
 .modal-insp__resumen {
   display: flex;
   gap: 0;
@@ -834,6 +690,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   padding: 12px 8px;
   border-right: 1px solid var(--border);
 }
+
 .modal-insp__stat:last-child { border-right: none; }
 
 .modal-insp__stat-val {
@@ -854,7 +711,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   text-align: center;
 }
 
-/* ── Zona de scroll con las tarjetas ── */
+/* Zona de scroll con tarjetas de lote */
 #modal-insp-lotes {
   overflow-y: auto;
   padding: 16px 20px 20px;
@@ -863,7 +720,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   gap: 10px;
 }
 
-/* ── Tarjeta acordeón de lote ── */
+/* Tarjeta acordeón de lote */
 .modal-lote-card {
   border: 1.5px solid var(--border);
   border-radius: var(--radius-lg);
@@ -871,12 +728,13 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   background: var(--white);
   transition: border-color var(--transition), box-shadow var(--transition);
 }
+
 .modal-lote-card:hover {
   border-color: var(--green-mid);
   box-shadow: var(--shadow-sm);
 }
 
-/* Cabecera del acordeón — siempre visible */
+/* Cabecera del acordeón */
 .modal-lote-card__header {
   display: flex;
   align-items: center;
@@ -888,6 +746,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   background: var(--green-xlight);
   transition: background var(--transition);
 }
+
 .modal-lote-card--open .modal-lote-card__header {
   background: var(--green-light);
   border-bottom: 1px solid var(--border);
@@ -907,30 +766,29 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   margin-left: auto;
 }
 
-/* Chevron animado: rota 180° al abrirse */
 .modal-lote-card__chevron {
   font-size: 11px;
   color: var(--text-mid);
   transition: transform 0.22s ease;
   flex-shrink: 0;
 }
-.modal-lote-card--open .modal-lote-card__chevron {
-  transform: rotate(180deg);
-}
 
-/* Cuerpo colapsable — animación por max-height */
+.modal-lote-card--open .modal-lote-card__chevron { transform: rotate(180deg); }
+
+/* Cuerpo colapsable */
 .modal-lote-card__body {
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease, padding 0.2s ease;
   padding: 0 16px;
 }
+
 .modal-lote-card--open .modal-lote-card__body {
-  max-height: 600px;               /* Valor máximo generoso para la animación */
+  max-height: 600px;
   padding: 14px 16px 16px;
 }
 
-/* ── Filas de datos dentro del cuerpo ── */
+/* Filas de datos dentro del cuerpo */
 .modal-lote-card__row {
   display: flex;
   align-items: baseline;
@@ -939,6 +797,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   border-bottom: 1px solid var(--green-xlight);
   font-size: 13px;
 }
+
 .modal-lote-card__row:last-child { border-bottom: none; }
 
 .modal-lote-card__lbl {
@@ -957,7 +816,21 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   text-align: right;
 }
 
-/* ── Lista de plagas dentro del cuerpo ── */
+.modal-lote-card__val--pending {
+  color: var(--accent-pend);
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* Nombre del cultivo en cabecera del acordeón */
+.modal-lote-card__cultivo {
+  font-size: 11px;
+  color: var(--text-mid);
+  font-weight: 500;
+  margin-right: 6px;
+}
+
+/* Lista de plagas dentro del cuerpo */
 .modal-plagas-titulo {
   font-size: 11px;
   font-weight: 700;
@@ -966,6 +839,8 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   letter-spacing: .05em;
   margin: 10px 0 6px;
 }
+
+.modal-plagas-titulo--detectadas { color: #c0392b; }
 
 .modal-plagas-lista {
   display: flex;
@@ -999,7 +874,10 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   padding-left: 0;
 }
 
-/* Badge de estado dentro de la cabecera de la tarjeta */
+.modal-plaga-item--detectada { background: #fff0ee; }
+.modal-plaga-item__dot--detectada { background: #e74c3c; }
+
+/* Badge de estado dentro de la cabecera */
 .modal-badge {
   display: inline-flex;
   align-items: center;
@@ -1009,40 +887,14 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   padding: 3px 8px;
   border-radius: 20px;
 }
+
 .modal-badge--pend { background: #fff4e0; color: #a05e00; }
 .modal-badge--comp { background: var(--green-light); color: var(--green-dark); }
 
+
 /* ============================================================
-   16. BOTÓN "FINALIZAR INSPECCIÓN"
-   ============================================================
-   NUEVO: botón en la esquina superior derecha de .page__header
-   dentro de #seccion-lotes.
-
-   ESTADOS:
-     :disabled  — estado por defecto; apariencia grisada.
-     :enabled   — se activa solo cuando todos los lotes están
-                  inspeccionados (verificarFinalizacion() en JS).
-
-   LAYOUT: usa margin-left: auto en el header flex para
-   empujarse a la derecha, independientemente del contenido
-   del encabezado.
+   14. BOTÓN "FINALIZAR INSPECCIÓN"
    ============================================================ */
-
-/* Ajusta el encabezado para que el botón quede a la derecha */
-.page__header {
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-/* Contenedor de título y subtítulo */
-.page__header-info {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-/* Botón Finalizar */
 .btn-finalizar {
   display: inline-flex;
   align-items: center;
@@ -1063,7 +915,6 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   white-space: nowrap;
 }
 
-/* Estado deshabilitado — opaco y sin pointer-events */
 .btn-finalizar:disabled {
   background: #b0c8ba;
   border-color: #b0c8ba;
@@ -1072,7 +923,6 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   opacity: 0.72;
 }
 
-/* Estado habilitado */
 .btn-finalizar:not(:disabled) {
   cursor: pointer;
   animation: finalizarPulse 2s ease-in-out infinite;
@@ -1085,11 +935,8 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   animation: none;
 }
 
-.btn-finalizar:not(:disabled):active {
-  transform: scale(0.97);
-}
+.btn-finalizar:not(:disabled):active { transform: scale(0.97); }
 
-/* Ícono del check */
 .btn-finalizar__icon {
   width: 20px;
   height: 20px;
@@ -1104,11 +951,8 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   transition: background 0.18s;
 }
 
-.btn-finalizar:not(:disabled) .btn-finalizar__icon {
-  background: rgba(255,255,255,0.3);
-}
+.btn-finalizar:not(:disabled) .btn-finalizar__icon { background: rgba(255,255,255,0.3); }
 
-/* Contador de progreso (ej: "2/4") */
 .btn-finalizar__contador {
   background: rgba(0,0,0,0.15);
   border-radius: 12px;
@@ -1120,11 +964,8 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   transition: background 0.18s;
 }
 
-.btn-finalizar:not(:disabled) .btn-finalizar__contador {
-  background: rgba(255,255,255,0.25);
-}
+.btn-finalizar:not(:disabled) .btn-finalizar__contador { background: rgba(255,255,255,0.25); }
 
-/* Animación de pulso sutil cuando el botón está habilitado */
 @keyframes finalizarPulse {
   0%   { box-shadow: 0 0 0 0 rgba(45,106,79,0.5); }
   60%  { box-shadow: 0 0 0 7px rgba(45,106,79,0); }
@@ -1133,59 +974,11 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
 
 
 /* ============================================================
-   17. ESTILOS ADICIONALES PARA MODAL (datos reales de inspección)
-   ============================================================
-   Complementa la sección 15 con estilos para los nuevos
-   elementos del modal cuando muestra datos reales del store.
+   15. MODAL VER / EDITAR INSPECCIÓN DE LOTE
+   (#modal-ver-editar-overlay)
    ============================================================ */
 
-/* Nombre del cultivo en la cabecera de la tarjeta acordeón */
-.modal-lote-card__cultivo {
-  font-size: 11px;
-  color: var(--text-mid);
-  font-weight: 500;
-  margin-right: 6px;
-}
-
-/* Valor en estado "pendiente de inspección" */
-.modal-lote-card__val--pending {
-  color: var(--accent-pend);
-  font-style: italic;
-  font-weight: 500;
-}
-
-/* Título de sección de plagas detectadas (variante en rojo) */
-.modal-plagas-titulo--detectadas {
-  color: #c0392b;
-}
-
-/* Ítem de plaga detectada — fondo rojo suave */
-.modal-plaga-item--detectada {
-  background: #fff0ee;
-}
-
-.modal-plaga-item__dot--detectada {
-  background: #e74c3c;
-}
-
-/* ============================================================
-   18. MODAL VER / EDITAR INSPECCIÓN DE LOTE  (#modal-ver-editar-overlay)
-   ============================================================
-   Reemplaza la sección 15 (modal acordeón multi-lote) con un
-   modal enfocado en un único lote, con modo lectura y edición.
-
-   MODOS:
-     · Lectura  — plantas contadas + plagas detectadas (solo datos
-                  registrados; sin posibles plagas del catálogo).
-     · Edición  — contador editable + checkboxes de plagas.
-
-   ANIMACIÓN:
-     · Overlay: opacity 0 → 1 con pointer-events al activarse.
-     · Caja:    scale(0.95) → scale(1) al activarse.
-     · Ambas transiciones: 0.22s ease.
-   ============================================================ */
-
-/* ── Overlay ── */
+/* Overlay */
 #modal-ver-editar-overlay {
   position: fixed;
   inset: 0;
@@ -1205,7 +998,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   pointer-events: all;
 }
 
-/* ── Caja central ── */
+/* Caja central */
 #modal-ver-editar-box {
   background: var(--white);
   border-radius: 18px;
@@ -1220,11 +1013,9 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   transition: transform 0.22s ease;
 }
 
-#modal-ver-editar-overlay.mve--visible #modal-ver-editar-box {
-  transform: scale(1);
-}
+#modal-ver-editar-overlay.mve--visible #modal-ver-editar-box { transform: scale(1); }
 
-/* ── Cabecera ── */
+/* Cabecera */
 .mve__header {
   display: flex;
   align-items: flex-start;
@@ -1273,12 +1064,13 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   justify-content: center;
   transition: background var(--transition), border-color var(--transition);
 }
+
 .mve__close:hover {
   background: var(--green-light);
   border-color: var(--green-mid);
 }
 
-/* ── Cuerpo (scroll) ── */
+/* Cuerpo */
 .mve__body {
   flex: 1 1 auto;
   overflow-y: auto;
@@ -1288,7 +1080,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   gap: 20px;
 }
 
-/* ── Footer (acciones) ── */
+/* Footer */
 .mve__footer {
   flex-shrink: 0;
   display: flex;
@@ -1299,7 +1091,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   background: var(--white);
 }
 
-/* ── Secciones dentro del cuerpo ── */
+/* Secciones dentro del cuerpo */
 .mve-seccion {
   display: flex;
   flex-direction: column;
@@ -1345,7 +1137,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   margin-left: 2px;
 }
 
-/* ── Dato principal (número grande de plantas) ── */
+/* Dato principal (número grande de plantas) */
 .mve-dato-principal {
   display: flex;
   align-items: baseline;
@@ -1371,15 +1163,15 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   font-weight: 500;
 }
 
-/* Dato secundario (plantas sembradas) */
 .mve-dato-secundario {
   font-size: 12.5px;
   color: var(--text-light);
   padding-left: 2px;
 }
+
 .mve-dato-secundario strong { color: var(--text-mid); }
 
-/* ── Lista de plagas en modo lectura ── */
+/* Lista de plagas en modo lectura */
 .mve-plagas-lista {
   list-style: none;
   padding: 0;
@@ -1418,7 +1210,6 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   min-width: 0;
 }
 
-/* Sin plagas (modo lectura) */
 .mve-sin-plagas {
   display: flex;
   align-items: center;
@@ -1437,7 +1228,6 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   color: var(--text-mid);
 }
 
-/* Sin catálogo (modo edición) */
 .mve-sin-catalogo {
   font-size: 13px;
   color: var(--text-light);
@@ -1446,7 +1236,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   padding: 8px 0;
 }
 
-/* ── Contador editable (modo edición) ── */
+/* Contador editable (modo edición) */
 .mve-contador {
   display: flex;
   align-items: center;
@@ -1471,16 +1261,10 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   transition: background .15s, color .15s, transform .1s;
   flex-shrink: 0;
 }
-.mve-contador__btn:hover:not(:disabled) {
-  background: var(--green-dark);
-  color: var(--white);
-}
+
+.mve-contador__btn:hover:not(:disabled) { background: var(--green-dark); color: var(--white); }
 .mve-contador__btn:active:not(:disabled) { transform: scale(.92); }
-.mve-contador__btn:disabled {
-  border-color: #c4d9c9;
-  color: #c4d9c9;
-  cursor: not-allowed;
-}
+.mve-contador__btn:disabled             { border-color: #c4d9c9; color: #c4d9c9; cursor: not-allowed; }
 
 .mve-contador__valor {
   font-family: var(--font-sora);
@@ -1500,7 +1284,7 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   margin: 0;
 }
 
-/* ── Grid de tarjetas de plagas checkboxes (modo edición) ── */
+/* Grid de tarjetas de plagas checkboxes (modo edición) */
 .mve-plagas-grid {
   display: flex;
   flex-direction: column;
@@ -1520,19 +1304,16 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   background: var(--white);
   outline: none;
 }
-.mve-plaga-check:hover { border-color: var(--green-mid); background: var(--green-xlight); }
-.mve-plaga-check:focus-visible {
-  box-shadow: 0 0 0 3px rgba(82,183,136,.4);
-}
 
-/* Estado seleccionado */
+.mve-plaga-check:hover         { border-color: var(--green-mid); background: var(--green-xlight); }
+.mve-plaga-check:focus-visible { box-shadow: 0 0 0 3px rgba(82,183,136,.4); }
+
 .mve-plaga-check--sel {
   border-color: var(--green-dark);
   background: #f0f9f4;
   box-shadow: 0 2px 8px rgba(45,106,79,.12);
 }
 
-/* Tick de selección */
 .mve-plaga-check__tick {
   width: 22px;
   height: 22px;
@@ -1548,12 +1329,12 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   flex-shrink: 0;
   transition: background .15s, border-color .15s;
 }
+
 .mve-plaga-check--sel .mve-plaga-check__tick {
   background: var(--green-dark);
   border-color: var(--green-dark);
 }
 
-/* Imagen de la plaga */
 .mve-plaga-check__img {
   width: 36px;
   height: 36px;
@@ -1563,7 +1344,6 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   background: var(--green-xlight);
 }
 
-/* Nombre de la plaga */
 .mve-plaga-check__nombre {
   font-size: 12.5px;
   font-weight: 600;
@@ -1572,9 +1352,10 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   min-width: 0;
   line-height: 1.3;
 }
+
 .mve-plaga-check--sel .mve-plaga-check__nombre { color: var(--green-dark); }
 
-/* ── Botones del footer ── */
+/* Botones del footer del modal */
 .mve-btn {
   display: inline-flex;
   align-items: center;
@@ -1588,29 +1369,30 @@ body { font-family: var(--font-dm); background: #eef5f0; color: var(--text-dark)
   transition: background .15s, color .15s, border-color .15s, transform .1s;
   border: 1.5px solid transparent;
 }
+
 .mve-btn:active { transform: scale(.97); }
 
-/* Botón editar (solo modo lectura) */
 .mve-btn--editar {
   background: var(--green-dark);
   color: var(--white);
   border-color: var(--green-dark);
   margin-left: auto;
 }
+
 .mve-btn--editar:hover { background: #245c43; border-color: #245c43; }
 
-/* Botón cancelar (modo edición) */
 .mve-btn--cancelar {
   background: transparent;
   color: var(--green-dark);
   border-color: var(--green-dark);
 }
+
 .mve-btn--cancelar:hover { background: var(--green-xlight); }
 
-/* Botón guardar (modo edición) */
 .mve-btn--guardar {
   background: var(--green-dark);
   color: var(--white);
   border-color: var(--green-dark);
 }
+
 .mve-btn--guardar:hover { background: #245c43; border-color: #245c43; }

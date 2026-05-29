@@ -19,26 +19,88 @@
 'use strict';
 
 /* ══════════════════════════════════════════════════════════
-   1. DATOS SIMULADOS
-   Fuente de verdad mientras no haya backend.
-   Estructura de cada usuario:
-   { id, nombre, correo, telefono, region, rol, estado }
+   1. ENDPOINTS Y DATOS REALES
+   Los usuarios se cargan desde los tres microservicios:
+     · Productores  → http://localhost:8003/productor
+     · Técnicos     → http://localhost:9000/tecnico
+     · Funcionarios → http://localhost:9000/funcionario
+
+   Cada registro del backend se normaliza al shape:
+   { id, nombre, identificacion, tipoId, celular,
+     correo, rol, estado, _raw }
 ══════════════════════════════════════════════════════════ */
-const usuarios = [
-  // Técnicos
-  { id: 1,  nombre: 'Carlos Ramírez',   correo: 'c.ramirez@sifex.co',    telefono: '310 555 0101', region: 'Santander',       rol: 'tecnico',     estado: 'activo'   },
-  { id: 2,  nombre: 'Luisa Mendoza',    correo: 'l.mendoza@sifex.co',    telefono: '315 555 0202', region: 'Boyacá',          rol: 'tecnico',     estado: 'activo'   },
-  { id: 3,  nombre: 'Andrés Pinto',     correo: 'a.pinto@sifex.co',      telefono: '320 555 0303', region: 'Cundinamarca',    rol: 'tecnico',     estado: 'inactivo' },
-  // Productores
-  { id: 4,  nombre: 'María Torres',     correo: 'm.torres@correo.com',   telefono: '300 555 0404', region: 'Antioquia',       rol: 'productor',   estado: 'activo'   },
-  { id: 5,  nombre: 'Jorge Salcedo',    correo: 'j.salcedo@correo.com',  telefono: '312 555 0505', region: 'Huila',           rol: 'productor',   estado: 'activo'   },
-  { id: 6,  nombre: 'Patricia Gómez',   correo: 'p.gomez@correo.com',    telefono: '316 555 0606', region: 'Nariño',          rol: 'productor',   estado: 'inactivo' },
-  { id: 7,  nombre: 'Ricardo Herrera',  correo: 'r.herrera@correo.com',  telefono: '318 555 0707', region: 'Tolima',          rol: 'productor',   estado: 'activo'   },
-  // Funcionarios ICA
-  { id: 8,  nombre: 'Sofía Castillo',   correo: 's.castillo@ica.gov.co', telefono: '301 555 0808', region: 'Bogotá D.C.',     rol: 'funcionario', estado: 'activo'   },
-  { id: 9,  nombre: 'Miguel Vargas',    correo: 'm.vargas@ica.gov.co',   telefono: '305 555 0909', region: 'Valle del Cauca', rol: 'funcionario', estado: 'activo'   },
-  { id: 10, nombre: 'Valentina Rueda',  correo: 'v.rueda@ica.gov.co',    telefono: '311 555 1010', region: 'Córdoba',         rol: 'funcionario', estado: 'inactivo' },
-];
+
+const API_PRODUCTORES  = 'http://localhost:8003/productor';
+const API_TECNICOS     = 'http://localhost:9000/tecnico';
+const API_FUNCIONARIOS = 'http://localhost:9000/funcionario';
+
+/** Array mutable — fuente de verdad de la vista */
+let usuarios = [];
+
+/**
+ * Normaliza un registro del backend al shape interno.
+ * Soporta los tres roles con sus campos específicos.
+ *
+ * @param {Object} raw  - Objeto crudo del API
+ * @param {string} rol  - 'productor' | 'tecnico' | 'funcionario'
+ */
+function normalizar(raw, rol) {
+  // Nombre completo (todos los roles usan Primer/Segundo Nombre/Apellido)
+  const partes = [
+    raw.Primer_nombre, raw.Segundo_nombre,
+    raw.Primer_apellido, raw.Segundo_apellido
+  ].filter(Boolean);
+  const nombre = partes.join(' ') || raw.Nombre || '—';
+
+  // ID numérico interno según rol
+  const idMap = {
+    productor:   raw.Id_productor,
+    tecnico:     raw.Id_tecnico,
+    funcionario: raw.Id_funcionario,
+  };
+
+  return {
+    id:             idMap[rol] ?? raw.id,
+    nombre,
+    identificacion: raw.Numero_identificacion ?? raw.Identificacion ?? '—',
+    tipoId:         raw.Tipo_identificacion   ?? '—',
+    celular:        raw.Celular               ?? raw.Telefono ?? '—',
+    correo:         raw.Correo                ?? '—',
+    rol,
+    estado:         raw.Estado ?? 'Activo',
+    _raw:           raw,   // referencia al objeto original (para edición futura)
+  };
+}
+
+/**
+ * Carga los usuarios de los tres endpoints en paralelo,
+ * normaliza cada lista y actualiza el array global.
+ */
+async function cargarUsuarios() {
+  try {
+    const [resP, resT, resF] = await Promise.all([
+      fetch(API_PRODUCTORES),
+      fetch(API_TECNICOS),
+      fetch(API_FUNCIONARIOS),
+    ]);
+
+    const [dataP, dataT, dataF] = await Promise.all([
+      resP.json(), resT.json(), resF.json()
+    ]);
+
+    const productores  = (dataP.data ?? dataP ?? []).map(r => normalizar(r, 'productor'));
+    const tecnicos     = (dataT.data ?? dataT ?? []).map(r => normalizar(r, 'tecnico'));
+    const funcionarios = (dataF.data ?? dataF ?? []).map(r => normalizar(r, 'funcionario'));
+
+    usuarios = [...productores, ...tecnicos, ...funcionarios];
+
+    actualizarBadges();
+    renderizarTabla();
+  } catch (err) {
+    console.error('[admin.js] Error cargando usuarios:', err);
+    mostrarToast('No se pudieron cargar los usuarios del servidor.', 'aviso');
+  }
+}
 
 
 /* ══════════════════════════════════════════════════════════
@@ -79,8 +141,7 @@ let _toastTimer = null;
 ══════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
   asignarEventos();
-  actualizarBadges();
-  renderizarTabla();
+  cargarUsuarios(); // carga real desde los tres endpoints
 });
 
 
@@ -122,16 +183,6 @@ function asignarEventos() {
   document.getElementById('gu-form-guardar')
     ?.addEventListener('click', guardarUsuario);
 
-  /* ── Modal "Ver detalle": cerrar ────────────────────── */
-  document.getElementById('gu-ver-close')
-    ?.addEventListener('click', cerrarModalVer);
-  document.getElementById('gu-ver-cancelar')
-    ?.addEventListener('click', cerrarModalVer);
-  document.getElementById('gu-modal-ver')
-    ?.addEventListener('click', e => {
-      if (e.target === e.currentTarget) cerrarModalVer();
-    });
-
   /* ── Modal confirmación eliminar ────────────────────── */
   document.getElementById('gu-confirm-cancelar')
     ?.addEventListener('click', cerrarModalConfirm);
@@ -142,12 +193,19 @@ function asignarEventos() {
   document.getElementById('gu-confirm-ok')
     ?.addEventListener('click', confirmarEliminar);
 
+  /* ── Input de imagen: preview en tiempo real ───────── */
+  document.getElementById('f-imagen-file')
+    ?.addEventListener('change', manejarSeleccionImagen);
+
+  /* ── Botón "Quitar imagen" ──────────────────────────── */
+  document.getElementById('gu-img-remove')
+    ?.addEventListener('click', quitarImagen);
+
   /* ── Teclado: Escape cierra cualquier modal abierto ─── */
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       cerrarModalForm();
       cerrarModalConfirm();
-      cerrarModalVer();
     }
   });
 }
@@ -170,7 +228,9 @@ function renderizarTabla() {
     const q            = estado.filtroBusq.toLowerCase().trim();
     const coincideBusq = !q
       || u.nombre.toLowerCase().includes(q)
-      || u.correo.toLowerCase().includes(q);
+      || u.correo.toLowerCase().includes(q)
+      || u.identificacion.toLowerCase().includes(q)
+      || u.celular.toLowerCase().includes(q);
     return coincideRol && coincideBusq;
   });
 
@@ -180,23 +240,29 @@ function renderizarTabla() {
     empty.hidden = false;
   } else {
     empty.hidden = true;
-    tbody.innerHTML = filtrados.map(generarFila).join('');
+    tbody.innerHTML = filtrados.map((u, idx) => generarFila(u, idx)).join('');
 
-    // 3. Asignar eventos a los botones de acción de cada fila
-    filtrados.forEach(u => {
-      document.getElementById(`btn-ver-${u.id}`)
-        ?.addEventListener('click', () => abrirVer(u));
-      document.getElementById(`btn-editar-${u.id}`)
-        ?.addEventListener('click', () => abrirEditar(u));
-      document.getElementById(`btn-eliminar-${u.id}`)
-        ?.addEventListener('click', () => abrirConfirmEliminar(u));
-    });
+    // 3. Delegación de eventos en el tbody — un solo listener para todas las filas.
+    // Se usa data-index para identificar al usuario exacto sin depender de IDs
+    // que pueden colisionar entre roles (técnico id=1, productor id=1, etc.).
+    tbody.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+
+      const u = filtrados[parseInt(btn.dataset.index, 10)];
+      if (!u) return;
+
+      if (btn.dataset.action === 'editar')   abrirEditar(u);
+      if (btn.dataset.action === 'eliminar') abrirConfirmEliminar(u);
+    }, { once: true }); // once: true → el listener se elimina solo al re-renderizar
   }
 
   // 4. Actualizar texto del contador
   const totalRol = estado.rolActivo === 'todos'
     ? usuarios.length
     : usuarios.filter(u => u.rol === estado.rolActivo).length;
+  // Re-sync badges after each render (count may have changed)
+  actualizarBadges();
 
   infoCount.innerHTML =
     `Mostrando <strong>${filtrados.length}</strong> de <strong>${totalRol}</strong> usuario${totalRol !== 1 ? 's' : ''}`;
@@ -208,18 +274,18 @@ function renderizarTabla() {
  * @param {Object} u - Objeto usuario
  * @returns {string} HTML de la fila
  */
-function generarFila(u) {
+function generarFila(u, idx) {
   // Iniciales del nombre (máx. 2 palabras)
   const iniciales = u.nombre
     .split(' ')
     .slice(0, 2)
-    .map(p => p[0])
+    .map(p => p[0] || '')
     .join('')
     .toUpperCase();
 
-  const rolLabel = ROL_LABELS[u.rol] || u.rol;
-  const rolClass = ROL_BADGE_CLASS[u.rol] || '';
-  const estadoLabel = u.estado.charAt(0).toUpperCase() + u.estado.slice(1);
+  const rolLabel    = ROL_LABELS[u.rol]    || u.rol;
+  const rolClass    = ROL_BADGE_CLASS[u.rol] || '';
+  const estadoLabel = u.estado;
 
   return `
     <tr>
@@ -234,11 +300,17 @@ function generarFila(u) {
         </div>
       </td>
 
-      <!-- Columna: teléfono -->
-      <td>${escHTML(u.telefono || '—')}</td>
+      <!-- Columna: número de identificación -->
+      <td>${escHTML(u.identificacion)}</td>
 
-      <!-- Columna: región -->
-      <td>${escHTML(u.region || '—')}</td>
+      <!-- Columna: tipo de identificación -->
+      <td>${escHTML(u.tipoId)}</td>
+
+      <!-- Columna: celular -->
+      <td>${escHTML(u.celular)}</td>
+
+      <!-- Columna: correo -->
+      <td>${escHTML(u.correo)}</td>
 
       <!-- Columna: badge de rol -->
       <td>
@@ -247,44 +319,30 @@ function generarFila(u) {
 
       <!-- Columna: badge de estado -->
       <td>
-        <span class="gu-badge-estado gu-badge-estado--${u.estado}">
+        <span class="gu-badge-estado gu-badge-estado--${u.estado.toLowerCase()}">
           ${estadoLabel}
         </span>
       </td>
 
-      <!-- Columna: acciones (Ver · Editar · Eliminar) -->
+      <!-- Columna: acciones (Editar · Eliminar) -->
       <td>
         <div class="gu-acciones">
 
-          <!-- Ver detalle -->
-          <button
-            class="gu-btn-accion gu-btn-accion--ver"
-            id="btn-ver-${u.id}"
-            title="Ver detalle"
-            aria-label="Ver detalle de ${escHTML(u.nombre)}"
-          >
-            ${SVG_ICONS.ver}
-          </button>
-
-          <!-- Editar -->
           <button
             class="gu-btn-accion gu-btn-accion--editar"
-            id="btn-editar-${u.id}"
+            data-action="editar"
+            data-index="${idx}"
             title="Editar usuario"
             aria-label="Editar ${escHTML(u.nombre)}"
-          >
-            ${SVG_ICONS.editar}
-          </button>
+          >${SVG_ICONS.editar}</button>
 
-          <!-- Eliminar -->
           <button
             class="gu-btn-accion gu-btn-accion--eliminar"
-            id="btn-eliminar-${u.id}"
+            data-action="eliminar"
+            data-index="${idx}"
             title="Eliminar usuario"
             aria-label="Eliminar ${escHTML(u.nombre)}"
-          >
-            ${SVG_ICONS.eliminar}
-          </button>
+          >${SVG_ICONS.eliminar}</button>
 
         </div>
       </td>
@@ -336,58 +394,6 @@ function cambiarTab(nuevoRol) {
 
 
 /* ══════════════════════════════════════════════════════════
-   8. ACCIÓN: VER DETALLE
-══════════════════════════════════════════════════════════ */
-/**
- * Abre el modal de solo lectura con los datos del usuario.
- * @param {Object} u - Usuario a mostrar
- */
-function abrirVer(u) {
-  const contenido = document.getElementById('gu-ver-contenido');
-  if (!contenido) return;
-
-  // Generar el grid de etiqueta/valor
-  contenido.innerHTML = `
-    <span class="gu-ver-label">Nombre</span>
-    <span class="gu-ver-valor">${escHTML(u.nombre)}</span>
-
-    <span class="gu-ver-label">Correo</span>
-    <span class="gu-ver-valor">${escHTML(u.correo)}</span>
-
-    <hr class="gu-ver-divider" />
-
-    <span class="gu-ver-label">Teléfono</span>
-    <span class="gu-ver-valor">${escHTML(u.telefono || '—')}</span>
-
-    <span class="gu-ver-label">Región</span>
-    <span class="gu-ver-valor">${escHTML(u.region || '—')}</span>
-
-    <hr class="gu-ver-divider" />
-
-    <span class="gu-ver-label">Rol</span>
-    <span class="gu-ver-valor">
-      <span class="gu-badge-rol ${ROL_BADGE_CLASS[u.rol] || ''}">
-        ${ROL_LABELS[u.rol] || u.rol}
-      </span>
-    </span>
-
-    <span class="gu-ver-label">Estado</span>
-    <span class="gu-ver-valor">
-      <span class="gu-badge-estado gu-badge-estado--${u.estado}">
-        ${u.estado.charAt(0).toUpperCase() + u.estado.slice(1)}
-      </span>
-    </span>
-  `;
-
-  mostrarModal('gu-modal-ver');
-}
-
-function cerrarModalVer() {
-  ocultarModal('gu-modal-ver');
-}
-
-
-/* ══════════════════════════════════════════════════════════
    9. ACCIÓN: CREAR USUARIO
 ══════════════════════════════════════════════════════════ */
 function abrirCrear() {
@@ -402,7 +408,7 @@ function abrirCrear() {
   }
 
   mostrarModal('gu-modal-form');
-  document.getElementById('f-nombre')?.focus();
+  document.getElementById('f-primer-nombre')?.focus();
 }
 
 
@@ -417,33 +423,163 @@ function abrirEditar(u) {
   estado.modalModo   = 'editar';
   estado.usuarioEdit = u;
 
+  const raw = u._raw; // objeto original con todos los campos del backend
+
   document.getElementById('gu-modal-titulo').textContent = 'Editar usuario';
-  document.getElementById('f-nombre').value   = u.nombre;
-  document.getElementById('f-correo').value   = u.correo;
-  document.getElementById('f-telefono').value = u.telefono || '';
-  document.getElementById('f-region').value   = u.region   || '';
-  document.getElementById('f-rol').value      = u.rol;
-  document.getElementById('f-estado').value   = u.estado;
+
+  // Identificación
+  document.getElementById('f-numero-identificacion').value = raw.Numero_identificacion ?? '';
+  document.getElementById('f-tipo-identificacion').value   = raw.Tipo_identificacion   ?? '';
+
+  // Nombres
+  document.getElementById('f-primer-nombre').value    = raw.Primer_nombre    ?? '';
+  document.getElementById('f-segundo-nombre').value   = raw.Segundo_nombre   ?? '';
+  document.getElementById('f-primer-apellido').value  = raw.Primer_apellido  ?? '';
+  document.getElementById('f-segundo-apellido').value = raw.Segundo_apellido ?? '';
+
+  // Contacto
+  document.getElementById('f-celular').value = raw.Celular ?? '';
+  document.getElementById('f-correo').value  = raw.Correo  ?? '';
+
+  // Rol y estado
+  document.getElementById('f-rol').value    = u.rol;
+  document.getElementById('f-estado').value = u.estado;
+
+  // Contraseña: en edición no se muestra — solo si el admin quiere cambiarla
+  const rowPassword = document.getElementById('gu-row-password');
+  const labelPass   = rowPassword?.querySelector('label');
+  if (rowPassword) {
+    // Quitar el asterisco de obligatorio en edición
+    if (labelPass) labelPass.innerHTML = 'Nueva contraseña <small style="font-weight:400;color:var(--color-text-muted)">(dejar vacío para no cambiar)</small>';
+    document.getElementById('f-password').value = '';
+  }
+
+  // Mostrar imagen actual si existe
+  if (raw.Imagen) {
+    const preview     = document.getElementById('gu-img-preview');
+    const previewWrap = document.getElementById('gu-img-preview-wrap');
+    const nameEl      = document.getElementById('gu-img-preview-name');
+    const sizeEl      = document.getElementById('gu-img-preview-size');
+    const filename    = document.getElementById('f-imagen-filename');
+    const nombreImg   = raw.Imagen.split('/').pop();
+
+    if (preview)     { preview.src = raw.Imagen; preview.onerror = () => { previewWrap.style.display = 'none'; }; }
+    if (previewWrap) previewWrap.style.display = 'flex';
+    if (nameEl)      nameEl.textContent   = nombreImg;
+    if (sizeEl)      sizeEl.textContent   = 'Imagen actual';
+    if (filename)    filename.textContent = nombreImg;
+  }
 
   mostrarModal('gu-modal-form');
-  document.getElementById('f-nombre')?.focus();
+  document.getElementById('f-primer-nombre')?.focus();
 }
 
 
 /* ══════════════════════════════════════════════════════════
-   11. ACCIÓN: GUARDAR (crear o actualizar)
+   8. MANEJO DE IMAGEN DE PERFIL
+   Muestra preview al seleccionar un archivo, valida
+   tamaño/formato y permite quitar la selección.
 ══════════════════════════════════════════════════════════ */
-function guardarUsuario() {
-  // Leer valores del formulario
-  const nombre   = document.getElementById('f-nombre').value.trim();
-  const correo   = document.getElementById('f-correo').value.trim();
-  const telefono = document.getElementById('f-telefono').value.trim();
-  const region   = document.getElementById('f-region').value.trim();
-  const rol      = document.getElementById('f-rol').value;
-  const estadoV  = document.getElementById('f-estado').value;
 
-  // Validaciones mínimas
-  if (!nombre || !correo || !rol) {
+const MAX_IMG_BYTES = 2 * 1024 * 1024; // 2 MB
+
+/**
+ * Se dispara cuando el usuario elige un archivo en el input.
+ * Valida formato y tamaño, luego muestra la preview.
+ */
+function manejarSeleccionImagen(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  // Validar tipo MIME
+  const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!tiposPermitidos.includes(file.type)) {
+    mostrarToast('Formato no válido. Use JPG, PNG o WEBP.', 'aviso');
+    e.target.value = '';
+    return;
+  }
+
+  // Validar tamaño
+  if (file.size > MAX_IMG_BYTES) {
+    mostrarToast('La imagen supera el tamaño máximo permitido de 2 MB.', 'aviso');
+    e.target.value = '';
+    return;
+  }
+
+  // Mostrar preview
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const preview     = document.getElementById('gu-img-preview');
+    const previewWrap = document.getElementById('gu-img-preview-wrap');
+    const nameEl      = document.getElementById('gu-img-preview-name');
+    const sizeEl      = document.getElementById('gu-img-preview-size');
+    const filename    = document.getElementById('f-imagen-filename');
+
+    if (preview)     preview.src           = ev.target.result;
+    if (previewWrap) previewWrap.style.display = 'flex';
+    if (nameEl)      nameEl.textContent    = file.name;
+    if (sizeEl)      sizeEl.textContent    = `${(file.size / 1024).toFixed(1)} KB`;
+    if (filename)    filename.textContent  = file.name;
+  };
+  reader.readAsDataURL(file);
+}
+
+/** Limpia la selección de imagen y oculta la preview. */
+function quitarImagen() {
+  const imgInput = document.getElementById('f-imagen-file');
+  if (imgInput) imgInput.value = '';
+
+  const preview     = document.getElementById('gu-img-preview');
+  const previewWrap = document.getElementById('gu-img-preview-wrap');
+  const filename    = document.getElementById('f-imagen-filename');
+
+  if (preview)     preview.src           = '';
+  if (previewWrap) previewWrap.style.display = 'none';
+  if (filename)    filename.textContent  = '';
+}
+
+
+/** Devuelve la URL del endpoint de creación según el rol. */
+function _endpointCrear(rol) {
+  if (rol === 'productor')   return 'http://localhost:8003/productor/add';
+  if (rol === 'tecnico')     return 'http://localhost:9000/tecnico/add';
+  if (rol === 'funcionario') return 'http://localhost:9000/funcionario/add';
+  return null;
+}
+
+/** Devuelve la URL del endpoint de edición según el rol e ID. */
+function _endpointEditar(rol, id) {
+  if (rol === 'productor')   return `http://localhost:8003/productor/${id}`;
+  if (rol === 'tecnico')     return `http://localhost:9000/tecnico/${id}`;
+  if (rol === 'funcionario') return `http://localhost:9000/funcionario/${id}`;
+  return null;
+}
+
+/** Devuelve la URL del endpoint de desactivación según el rol e ID. */
+function _endpointEliminar(rol, id) {
+  if (rol === 'productor')   return `http://localhost:8003/productor/delete/${id}`;
+  if (rol === 'tecnico')     return `http://localhost:9000/tecnico/delete/${id}`;
+  if (rol === 'funcionario') return `http://localhost:9000/funcionario/delete/${id}`;
+  return null;
+}
+
+async function guardarUsuario() {
+  // ── Leer campos del formulario (estructura real del HTML) ──
+  const primerNombre   = document.getElementById('f-primer-nombre')?.value.trim()   || '';
+  const segundoNombre  = document.getElementById('f-segundo-nombre')?.value.trim()  || '';
+  const primerApellido = document.getElementById('f-primer-apellido')?.value.trim() || '';
+  const segundoApellido= document.getElementById('f-segundo-apellido')?.value.trim()|| '';
+  const celular        = document.getElementById('f-celular')?.value.trim()          || '';
+  const correo         = document.getElementById('f-correo')?.value.trim()           || '';
+  const rol            = document.getElementById('f-rol')?.value                     || '';
+  const password       = document.getElementById('f-password')?.value               || '';
+
+  // Identificación — campo extra que puede existir en el form
+  const numeroId = document.getElementById('f-numero-identificacion')?.value.trim() || '';
+  const tipoId   = document.getElementById('f-tipo-identificacion')?.value   || '';
+
+  // ── Validaciones ──────────────────────────────────────────
+  if (!primerNombre || !primerApellido || !correo || !rol) {
     mostrarToast('Complete los campos obligatorios (*).', 'aviso');
     return;
   }
@@ -451,32 +587,131 @@ function guardarUsuario() {
     mostrarToast('Ingrese un correo electrónico válido.', 'aviso');
     return;
   }
-
-  if (estado.modalModo === 'crear') {
-    // Agregar nuevo usuario al arreglo
-    usuarios.push({
-      id: estado.nextId++,
-      nombre, correo, telefono, region, rol, estado: estadoV,
-    });
-    mostrarToast(`Usuario <strong>${escHTML(nombre)}</strong> creado exitosamente.`, 'exito');
-    cambiarTab(rol); // navegar a la tab del rol recién creado
-
-  } else {
-    // Actualizar el objeto en memoria
-    Object.assign(estado.usuarioEdit, {
-      nombre, correo, telefono, region, rol, estado: estadoV,
-    });
-    mostrarToast(`Usuario <strong>${escHTML(nombre)}</strong> actualizado.`, 'exito');
-    // Si cambió de rol, navegar a la tab correspondiente
-    if (rol !== estado.rolActivo && estado.rolActivo !== 'todos') {
-      cambiarTab(rol);
-    } else {
-      renderizarTabla();
-    }
+  if (estado.modalModo === 'crear' && !password) {
+    mostrarToast('La contraseña es obligatoria al crear un usuario.', 'aviso');
+    return;
   }
 
-  actualizarBadges();
-  cerrarModalForm();
+  if (estado.modalModo === 'crear') {
+    // ── POST al endpoint correspondiente ──────────────────
+    const url = _endpointCrear(rol);
+    if (!url) {
+      mostrarToast('Rol no reconocido.', 'aviso');
+      return;
+    }
+
+    // ── Construir FormData para enviar imagen + campos de texto ──
+    // El backend debe recibir multipart/form-data.
+    // El campo "Imagen" llegará como archivo; el servidor lo guarda
+    // en disco y almacena la ruta resultante en la BD (varchar 255).
+    const formData = new FormData();
+    formData.append('Numero_identificacion', numeroId);
+    formData.append('Tipo_identificacion',   tipoId);
+    formData.append('Primer_nombre',         primerNombre);
+    formData.append('Segundo_nombre',        segundoNombre);
+    formData.append('Primer_apellido',       primerApellido);
+    formData.append('Segundo_apellido',      segundoApellido);
+    formData.append('Celular',               celular);
+    formData.append('Correo',                correo);
+    formData.append('Password',              password);
+
+    // Adjuntar archivo de imagen si el usuario seleccionó uno
+    const imgInput = document.getElementById('f-imagen-file');
+    const imgFile  = imgInput?.files?.[0];
+    if (imgFile) {
+      // El backend debe tener un middleware como multer (Node.js)
+      // que procese el campo "Imagen" y devuelva la ruta guardada.
+      formData.append('Imagen', imgFile, imgFile.name);
+    }
+    // Si no hay imagen, el backend usará su imagen por defecto o
+    // dejará el campo vacío — ajusta según tu lógica de negocio.
+
+    // Deshabilitar botón mientras se procesa
+    const btnGuardar = document.getElementById('gu-form-guardar');
+    if (btnGuardar) { btnGuardar.disabled = true; btnGuardar.textContent = 'Guardando…'; }
+
+    try {
+      // IMPORTANTE: NO pongas 'Content-Type' manualmente.
+      // El navegador lo establece solo con el boundary correcto
+      // cuando el body es un FormData.
+      const res  = await fetch(url, {
+        method: 'POST',
+        body:   formData,
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        // 413 → imagen demasiado grande (rechazada por multer en el backend)
+        // Para cualquier otro error usamos data.message del servidor
+        mostrarToast(data.message || 'Error al crear el usuario.', 'aviso');
+
+        // Si el error fue por la imagen, limpiar el input para que el
+        // usuario pueda elegir otra sin necesidad de cerrar el formulario
+        if (res.status === 413 || res.status === 400) quitarImagen();
+        return;
+      }
+
+      const nombreCompleto = `${primerNombre} ${primerApellido}`;
+      mostrarToast(`Usuario <strong>${escHTML(nombreCompleto)}</strong> creado exitosamente.`, 'exito');
+      cerrarModalForm();
+      cambiarTab(rol);        // ir a la tab del rol recién creado
+      await cargarUsuarios(); // refrescar la tabla desde el servidor
+
+    } catch (err) {
+      console.error('[guardarUsuario]', err);
+      mostrarToast('No se pudo conectar con el servidor.', 'aviso');
+    } finally {
+      if (btnGuardar) { btnGuardar.disabled = false; btnGuardar.textContent = 'Guardar'; }
+    }
+
+  } else {
+    // ── PUT al endpoint correspondiente ───────────────────
+    const u   = estado.usuarioEdit;
+    const url = _endpointEditar(u.rol, u.id);
+    if (!url) { mostrarToast('Rol no reconocido.', 'aviso'); return; }
+
+    const formData = new FormData();
+    formData.append('Numero_identificacion', numeroId);
+    formData.append('Tipo_identificacion',   tipoId);
+    formData.append('Primer_nombre',         primerNombre);
+    formData.append('Segundo_nombre',        segundoNombre);
+    formData.append('Primer_apellido',       primerApellido);
+    formData.append('Segundo_apellido',      segundoApellido);
+    formData.append('Celular',               celular);
+    formData.append('Correo',                correo);
+    formData.append('Estado',                document.getElementById('f-estado')?.value ?? 'Activo');
+    if (password) formData.append('Password', password);
+
+    // Solo adjuntar imagen si el usuario seleccionó una nueva
+    const imgInput = document.getElementById('f-imagen-file');
+    const imgFile  = imgInput?.files?.[0];
+    if (imgFile) formData.append('Imagen', imgFile, imgFile.name);
+
+    const btnGuardar = document.getElementById('gu-form-guardar');
+    if (btnGuardar) { btnGuardar.disabled = true; btnGuardar.textContent = 'Guardando…'; }
+
+    try {
+      const res  = await fetch(url, { method: 'PUT', body: formData });
+      const data = await res.json();
+
+      if (!res.ok) {
+        mostrarToast(data.message || 'Error al actualizar el usuario.', 'aviso');
+        if (res.status === 413 || res.status === 400) quitarImagen();
+        return;
+      }
+
+      const nombreCompleto = `${primerNombre} ${primerApellido}`;
+      mostrarToast(`Usuario <strong>${escHTML(nombreCompleto)}</strong> actualizado correctamente.`, 'exito');
+      cerrarModalForm();
+      await cargarUsuarios();
+
+    } catch (err) {
+      console.error('[guardarUsuario - editar]', err);
+      mostrarToast('No se pudo conectar con el servidor.', 'aviso');
+    } finally {
+      if (btnGuardar) { btnGuardar.disabled = false; btnGuardar.textContent = 'Guardar'; }
+    }
+  }
 }
 
 
@@ -494,22 +729,46 @@ function abrirConfirmEliminar(u) {
   mostrarModal('gu-modal-confirm');
 }
 
-/** Ejecuta la eliminación tras confirmar en el modal. */
-function confirmarEliminar() {
+/** Ejecuta la desactivación (Estado → Inactivo) tras confirmar en el modal. */
+async function confirmarEliminar() {
   if (!estado.usuarioElim) return;
 
-  const idx = usuarios.findIndex(u => u.id === estado.usuarioElim.id);
-  if (idx !== -1) usuarios.splice(idx, 1);
+  const u   = estado.usuarioElim;
+  const url = _endpointEliminar(u.rol, u.id);
 
-  mostrarToast(
-    `Usuario <strong>${escHTML(estado.usuarioElim.nombre)}</strong> eliminado.`,
-    'error'
-  );
+  if (!url) {
+    mostrarToast('Rol no reconocido.', 'aviso');
+    cerrarModalConfirm();
+    return;
+  }
 
-  estado.usuarioElim = null;
-  actualizarBadges();
-  renderizarTabla();
-  cerrarModalConfirm();
+  // Deshabilitar botón mientras se procesa
+  const btnOk = document.getElementById('gu-confirm-ok');
+  if (btnOk) { btnOk.disabled = true; btnOk.textContent = 'Desactivando…'; }
+
+  try {
+    const res  = await fetch(url, { method: 'PUT' });
+    const data = await res.json();
+
+    if (!res.ok) {
+      mostrarToast(data.message || 'No se pudo desactivar el usuario.', 'aviso');
+      return;
+    }
+
+    mostrarToast(
+      `Usuario <strong>${escHTML(u.nombre)}</strong> marcado como Inactivo.`,
+      'error'
+    );
+    cerrarModalConfirm();
+    await cargarUsuarios(); // refrescar tabla desde el servidor
+
+  } catch (err) {
+    console.error('[confirmarEliminar]', err);
+    mostrarToast('No se pudo conectar con el servidor.', 'aviso');
+  } finally {
+    if (btnOk) { btnOk.disabled = false; btnOk.textContent = 'Sí, desactivar'; }
+    estado.usuarioElim = null;
+  }
 }
 
 
@@ -551,12 +810,28 @@ function cerrarModalConfirm() {
 
 /** Reinicia todos los campos del formulario a sus valores por defecto. */
 function limpiarFormulario() {
-  ['f-nombre', 'f-correo', 'f-telefono', 'f-region'].forEach(id => {
+  const campos = [
+    'f-primer-nombre', 'f-segundo-nombre',
+    'f-primer-apellido', 'f-segundo-apellido',
+    'f-celular', 'f-correo', 'f-password',
+    'f-numero-identificacion', 'f-tipo-identificacion',
+  ];
+  campos.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  document.getElementById('f-rol').value    = '';
-  document.getElementById('f-estado').value = 'activo';
+  const rol    = document.getElementById('f-rol');
+  const estado = document.getElementById('f-estado');
+  if (rol)    rol.value    = '';
+  if (estado) estado.value = 'Activo';
+
+  // Limpiar preview de imagen si existe
+  const preview = document.getElementById('gu-img-preview-wrap');
+  if (preview) preview.style.display = 'none';
+  const filename = document.getElementById('f-imagen-filename');
+  if (filename) filename.textContent = '';
+  const imgInput = document.getElementById('f-imagen-file');
+  if (imgInput) imgInput.value = '';
 }
 
 
@@ -587,15 +862,6 @@ function mostrarToast(mensaje, tipo = 'exito') {
    (son iconos dinámicos de las filas de la tabla).
 ══════════════════════════════════════════════════════════ */
 const SVG_ICONS = {
-
-  ver: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round"
-          aria-hidden="true">
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-          <circle cx="12" cy="12" r="3"/>
-        </svg>`,
-
   editar: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round"

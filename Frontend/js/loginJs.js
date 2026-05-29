@@ -2,6 +2,13 @@ const loginButton   = document.querySelector('button');
 const emailInput    = document.querySelector('input[type="email"]');
 const passwordInput = document.querySelector('input[type="password"]');
 
+// ─── Credenciales fijas del administrador ────────────────────────────────────────────
+const ADMIN_CREDENTIALS = {
+    correo:   'sepulvedarojasjuandavid@gmail.com',
+    password: 'juan123'
+};
+// ────────────────────────────────────────────────────────────────────────────────
+
 loginButton.addEventListener('click', async (e) => {
     e.preventDefault();
 
@@ -12,6 +19,18 @@ loginButton.addEventListener('click', async (e) => {
 
     if (!datos.Correo || !datos.Password) {
         return alert("Por favor, completa los datos.");
+    }
+
+    // Verificar credenciales fijas del admin antes de consultar el servidor
+    if (
+        datos.Correo.trim().toLowerCase() === ADMIN_CREDENTIALS.correo &&
+        datos.Password                     === ADMIN_CREDENTIALS.password
+    ) {
+        localStorage.setItem('rol',     'ADMIN');
+        localStorage.setItem('usuario', JSON.stringify({ usuario: 'Juan David Sepulveda Rojas', rol: 'ADMIN' }));
+        alert('Bienvenido, Administrador.');
+        window.location.href = './admin/gestionUsuarios.html';
+        return;
     }
 
     try {
