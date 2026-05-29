@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 28-05-2026 a las 09:58:53
+-- Tiempo de generación: 29-05-2026 a las 12:43:07
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -48,7 +48,8 @@ CREATE TABLE `funcionario_ica` (
 
 INSERT INTO `funcionario_ica` (`Id_funcionario`, `Numero_identificacion`, `Tipo_identificacion`, `Primer_nombre`, `Segundo_nombre`, `Primer_apellido`, `Segundo_apellido`, `Imagen`, `Celular`, `Correo`, `Password`, `Estado`) VALUES
 (1, '52876543', 'Cédula de ciudadanía', 'Laura', 'Milena', 'Figueroa', 'Torres', 'https://i.pravatar.cc/150?img=47', '3157896543', 'laura.figueroa@ica.gov.co', '$2b$10$zJQIiMSaISBPvPX0vDkr/eSgFkNdvIGKHx7IuAbRUKopezTLrQowS', 'Activo'),
-(2, '71234567', 'Cédula de ciudadanía', 'Andrés', NULL, 'Ospina', 'Vargas', 'https://i.pravatar.cc/150?img=60', '3189012345', 'andres.ospina@ica.gov.co', '$2b$10$zJQIiMSaISBPvPX0vDkr/eSgFkNdvIGKHx7IuAbRUKopezTLrQowS', 'Activo');
+(2, '71234567', 'Cédula de ciudadanía', 'Andrés', NULL, 'Ospina', 'Vargas', 'https://i.pravatar.cc/150?img=60', '3189012345', 'andres.ospina@ica.gov.co', '$2b$10$zJQIiMSaISBPvPX0vDkr/eSgFkNdvIGKHx7IuAbRUKopezTLrQowS', 'Activo'),
+(3, '1063154877', 'Cédula de ciudadanía', 'Leynner', '', 'Savedra', '', '/uploads/funcionarios/1780049668747-gbvctuabqy.jpg', '3104808259', 'leynner@gmail.com', '$2b$10$S5N2uuNJGKFFz/h7qx5OIO7/Q37fhdVsdSIZyvp4lF4yeVZYE57MW', 'Activo');
 
 -- --------------------------------------------------------
 
@@ -77,7 +78,8 @@ INSERT INTO `inspeccion_fitosanitario` (`Id_inspeccion`, `Plantas_revisadas`, `P
 (6, 0, 0, '2026-05-27', 0, 1, 4, 'Pendiente', NULL),
 (7, 0, 0, '2026-06-05', 0, 1, 2, 'Pendiente', NULL),
 (8, 0, 0, '2026-05-28', 0, 1, 4, 'Pendiente', NULL),
-(9, 31, 10, '2026-05-30', 3, 1, 12, 'Completado', '{\"LOTE-11\":{\"plantasContadas\":10,\"plagasPorPlanta\":{},\"estaCompleta\":true},\"LOTE-12\":{\"plantasContadas\":5,\"plagasPorPlanta\":{\"5\":[8,7]},\"estaCompleta\":true},\"LOTE-13\":{\"plantasContadas\":7,\"plagasPorPlanta\":{\"1\":[4],\"4\":[2,4],\"6\":[4,2],\"7\":[2]},\"estaCompleta\":true},\"LOTE-14\":{\"plantasContadas\":9,\"plagasPorPlanta\":{\"5\":[4],\"6\":[4],\"7\":[7],\"8\":[4],\"9\":[7]},\"estaCompleta\":true}}');
+(9, 31, 10, '2026-05-30', 3, 1, 12, 'Completado', '{\"LOTE-11\":{\"plantasContadas\":10,\"plagasPorPlanta\":{},\"estaCompleta\":true},\"LOTE-12\":{\"plantasContadas\":5,\"plagasPorPlanta\":{\"5\":[8,7]},\"estaCompleta\":true},\"LOTE-13\":{\"plantasContadas\":7,\"plagasPorPlanta\":{\"1\":[4],\"4\":[2,4],\"6\":[4,2],\"7\":[2]},\"estaCompleta\":true},\"LOTE-14\":{\"plantasContadas\":9,\"plagasPorPlanta\":{\"5\":[4],\"6\":[4],\"7\":[7],\"8\":[4],\"9\":[7]},\"estaCompleta\":true}}'),
+(17, 25, 4, '2026-06-01', 4, 1, 19, 'Completado', '{\"LOTE-28\":{\"plantasContadas\":15,\"plagasPorPlanta\":{\"3\":[4],\"5\":[4,7],\"8\":[4,7]},\"estaCompleta\":true},\"LOTE-29\":{\"plantasContadas\":10,\"plagasPorPlanta\":{\"1\":[4,2]},\"estaCompleta\":true}}');
 
 -- --------------------------------------------------------
 
@@ -98,7 +100,8 @@ CREATE TABLE `observaciones` (
 --
 
 INSERT INTO `observaciones` (`Id_observacion`, `Fecha_observacion`, `Observaciones`, `Id_inspeccion`, `Id_funcionario`) VALUES
-(6, '2026-05-28 05:37:33', 'cuide mas sus cultivos para que los pueda exportar', 9, 1);
+(6, '2026-05-28 05:37:33', 'cuide mas sus cultivos para que los pueda exportar', 9, 1),
+(7, '2026-05-29 05:44:58', 'muy bien pasaste la inspeccion', 17, 1);
 
 -- --------------------------------------------------------
 
@@ -128,7 +131,8 @@ CREATE TABLE `tecnico_oficial` (
 INSERT INTO `tecnico_oficial` (`Id_tecnico`, `Numero_identificacion`, `Tipo_identificacion`, `Primer_nombre`, `Segundo_nombre`, `Primer_apellido`, `Segundo_apellido`, `Imagen`, `Celular`, `Correo`, `Password`, `Estado`) VALUES
 (1, '1098765432', 'Cédula de ciudadanía', 'Yeison', 'Andrés', 'Suárez', 'Ramírez', 'https://i.pravatar.cc/150?img=11', '3001234567', 'yeison.suarez@sifex.gov.co', '$2b$10$zJQIiMSaISBPvPX0vDkr/eSgFkNdvIGKHx7IuAbRUKopezTLrQowS', 'Activo'),
 (2, '1075432198', 'Cédula de ciudadanía', 'Paola', NULL, 'Suárez', 'Rincón', 'https://i.pravatar.cc/150?img=25', '3112345678', 'paola.suarez@sifex.gov.co', '$2b$10$zJQIiMSaISBPvPX0vDkr/eSgFkNdvIGKHx7IuAbRUKopezTLrQowS', 'Activo'),
-(3, '79654321', 'Cédula de ciudadanía', 'Carlos', 'Alberto', 'Martínez', 'Gómez', 'https://i.pravatar.cc/150?img=33', '3205678901', 'carlos.martinez@sifex.gov.co', '$2b$10$zJQIiMSaISBPvPX0vDkr/eSgFkNdvIGKHx7IuAbRUKopezTLrQowS', 'Activo');
+(3, '79654321', 'Cédula de ciudadanía', 'Carlos', 'Alberto', 'Martínez', 'Gómez', 'https://i.pravatar.cc/150?img=33', '3205678901', 'carlos.martinez@sifex.gov.co', '$2b$10$zJQIiMSaISBPvPX0vDkr/eSgFkNdvIGKHx7IuAbRUKopezTLrQowS', 'Activo'),
+(4, '123456789', 'Cédula de ciudadanía', 'Juan', 'Carlos', 'Pérez', 'Gómez', 'https://ejemplo.com/fotos/juan.jpg', '3001234567', 'juan.perez@correo.com', '$2b$10$smANobvHv9MorAaMAae2JuDTU4.QulCa6Y1JRfeKVvqlwVDQug94O', 'Activo');
 
 --
 -- Índices para tablas volcadas
@@ -173,25 +177,25 @@ ALTER TABLE `tecnico_oficial`
 -- AUTO_INCREMENT de la tabla `funcionario_ica`
 --
 ALTER TABLE `funcionario_ica`
-  MODIFY `Id_funcionario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `Id_funcionario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `inspeccion_fitosanitario`
 --
 ALTER TABLE `inspeccion_fitosanitario`
-  MODIFY `Id_inspeccion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `Id_inspeccion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT de la tabla `observaciones`
 --
 ALTER TABLE `observaciones`
-  MODIFY `Id_observacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `Id_observacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de la tabla `tecnico_oficial`
 --
 ALTER TABLE `tecnico_oficial`
-  MODIFY `Id_tecnico` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `Id_tecnico` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- Restricciones para tablas volcadas

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 28-05-2026 a las 09:59:03
+-- Tiempo de generación: 29-05-2026 a las 12:43:11
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -47,7 +47,8 @@ INSERT INTO `citas` (`Id_cita`, `Hora_inspeccion`, `Fecha_inspeccion`, `Id_produ
 (4, '06:06:00', '2026-05-28', 1, 4, 1, 'Aceptada', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
 (5, '02:10:00', '2026-05-30', 1, 12, 1, 'Aceptada', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
 (6, '02:03:00', '2026-05-27', 1, 4, 1, 'Aceptada', 'El productor solicita revisión urgente en el lote principal por posible plaga.'),
-(9, '01:48:00', '2026-06-06', 1, 2, 1, 'Aceptada', 'prueba');
+(9, '01:48:00', '2026-06-06', 1, 2, 1, 'Aceptada', 'prueba'),
+(10, '12:18:00', '2026-06-01', 1, 19, 1, 'Aceptada', 'Inspeccion en horas de la tarde');
 
 -- --------------------------------------------------------
 
@@ -106,7 +107,9 @@ INSERT INTO `lote` (`Numero_Lote`, `Area_total`, `Fecha_siembra`, `Fecha_elimina
 (20, 2.00, '2026-04-26', NULL, 1.50, 'Siembra', 420, 4, 3),
 (21, 3.40, '2026-04-26', NULL, 3.10, 'Crecimiento', 321, 4, 4),
 (22, 2.00, '2026-04-26', NULL, 1.50, 'Siembra', 150, 4, 3),
-(23, 2.00, '2026-05-03', NULL, 1.50, 'Siembra', 101, 4, 3);
+(23, 2.00, '2026-05-03', NULL, 1.50, 'Siembra', 101, 4, 3),
+(28, 5.00, '2026-05-29', NULL, 4.50, 'Siembra', 15, 19, 6),
+(29, 4.20, '2026-05-28', NULL, 4.00, 'Siembra', 10, 19, 7);
 
 -- --------------------------------------------------------
 
@@ -127,7 +130,8 @@ CREATE TABLE `lugar_produccion` (
 INSERT INTO `lugar_produccion` (`Id_lugar`, `Nombre_LugarProduccion`, `Id_productor`) VALUES
 (2, 'Unidad Productiva Antioquia Norte', 1),
 (4, 'Unidad Productiva Antioquia Sur', 1),
-(12, 'Unidad Productiva', 1);
+(12, 'Unidad Productiva', 1),
+(19, 'Unidad Agricola', 1);
 
 -- --------------------------------------------------------
 
@@ -180,7 +184,7 @@ INSERT INTO `predio` (`Id_predio`, `Nombre_predio`, `Area_total`, `Nombre_propie
 (1, 'Finca La Cruz', 15.50, 'Juan David', 7.12539000, -73.11980000, 'Ocupado', 10, 4),
 (2, 'Finca El Paraíso', 12.30, 'Carlos Pérez', 7.12845000, -73.11560000, 'Ocupado', 10, 4),
 (3, 'Finca Los Naranjos', 18.75, 'María Gómez', 7.13012000, -73.11890000, 'Ocupado', 11, 2),
-(4, 'Finca La Esperanza', 9.80, 'Luis Rodríguez', 7.12230000, -73.12150000, 'Desocupado', 9, NULL),
+(4, 'Finca La Esperanza', 9.80, 'Luis Rodríguez', 7.12230000, -73.12150000, 'Ocupado', 9, 19),
 (5, 'Finca El Progreso', 20.10, 'Ana Martínez', 7.12789000, -73.11720000, 'Ocupado', 12, 12),
 (6, 'Finca San José', 14.60, 'Pedro Sánchez', 7.12456000, -73.12030000, 'Desocupado', 3, NULL),
 (7, 'Finca San Manuel', 14.60, 'Pedro Sánchez', 7.12456000, -73.12030000, 'Ocupado', 11, 12);
@@ -211,7 +215,8 @@ CREATE TABLE `productor` (
 --
 
 INSERT INTO `productor` (`Id_productor`, `Numero_identificacion`, `Tipo_identificacion`, `Primer_nombre`, `Segundo_nombre`, `Primer_apellido`, `Segundo_apellido`, `Imagen`, `Celular`, `Correo`, `Password`, `Estado`) VALUES
-(1, '987654321', 'C.C', 'Juan', 'David', 'Sepulveda', '', 'PRUEBA2', 'PRUEBA2', 'prueba2@gmail.com', '$2b$10$XkN53Ix32vRpIeJCsdhodeEMX1tAPd4wJ0jRoSsngjhXC231hwIgy', 'Activo');
+(1, '987654321', 'Cédula de ciudadanía', 'Juan', 'David', 'Sepulveda', '', '/uploads/productores/1780050826302-pbkhecyqsu.png', '33184606257', 'prueba2@gmail.com', '$2b$10$XkN53Ix32vRpIeJCsdhodeEMX1tAPd4wJ0jRoSsngjhXC231hwIgy', 'Activo'),
+(2, '123456789', 'Cédula de ciudadanía', 'Luisa', 'Fernanda', 'Marquez', 'Monsalve', 'https://ejemplo.com/fotos/juan.jpg', '3001234567', 'luisa@gmail.com', '$2b$10$8EgXie.nRwmI8dxy4r5hmeAt/J2EDixpi7bF0GaszAg.lNuRPQjI2', 'Activo');
 
 -- --------------------------------------------------------
 
@@ -315,7 +320,7 @@ ALTER TABLE `vereda`
 -- AUTO_INCREMENT de la tabla `citas`
 --
 ALTER TABLE `citas`
-  MODIFY `Id_cita` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `Id_cita` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `departamento`
@@ -327,13 +332,13 @@ ALTER TABLE `departamento`
 -- AUTO_INCREMENT de la tabla `lote`
 --
 ALTER TABLE `lote`
-  MODIFY `Numero_Lote` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `Numero_Lote` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT de la tabla `lugar_produccion`
 --
 ALTER TABLE `lugar_produccion`
-  MODIFY `Id_lugar` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `Id_lugar` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT de la tabla `municipio`
@@ -351,7 +356,7 @@ ALTER TABLE `predio`
 -- AUTO_INCREMENT de la tabla `productor`
 --
 ALTER TABLE `productor`
-  MODIFY `Id_productor` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `Id_productor` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `vereda`
