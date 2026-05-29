@@ -22,13 +22,14 @@ class Server {
     middlewares() {
         this.app.use(cors());
         this.app.use(express.json());
+        this.app.use("/uploads", express.static("uploads"));
     }
 
     routes() {
-        this.app.use("/login", loginRouter);
-        this.app.use("/tecnico", tecnicoRouter);
+        this.app.use("/login",       loginRouter);
+        this.app.use("/tecnico",     tecnicoRouter);
         this.app.use("/funcionario", funcionarioRouter);
-        this.app.use("/inspeccion", inspeccionRouter);
+        this.app.use("/inspeccion",  inspeccionRouter);
         this.app.use("/observacion", observacionRouter);
     }
 
