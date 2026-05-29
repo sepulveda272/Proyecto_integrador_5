@@ -1,0 +1,683 @@
+/* ═══════════════════════════════════════════════════════════════════
+   SIFEX — Upgrade visual global
+   Archivo: sifex-modals-upgrade.css
+   
+   Cómo usarlo: añadir DESPUÉS de todos los CSS existentes en cada
+   HTML del sistema:
+   
+     <link rel="stylesheet" href="../../css/sifex-modals-upgrade.css">
+   
+   Mejora todos los modales del sistema sin romper la lógica existente.
+   ═══════════════════════════════════════════════════════════════════ */
+
+
+/* ──────────────────────────────────────────────────────────────────
+   0. VARIABLES ADICIONALES
+   ────────────────────────────────────────────────────────────────── */
+:root {
+  --up-green-gradient: linear-gradient(135deg, #1b5e20 0%, #2e7d32 55%, #388e3c 100%);
+  --up-overlay-bg:     rgba(10, 18, 12, 0.6);
+  --up-blur:           blur(8px);
+  --up-card-shadow:    0 4px 20px rgba(46, 125, 50, 0.10);
+  --up-modal-shadow:   0 24px 80px rgba(0, 0, 0, 0.22), 0 8px 24px rgba(0,0,0,.10);
+  --up-enter:          cubic-bezier(0.22, 0.68, 0, 1.2);
+  --up-leave:          cubic-bezier(0.4, 0, 1, 1);
+  --up-radius:         18px;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   1. OVERLAYS — todos los tipos de modal reciben backdrop blur
+   ────────────────────────────────────────────────────────────────── */
+.gu-modal-overlay,
+.modal-overlay,
+.modal-base,
+.modal-cita-overlay,
+.modal-obs-edit-overlay,
+.modal-obs-overlay {
+  background: var(--up-overlay-bg) !important;
+  backdrop-filter: var(--up-blur) !important;
+  -webkit-backdrop-filter: var(--up-blur) !important;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   2. CAJA DEL MODAL — forma, sombra y animación de entrada
+   ────────────────────────────────────────────────────────────────── */
+.gu-modal,
+.modal-box,
+.modal-base__box,
+.modal-cita-box,
+.modal-obs-edit-box,
+.modal-obs-box {
+  border-radius: var(--up-radius) !important;
+  box-shadow: var(--up-modal-shadow) !important;
+  border: none !important;
+  transform: translateY(28px) scale(0.97) !important;
+  transition: transform 0.32s var(--up-enter), opacity 0.25s ease !important;
+}
+
+/* Estado visible */
+.gu-modal-overlay.visible .gu-modal,
+.modal-overlay.show .modal-box,
+.modal-base.show .modal-base__box,
+.modal-cita-overlay.show .modal-cita-box,
+.modal-obs-edit-overlay.show .modal-obs-edit-box,
+.modal-obs-overlay.show .modal-obs-box {
+  transform: translateY(0) scale(1) !important;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   3. CABECERAS — gradiente verde en todos los modales
+   ────────────────────────────────────────────────────────────────── */
+
+/* Admin: gu-modal */
+.gu-modal__header {
+  background: var(--up-green-gradient) !important;
+  padding: 22px 32px 20px !important;
+  border-bottom: none !important;
+}
+
+.gu-modal__header h2 {
+  color: #ffffff !important;
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -.01em !important;
+}
+
+.gu-modal__close {
+  background: rgba(255,255,255, 0.15) !important;
+  color: #fff !important;
+  border-radius: 50% !important;
+  width: 34px !important;
+  height: 34px !important;
+  transition: background 0.15s !important;
+}
+
+.gu-modal__close:hover {
+  background: rgba(255,255,255, 0.28) !important;
+  color: #fff !important;
+}
+
+/* modal-cita / modal-base */
+.modal__head,
+.modal-cita-head,
+.modal-obs-edit-head,
+.modal-obs-head {
+  background: var(--up-green-gradient) !important;
+  border-bottom: none !important;
+  padding: 20px 24px 18px !important;
+}
+
+.modal__title,
+.modal-title,
+.modal-cita-titulo,
+.modal-obs-edit-titulo,
+.modal-obs-titulo {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: .98rem !important;
+}
+
+.modal__subtitle,
+.modal-subtitle,
+.modal-cita-sub,
+.modal-obs-edit-sub {
+  color: rgba(255,255,255,.72) !important;
+  font-size: .76rem !important;
+}
+
+.modal__close,
+.modal-close,
+.modal-cita-close,
+.modal-obs-edit-close,
+.modal-obs-close {
+  color: rgba(255,255,255,.8) !important;
+  font-size: 20px !important;
+  padding: 2px 6px !important;
+  border-radius: 8px !important;
+  transition: background 0.15s, color 0.15s !important;
+}
+
+.modal__close:hover,
+.modal-close:hover,
+.modal-cita-close:hover,
+.modal-obs-edit-close:hover,
+.modal-obs-close:hover {
+  background: rgba(255,255,255,.18) !important;
+  color: #fff !important;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   4. CUERPOS — espaciado y scrollbar elegante
+   ────────────────────────────────────────────────────────────────── */
+.gu-modal__body,
+.modal__body,
+.modal-cita-body,
+.modal-obs-edit-body,
+.modal-obs-body {
+  padding: 20px 28px 24px !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #c8e6c9 transparent !important;
+}
+
+.gu-modal__body::-webkit-scrollbar,
+.modal__body::-webkit-scrollbar,
+.modal-cita-body::-webkit-scrollbar,
+.modal-obs-edit-body::-webkit-scrollbar,
+.modal-obs-body::-webkit-scrollbar { width: 4px !important; }
+
+.gu-modal__body::-webkit-scrollbar-thumb,
+.modal__body::-webkit-scrollbar-thumb,
+.modal-cita-body::-webkit-scrollbar-thumb,
+.modal-obs-edit-body::-webkit-scrollbar-thumb,
+.modal-obs-body::-webkit-scrollbar-thumb {
+  background: #a5d6a7 !important;
+  border-radius: 4px !important;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   5. PIES — fondo sutil y botones mejorados
+   ────────────────────────────────────────────────────────────────── */
+.gu-modal__footer,
+.modal__foot,
+.modal-cita-foot,
+.modal-obs-edit-foot,
+.modal-footer-custom {
+  background: #f7fbf8 !important;
+  border-top: 1px solid #e8f5e9 !important;
+  padding: 14px 28px 18px !important;
+  gap: 10px !important;
+}
+
+/* Botón primario del pie */
+.gu-modal__footer .btn-primary,
+.modal__foot .btn-primary,
+.modal-cita-foot .btn-primary,
+.modal-obs-edit-foot .btn-primary {
+  background: var(--up-green-gradient) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 9px 22px !important;
+  font-weight: 700 !important;
+  font-size: .85rem !important;
+  letter-spacing: .01em !important;
+  box-shadow: 0 4px 12px rgba(46,125,50,.28) !important;
+  transition: transform 0.15s, box-shadow 0.15s !important;
+}
+
+.gu-modal__footer .btn-primary:hover,
+.modal__foot .btn-primary:hover,
+.modal-cita-foot .btn-primary:hover,
+.modal-obs-edit-foot .btn-primary:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 18px rgba(46,125,50,.35) !important;
+}
+
+/* Botón secundario del pie */
+.gu-modal__footer .btn-secondary,
+.modal__foot .btn-secondary,
+.modal-cita-foot .btn-secondary,
+.modal-obs-edit-foot .btn-secondary,
+.gu-modal__footer .btn-ghost,
+.modal__foot .btn-ghost {
+  background: none !important;
+  border: 1.5px solid #c8e6c9 !important;
+  color: #4a7c59 !important;
+  border-radius: 10px !important;
+  padding: 9px 20px !important;
+  font-weight: 600 !important;
+  font-size: .85rem !important;
+  transition: border-color 0.15s, background 0.15s !important;
+}
+
+.gu-modal__footer .btn-secondary:hover,
+.modal__foot .btn-secondary:hover,
+.modal-cita-foot .btn-secondary:hover,
+.modal-obs-edit-foot .btn-secondary:hover,
+.gu-modal__footer .btn-ghost:hover,
+.modal__foot .btn-ghost:hover {
+  border-color: #2e7d32 !important;
+  background: #f1f8e9 !important;
+  color: #2e7d32 !important;
+}
+
+/* Botón de peligro */
+.gu-modal__footer .btn-danger,
+.modal__foot .btn-danger {
+  border-radius: 10px !important;
+  padding: 9px 20px !important;
+  font-weight: 700 !important;
+  font-size: .85rem !important;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   6. FORMULARIOS DENTRO DE MODALES — inputs y labels mejorados
+   ────────────────────────────────────────────────────────────────── */
+.gu-modal__body .gu-form-group label,
+.gu-modal__body .form-label,
+.modal__body .form-label,
+.modal-cita-body .form-label,
+.modal-obs-edit-body .form-label {
+  font-size: .69rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  color: #7a9e82 !important;
+  margin-bottom: 6px !important;
+}
+
+.gu-modal__body input,
+.gu-modal__body select,
+.gu-modal__body textarea,
+.modal__body input,
+.modal__body select,
+.modal__body textarea,
+.modal-cita-body input,
+.modal-cita-body select,
+.modal-cita-body textarea,
+.modal-obs-edit-body input,
+.modal-obs-edit-body select,
+.modal-obs-edit-body textarea {
+  border: 1.5px solid #d4e8d6 !important;
+  border-radius: 10px !important;
+  padding: 10px 14px !important;
+  font-size: .9rem !important;
+  transition: border-color 0.15s, box-shadow 0.15s !important;
+  background: #fff !important;
+}
+
+.gu-modal__body input:focus,
+.gu-modal__body select:focus,
+.gu-modal__body textarea:focus,
+.modal__body input:focus,
+.modal__body select:focus,
+.modal__body textarea:focus,
+.modal-cita-body input:focus,
+.modal-cita-body select:focus,
+.modal-obs-edit-body input:focus,
+.modal-obs-edit-body select:focus,
+.modal-obs-edit-body textarea:focus {
+  border-color: #2e7d32 !important;
+  box-shadow: 0 0 0 3px rgba(46,125,50,.12) !important;
+  outline: none !important;
+}
+
+/* Secciones / separadores dentro del body */
+.gu-modal__body .gu-section-title,
+.modal__body .section-divider {
+  font-size: .7rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .1em !important;
+  color: #2e7d32 !important;
+  padding-bottom: 8px !important;
+  border-bottom: 2px solid #e8f5e9 !important;
+  margin: 20px 0 14px !important;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   7. MODAL BOOTSTRAP (lugarProducción.html) — encabezado verde
+   ────────────────────────────────────────────────────────────────── */
+#modalDetalleLugar .modal-body {
+  padding: 16px 20px 8px !important;
+}
+
+/* Scrollbar del body Bootstrap */
+#modalDetalleLugar .modal-dialog-scrollable .modal-body::-webkit-scrollbar { width: 4px; }
+#modalDetalleLugar .modal-dialog-scrollable .modal-body::-webkit-scrollbar-thumb {
+  background: #a5d6a7;
+  border-radius: 4px;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   8. MODAL VERIFICAR INSPECCIÓN (técnico — modal-ver-editar)
+   ────────────────────────────────────────────────────────────────── */
+#modal-ver-editar-overlay {
+  background: var(--up-overlay-bg) !important;
+  backdrop-filter: var(--up-blur) !important;
+  -webkit-backdrop-filter: var(--up-blur) !important;
+}
+
+#modal-ver-editar-box {
+  border-radius: var(--up-radius) !important;
+  box-shadow: var(--up-modal-shadow) !important;
+  overflow: hidden !important;
+}
+
+/* Header del modal del técnico — buscamos el primer hijo directo */
+#modal-ver-editar-box > div:first-child,
+#modal-ver-editar-box .modal-ver-head {
+  background: var(--up-green-gradient) !important;
+  border-bottom: none !important;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   9. TARJETAS DE STATS en modales (admin detalle lugar/usuario)
+   ────────────────────────────────────────────────────────────────── */
+.gu-modal__body .detalle-stats,
+.modal__body .detalle-stats {
+  display: flex !important;
+  gap: 10px !important;
+  margin-bottom: 18px !important;
+}
+
+.gu-modal__body .detalle-stat,
+.modal__body .detalle-stat {
+  flex: 1 !important;
+  background: #f0faf3 !important;
+  border: 1px solid #c8e6c9 !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  text-align: center !important;
+}
+
+.gu-modal__body .stat-label,
+.modal__body .stat-label {
+  font-size: .65rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  color: #7a9e82 !important;
+  margin-bottom: 4px !important;
+}
+
+.gu-modal__body .stat-value,
+.modal__body .stat-value {
+  font-size: 1.5rem !important;
+  font-weight: 800 !important;
+  color: #1b5e20 !important;
+  line-height: 1 !important;
+}
+
+/* Items de detalle (lotes/predios dentro del modal admin) */
+.gu-modal__body .detalle-item,
+.modal__body .detalle-item {
+  border: 1px solid #e8f5e9 !important;
+  border-radius: 12px !important;
+  padding: 14px 18px !important;
+  margin-bottom: 8px !important;
+  background: #fff !important;
+  transition: box-shadow 0.15s !important;
+}
+
+.gu-modal__body .detalle-item:hover,
+.modal__body .detalle-item:hover {
+  box-shadow: 0 3px 12px rgba(46,125,50,.09) !important;
+}
+
+.gu-modal__body .detalle-item-title,
+.modal__body .detalle-item-title {
+  color: #1b5e20 !important;
+  font-size: .82rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 10px !important;
+  padding-bottom: 6px !important;
+  border-bottom: 1px solid #e8f5e9 !important;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   10. MODAL CONFIRMAR ELIMINACIÓN (modal--sm)
+   ────────────────────────────────────────────────────────────────── */
+.gu-modal--sm .gu-modal__header {
+  background: linear-gradient(135deg, #b71c1c 0%, #c62828 100%) !important;
+  padding: 18px 24px 16px !important;
+}
+
+.gu-modal--sm .gu-modal__header h2::before {
+  content: "⚠️ ";
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   11. OPCIONES DE LUGAR dentro de modal-cita (productor)
+   ────────────────────────────────────────────────────────────────── */
+.lugar-option {
+  border-radius: 12px !important;
+  border: 1.5px solid #d4e8d6 !important;
+  padding: 12px 14px !important;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s, background 0.15s !important;
+}
+
+.lugar-option:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 14px rgba(46,125,50,.12) !important;
+  border-color: #66bb6a !important;
+  background: #f1f8e9 !important;
+}
+
+.lugar-option.selected {
+  border-color: #2e7d32 !important;
+  background: #e8f5ee !important;
+  box-shadow: 0 0 0 3px rgba(46,125,50,.14) !important;
+}
+
+.lugar-check {
+  border-radius: 8px !important;
+  border: 2px solid #c8e6c9 !important;
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 13px !important;
+}
+
+.lugar-option.selected .lugar-check {
+  background: #2e7d32 !important;
+  border-color: #2e7d32 !important;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   12. LISTA DE TÉCNICOS en modal verificar cita
+   ────────────────────────────────────────────────────────────────── */
+.cita-tecnico-item {
+  border-radius: 12px !important;
+  padding: 11px 16px !important;
+  transition: transform 0.12s, border-color 0.12s, background 0.12s !important;
+}
+
+.cita-tecnico-item:hover {
+  transform: translateX(3px) !important;
+  border-color: #66bb6a !important;
+  background: #f1f8e9 !important;
+}
+
+.cita-tecnico-item.sel {
+  border-color: #2e7d32 !important;
+  background: #e8f5ee !important;
+  box-shadow: 0 0 0 3px rgba(46,125,50,.10) !important;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   13. MEJORAS GENERALES DE UI (no solo modales)
+   ────────────────────────────────────────────────────────────────── */
+
+/* — Tabla: filas con hover más suave — */
+table tbody tr {
+  transition: background 0.12s !important;
+}
+table tbody tr:hover {
+  background: #f0faf3 !important;
+}
+
+/* — Botones de acción en tabla (✏️ 🗑 👁 🌾) — */
+.action-btn {
+  border-radius: 8px !important;
+  transition: transform 0.12s, box-shadow 0.12s !important;
+}
+.action-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 3px 8px rgba(0,0,0,.12) !important;
+}
+
+/* — Cards de estadísticas en la página principal — */
+.stat-card {
+  transition: transform 0.15s, box-shadow 0.15s !important;
+}
+.stat-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 24px rgba(46,125,50,.13) !important;
+}
+
+/* — Toast mejorado — */
+.toast {
+  border-radius: 12px !important;
+  padding: 13px 20px !important;
+  font-size: .85rem !important;
+  font-weight: 600 !important;
+  letter-spacing: .01em !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.10) !important;
+}
+
+/* — Barra de progreso / pasos numerados — */
+.modal-cita-step {
+  background: rgba(255,255,255,.25) !important;
+  border: 1.5px solid rgba(255,255,255,.6) !important;
+  color: #fff !important;
+  font-weight: 800 !important;
+}
+
+/* — Observaciones card (tab Observaciones en modal Bootstrap) — */
+.obs-productor-card {
+  border-radius: 12px !important;
+  padding: 16px 18px !important;
+  transition: box-shadow 0.15s !important;
+}
+.obs-productor-card:hover {
+  box-shadow: 0 4px 16px rgba(46,125,50,.12) !important;
+}
+
+/* — Cards de inspección en historial — */
+.insp-card {
+  border-radius: 12px !important;
+  transition: transform 0.15s, box-shadow 0.15s !important;
+}
+.insp-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,.09) !important;
+}
+
+/* — Tabs del modal Bootstrap (Lotes / Predios / Observaciones / Historial) — */
+#detalleTabs .nav-link {
+  border-radius: 8px 8px 0 0 !important;
+  font-size: .8rem !important;
+  font-weight: 600 !important;
+  transition: background 0.12s, color 0.12s !important;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   14. PANEL DE NOTIFICACIONES
+   ────────────────────────────────────────────────────────────────── */
+.notif-panel {
+  border-radius: 16px 0 0 16px !important;
+  box-shadow: -8px 0 40px rgba(0,0,0,.15) !important;
+}
+
+.notif-panel-head {
+  background: var(--up-green-gradient) !important;
+  border-bottom: none !important;
+  padding: 18px 20px 14px !important;
+  border-radius: 16px 0 0 0 !important;
+}
+
+.notif-panel-titulo {
+  color: #fff !important;
+}
+
+.notif-panel-close {
+  color: rgba(255,255,255,.8) !important;
+  border-radius: 8px !important;
+  transition: background 0.12s !important;
+}
+
+.notif-panel-close:hover {
+  background: rgba(255,255,255,.18) !important;
+  color: #fff !important;
+}
+
+.notif-item {
+  border-radius: 0 !important;
+  padding: 13px 18px !important;
+  transition: background 0.12s, padding-left 0.15s !important;
+}
+
+.notif-item:hover {
+  padding-left: 22px !important;
+  background: #f1f8e9 !important;
+}
+
+.notif-item.no-leida {
+  border-left: 3px solid #43a047 !important;
+}
+
+.notif-item.leida {
+  border-left: 3px solid transparent !important;
+}
+
+.btn-marcar-leidas {
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  letter-spacing: .02em !important;
+  transition: background 0.12s, transform 0.12s !important;
+}
+
+.btn-marcar-leidas:hover {
+  transform: translateY(-1px) !important;
+  background: #e8f5e9 !important;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   15. LOGIN — mejoras sutiles
+   ────────────────────────────────────────────────────────────────── */
+.login-card,
+.login-box,
+.login-container > div,
+form.login-form {
+  border-radius: 20px !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,.15) !important;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   16. SIDEBAR — mejora el nav-item activo
+   ────────────────────────────────────────────────────────────────── */
+.nav-item {
+  border-radius: 10px !important;
+  transition: background 0.15s, padding-left 0.15s, transform 0.12s !important;
+}
+
+.nav-item:hover {
+  background: rgba(255,255,255,.12) !important;
+  padding-left: 20px !important;
+}
+
+.nav-item.active,
+.nav-item[aria-current="page"] {
+  background: rgba(255,255,255,.18) !important;
+  font-weight: 700 !important;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   17. RESPONSIVE — reduce padding en pantallas pequeñas
+   ────────────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .gu-modal__header  { padding: 18px 20px 16px !important; }
+  .gu-modal__body    { padding: 16px 18px 20px !important; }
+  .gu-modal__footer  { padding: 12px 18px 16px !important; }
+  .modal__head,
+  .modal-cita-head   { padding: 16px 18px 14px !important; }
+  .modal__body,
+  .modal-cita-body   { padding: 14px 16px 18px !important; }
+  .modal__foot,
+  .modal-cita-foot   { padding: 12px 16px !important; }
+}

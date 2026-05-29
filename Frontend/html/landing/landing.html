@@ -6,12 +6,166 @@
   <title>SIFEX — Sistema de Inspección Fitosanitaria para Exportación</title>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../css/landing.css">
+
+  <!-- Accessibility & enhancements -->
+  <style>
+    /* ── Font-size widget ─────────────────────────────── */
+    .a11y-bar {
+      position: fixed;
+      top: 5rem;
+      right: 1rem;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 2rem;
+      padding: 0.35rem 0.65rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .a11y-bar__label {
+      font-size: 0.72rem;
+      font-family: 'DM Sans', sans-serif;
+      color: #555;
+      letter-spacing: 0.03em;
+      user-select: none;
+      margin-right: 0.2rem;
+    }
+    .a11y-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      border: 1px solid rgba(0,0,0,0.14);
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      color: #2d6a4f;
+      line-height: 1;
+      transition: background 0.18s, color 0.18s, transform 0.12s;
+      user-select: none;
+    }
+    .a11y-btn:hover { background: #2d6a4f; color: #fff; transform: scale(1.08); }
+    .a11y-btn:focus-visible { outline: 2px solid #2d6a4f; outline-offset: 2px; }
+    .a11y-btn:active { transform: scale(0.95); }
+    .a11y-reset {
+      font-size: 0.7rem;
+      width: auto;
+      padding: 0 0.7rem;
+      border-radius: 1rem;
+    }
+    .a11y-level {
+      font-size: 0.72rem;
+      font-family: 'DM Sans', sans-serif;
+      color: #2d6a4f;
+      font-weight: 600;
+      min-width: 1.6rem;
+      text-align: center;
+    }
+
+    /* ── btn-nav white text ───────────────────────────── */
+    .btn-nav { color: #fff !important; }
+
+    /* ── nav-logo refinado ───────────────────────────── */
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .nav-logo__leaf { flex-shrink: 0; display: block; }
+    .nav-logo__text {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: 0.01em;
+      color: inherit;
+    }
+    .nav-logo__sub {
+      font-family: 'Fraunces', serif;
+      font-weight: 300;
+      font-size: 1.0rem;
+      color: inherit;
+      opacity: 0.85;
+    }
+    .nav-logo__sub em { font-style: italic; }
+
+    /* ── Footer social icons ──────────────────────────── */
+    footer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0.5rem;
+    }
+    .footer-social {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      width: 100%;
+      margin: 0.75rem 0;
+      order: 2;
+    }
+    .social-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.4rem;
+      height: 2.4rem;
+      border-radius: 50%;
+      background: transparent;
+      border: 1.5px solid #2d6a4f;
+      color: #2d6a4f;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s, transform 0.18s, border-color 0.2s;
+    }
+    .social-link:hover {
+      background: #2d6a4f;
+      border-color: #2d6a4f;
+      color: #fff;
+      transform: translateY(-3px) scale(1.08);
+    }
+    .social-link:focus-visible {
+      outline: 2px solid #4ade80;
+      outline-offset: 3px;
+    }
+    .social-link svg {
+      width: 1.1rem;
+      height: 1.1rem;
+      fill: currentColor;
+    }
+  </style>
 </head>
 <body>
 
+  <!-- ── Accesibilidad: control de tamaño de texto ── -->
+  <div class="a11y-bar" role="toolbar" aria-label="Tamaño de texto">
+    <span class="a11y-bar__label" aria-hidden="true">A</span>
+    <button class="a11y-btn" id="a11y-dec" aria-label="Reducir tamaño de texto" title="Reducir texto">A−</button>
+    <span class="a11y-level" id="a11y-level" aria-live="polite" aria-atomic="true">100%</span>
+    <button class="a11y-btn" id="a11y-inc" aria-label="Aumentar tamaño de texto" title="Aumentar texto">A+</button>
+    <button class="a11y-btn a11y-reset" id="a11y-reset" aria-label="Restablecer tamaño de texto" title="Restablecer">↺</button>
+  </div>
+
+
   <!-- NAV -->
   <nav>
-    <div class="nav-logo">🌿 SIFEX <span>— ICA</span></div>
+    <div class="nav-logo">
+      <svg class="nav-logo__leaf" width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <!-- Main leaf -->
+        <path d="M8 26 C8 26 10 14 20 8 C28 3 30 2 30 2 C30 2 30 6 26 12 C22 18 14 22 8 26 Z" fill="#2d6a4f"/>
+        <!-- Highlight / inner leaf shape -->
+        <path d="M10 24 C10 24 13 16 20 10 C25 6 28 4 28 4 C28 4 27 7 24 11 C20 16 14 20 10 24 Z" fill="#52b788" opacity="0.55"/>
+        <!-- Stem -->
+        <line x1="8" y1="26" x2="6" y2="30" stroke="#2d6a4f" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      <span class="nav-logo__text">SIFEX</span><span class="nav-logo__sub"> — <em>ICA</em></span>
+    </div>
     <ul class="nav-links">
       <li><a href="#funciones">Funciones</a></li>
       <li><a href="#roles">Roles</a></li>
@@ -142,19 +296,19 @@
 
     <div class="roles-grid">
       <div class="role-card reveal">
-        <div class="role-emoji">🛡️</div>
-        <h3>Administrador</h3>
-        <p>Gestiona técnicos, productores, funcionarios ICA, lugares de producción, predios, lotes y cultivos desde un panel centralizado.</p>
+        <div class="role-emoji">🌱</div>
+        <h3>Productor</h3>
+        <p>Crea y gestiona lugares de producción, relacionándolos con sus predios y lotes. Administra los cultivos por lote, realiza inspecciones fitosanitarias y verifica que cada lote cumpla los requisitos necesarios para su certificación de exportación.</p>
       </div>
       <div class="role-card reveal" style="transition-delay:0.15s">
         <div class="role-emoji">🔬</div>
         <h3>Técnico Oficial</h3>
-        <p>Ejecuta inspecciones en campo, registra datos por lote, visualiza su zona de trabajo y finaliza reportes de inspección.</p>
+        <p>Se desplaza físicamente hasta los lugares de producción registrados para realizar inspecciones fitosanitarias directamente sobre cultivos y lotes. Evalúa el estado sanitario de los cultivos, recopila evidencia técnica en campo y registra en el sistema toda la información obtenida durante el proceso para su posterior análisis y seguimiento.</p>
       </div>
       <div class="role-card reveal" style="transition-delay:0.3s">
         <div class="role-emoji">📑</div>
         <h3>Funcionario ICA</h3>
-        <p>Revisa y aprueba inspecciones completadas, genera reportes oficiales y hace seguimiento al estado fitosanitario regional.</p>
+        <p>Analiza la información recopilada por los Técnicos Oficiales y genera observaciones y conclusiones técnicas a partir de los datos registrados. Elabora reportes e informes fitosanitarios oficiales, aprueba o rechaza solicitudes de cita de los productores, asigna las inspecciones aprobadas a los técnicos correspondientes y supervisa el cumplimiento de los requisitos fitosanitarios establecidos.</p>
       </div>
     </div>
   </section>
@@ -168,18 +322,115 @@
 
   <!-- FOOTER -->
   <footer>
-    <div class="footer-logo">🌿 SIFEX</div>
+    <div class="footer-logo">
+      <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="vertical-align:middle;margin-right:0.35rem">
+        <path d="M8 26 C8 26 10 14 20 8 C28 3 30 2 30 2 C30 2 30 6 26 12 C22 18 14 22 8 26 Z" fill="#52b788"/>
+        <path d="M10 24 C10 24 13 16 20 10 C25 6 28 4 28 4 C28 4 27 7 24 11 C20 16 14 20 10 24 Z" fill="#b7e4c7" opacity="0.6"/>
+        <line x1="8" y1="26" x2="6" y2="30" stroke="#52b788" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      SIFEX
+    </div>
+    <div class="footer-social" role="list" aria-label="Redes sociales">
+      <!-- Instagram -->
+      <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer"
+         class="social-link" aria-label="Instagram">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.334 3.608 1.308.975.975 1.246 2.242 1.308 3.608.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.062 1.366-.334 2.633-1.308 3.608-.975.975-2.242 1.246-3.608 1.308-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.366-.062-2.633-.334-3.608-1.308-.975-.975-1.246-2.242-1.308-3.608C2.175 15.584 2.163 15.204 2.163 12s.012-3.584.07-4.85c.062-1.366.334-2.633 1.308-3.608C4.516 2.497 5.783 2.226 7.15 2.163 8.416 2.105 8.796 2.163 12 2.163zm0-2.163C8.741 0 8.332.014 7.052.072 5.197.157 3.355.673 2.014 2.014.673 3.355.157 5.197.072 7.052.014 8.332 0 8.741 0 12c0 3.259.014 3.668.072 4.948.085 1.855.601 3.697 1.942 5.038 1.341 1.341 3.183 1.857 5.038 1.942C8.332 23.986 8.741 24 12 24s3.668-.014 4.948-.072c1.855-.085 3.697-.601 5.038-1.942 1.341-1.341 1.857-3.183 1.942-5.038.058-1.28.072-1.689.072-4.948 0-3.259-.014-3.668-.072-4.948-.085-1.855-.601-3.697-1.942-5.038C20.645.673 18.803.157 16.948.072 15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zm0 10.162a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/>
+        </svg>
+      </a>
+      <!-- Facebook -->
+      <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer"
+         class="social-link" aria-label="Facebook">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+          <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.235 2.686.235v2.97h-1.514c-1.491 0-1.956.93-1.956 1.886v2.268h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+        </svg>
+      </a>
+      <!-- X / Twitter -->
+      <a href="https://x.com/" target="_blank" rel="noopener noreferrer"
+         class="social-link" aria-label="X (Twitter)">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+        </svg>
+      </a>
+    </div>
     <div class="footer-copy">© 2026 · Sistema de Inspección Fitosanitaria para Exportación · ICA Colombia</div>
   </footer>
 
   <script>
+    /* ── Intersection observer (original) ───────────── */
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(e => {
         if (e.isIntersecting) e.target.classList.add('visible');
       });
     }, { threshold: 0.1 });
-
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    /* ── Accesibilidad: tamaño de texto dinámico ─────── */
+    (function () {
+      const ROOT      = document.documentElement;
+      const STEP      = 10;          // % de incremento/decremento por clic
+      const MIN       = 80;          // % mínimo
+      const MAX       = 160;         // % máximo
+      const LS_KEY    = 'sifex-font-scale';
+      const levelEl   = document.getElementById('a11y-level');
+
+      /* Elementos a escalar — se agrupan en un selector amplio
+         para que cualquier texto relevante reciba el cambio     */
+      const TARGETS = [
+        'h1','h2','h3','h4','h5','h6',
+        'p','a','li','span','label','button',
+        '.stat-num','.stat-label',
+        '.hero-tag','.section-label','.section-title',
+        '.mock-title','.mock-name','.mock-sub','.mock-badge',
+        '.footer-copy','.footer-logo','.nav-logo',
+        '.feature h3','.feature p',
+        '.role-card h3','.role-card p',
+        '.cta h2','.cta p'
+      ].join(',');
+
+      /* Recuperar escala guardada en localStorage */
+      let scale = parseInt(localStorage.getItem(LS_KEY) || '100', 10);
+
+      function applyScale(s) {
+        scale = Math.max(MIN, Math.min(MAX, s));
+
+        /* CSS custom property en :root para que los elementos
+           que usen rem hereden el cambio automáticamente.
+           Para los que usen em o px explícito usamos el factor. */
+        const factor = scale / 100;
+        ROOT.style.setProperty('--a11y-scale', factor);
+
+        /* Aplicar font-size proporcional a cada selector */
+        document.querySelectorAll(TARGETS).forEach(el => {
+          /* Leer el tamaño computado original (guardado la 1.ª vez) */
+          if (!el.dataset.baseFontSize) {
+            el.dataset.baseFontSize = parseFloat(
+              getComputedStyle(el).fontSize
+            );
+          }
+          el.style.fontSize = (el.dataset.baseFontSize * factor) + 'px';
+        });
+
+        levelEl.textContent = scale + '%';
+        localStorage.setItem(LS_KEY, scale);
+      }
+
+      document.getElementById('a11y-inc').addEventListener('click', () => applyScale(scale + STEP));
+      document.getElementById('a11y-dec').addEventListener('click', () => applyScale(scale - STEP));
+      document.getElementById('a11y-reset').addEventListener('click', () => {
+        /* Limpiar estilos inline para restaurar CSS original */
+        document.querySelectorAll(TARGETS).forEach(el => {
+          el.style.fontSize = '';
+          delete el.dataset.baseFontSize;
+        });
+        scale = 100;
+        levelEl.textContent = '100%';
+        localStorage.removeItem(LS_KEY);
+      });
+
+      /* Aplicar escala guardada al cargar (si no es 100%) */
+      if (scale !== 100) applyScale(scale);
+    })();
   </script>
 
 </body>

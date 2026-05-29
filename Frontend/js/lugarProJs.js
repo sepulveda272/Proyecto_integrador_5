@@ -15,8 +15,16 @@ document.addEventListener("DOMContentLoaded", () => {
  * Función principal para obtener los datos de la API
  */
 async function cargarLugares() {
+  // MODIFICADO: filtra los lugares por el productor logueado
   try {
-    const response = await fetch(API_URL);
+    const usuarioStorage = JSON.parse(localStorage.getItem("usuario"));
+    if (!usuarioStorage || !usuarioStorage.Id_productor) {
+      showToast("Sesión no válida. Inicie sesión de nuevo.", "error");
+      window.location.href = "../login.html";
+      return;
+    }
+    const idProductor = usuarioStorage.Id_productor;
+    const response = await fetch(`${API_URL}/productor/${idProductor}`);
     const result = await response.json();
 
     if (result.status === "Success") {
@@ -548,8 +556,12 @@ async function cargarNotificaciones() {
     const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
     const idProductor = usuario.Id_productor ?? null;
 
-    // 1. Lugares del productor
-    const resLugares = await fetch(API_URL);
+    // 1. Lugares del productor — usa la ruta filtrada para traer solo los suyos
+    if (!idProductor) {
+      console.warn('cargarNotificaciones: no hay Id_productor en localStorage');
+      return;
+    }
+    const resLugares = await fetch(`${API_URL}/productor/${idProductor}`);
     const dataLugares = await resLugares.json();
     const lugares = (dataLugares.data || []);
     const lugarIds = new Set(lugares.map(l => l.Id_lugar));
@@ -691,15 +703,19 @@ function marcarTodasLeidas() {
 }
 
 function llenarModalDinamico(lugar, lotes) {
-  // 1. Título y Ubicación (usando el primer predio como referencia)
+  // 1. Título y Ubicación — ahora muestra Vereda, Municipio, Departamento reales
   document.querySelector("#modalDetalleLugar .modal-title").innerHTML =
-    `<span>📋</span> ${lugar.Nombre_LugarProduccion}`;
-  const veredaNombre =
-    lugar.predios.length > 0
-      ? "Vereda ID: " + lugar.predios[0].Id_vereda
-      : "Ubicación no definida";
-  document.querySelector("#modalDetalleLugar .px-4.text-muted").innerText =
-    veredaNombre;
+    `<span class="modal-title-icon">🌿</span> ${lugar.Nombre_LugarProduccion}`;
+
+  const primerPredio = lugar.predios && lugar.predios[0];
+  const ubicacionTexto = primerPredio
+    ? [primerPredio.Nombre_Vereda || primerPredio.Ubicacion?.Vereda,
+       primerPredio.Nombre_Municipio || primerPredio.Ubicacion?.Municipio,
+       primerPredio.Nombre_Depart || primerPredio.Ubicacion?.Departamento]
+        .filter(Boolean).join(" · ")
+    : "Ubicación no definida";
+
+  document.querySelector("#modalDetalleLugar .px-4.text-muted").innerText = ubicacionTexto;
 
   // 2. Renderizar Predios
   const prediosCont = document.getElementById("lista-predios-dinamica");
@@ -708,81 +724,170 @@ function llenarModalDinamico(lugar, lotes) {
   let areaTotalLugar = 0;
 
   lugar.predios.forEach((p) => {
-    areaTotalLugar += p.Area_total;
+    areaTotalLugar += parseFloat(p.Area_total) || 0;
+    const vereda = p.Nombre_Vereda || p.Ubicacion?.Vereda || "—";
+    const municipio = p.Nombre_Municipio || p.Ubicacion?.Municipio || "—";
+    const depto = p.Nombre_Depart || p.Ubicacion?.Departamento || "—";
     prediosCont.innerHTML += `
-            <div class="predio-card p-3 border rounded shadow-sm mb-2">
-                <div class="text-success fw-bold mb-1">${p.Nombre_predio}</div>
-                <div class="d-flex justify-content-between small">
-                    <span class="text-muted">Propietario:</span> <strong>${p.Nombre_propietario}</strong>
-                </div>
-                <div class="d-flex justify-content-between small">
-                    <span class="text-muted">Área:</span> <strong>${p.Area_total} ha</strong>
-                </div>
-            </div>`;
+      <div class="mp-predio-card">
+        <div class="mp-predio-header">
+          <span class="mp-predio-icon">🏡</span>
+          <span class="mp-predio-nombre">${p.Nombre_predio}</span>
+          <span class="mp-predio-area-badge">${parseFloat(p.Area_total).toFixed(2)} ha</span>
+        </div>
+        <div class="mp-predio-meta">
+          <div class="mp-meta-item">
+            <span class="mp-meta-label">Propietario</span>
+            <span class="mp-meta-value">${p.Nombre_propietario || "—"}</span>
+          </div>
+          <div class="mp-meta-item">
+            <span class="mp-meta-label">Vereda</span>
+            <span class="mp-meta-value">${vereda}</span>
+          </div>
+          <div class="mp-meta-item">
+            <span class="mp-meta-label">Municipio</span>
+            <span class="mp-meta-value">${municipio}</span>
+          </div>
+          <div class="mp-meta-item">
+            <span class="mp-meta-label">Departamento</span>
+            <span class="mp-meta-value">${depto}</span>
+          </div>
+        </div>
+      </div>`;
   });
 
   statsPredios.innerHTML = `
-        <div class="col-md-6"><div class="stat-card"><label>TOTAL PREDIOS</label><div class="value">${lugar.predios.length}</div></div></div>
-        <div class="col-md-6"><div class="stat-card"><label>ÁREA TOTAL</label><div class="value">${areaTotalLugar.toFixed(2)} ha</div></div></div>
-    `;
+    <div class="col-6">
+      <div class="mp-stat-card">
+        <div class="mp-stat-icon">🏡</div>
+        <div class="mp-stat-info">
+          <div class="mp-stat-label">Total predios</div>
+          <div class="mp-stat-value">${lugar.predios.length}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="mp-stat-card">
+        <div class="mp-stat-icon">📐</div>
+        <div class="mp-stat-info">
+          <div class="mp-stat-label">Área total</div>
+          <div class="mp-stat-value">${areaTotalLugar.toFixed(2)} <small>ha</small></div>
+        </div>
+      </div>
+    </div>`;
 
-  // 3. Renderizar Lotes (Acordeón)
+  // 3. Renderizar Lotes (Acordeón mejorado)
   const lotesCont = document.getElementById("lista-lotes-dinamica");
   const statsLotes = document.getElementById("stats-lotes-container");
   lotesCont.innerHTML = "";
   let areaSiembraAcumulada = 0;
 
+  // Mapa de color por estado fenológico
+  const estadoColor = {
+    "Siembra":      "#e3f2fd",
+    "Germinación":  "#f3e5f5",
+    "Crecimiento":  "#e8f5e9",
+    "Floración":    "#fff8e1",
+    "Maduración":   "#fff3e0",
+    "Cosecha":      "#fce4ec",
+    "Finalizado":   "#f5f5f5"
+  };
+  const estadoAccent = {
+    "Siembra":      "#1976d2",
+    "Germinación":  "#7b1fa2",
+    "Crecimiento":  "#2e7d32",
+    "Floración":    "#f9a825",
+    "Maduración":   "#e65100",
+    "Cosecha":      "#c62828",
+    "Finalizado":   "#757575"
+  };
+
   if (lotes.length === 0) {
-    lotesCont.innerHTML = `<div class="text-center py-4 text-muted">No hay lotes registrados para este lugar.</div>`;
+    lotesCont.innerHTML = `
+      <div class="mp-empty-state">
+        <div class="mp-empty-icon">🌾</div>
+        <div class="mp-empty-text">Sin lotes registrados</div>
+        <div class="mp-empty-sub">Usa el botón 🌾 de la tabla para agregar lotes a este lugar.</div>
+      </div>`;
   } else {
     lotes.forEach((lote, index) => {
-      areaSiembraAcumulada += lote.Area_siembra || 0;
+      areaSiembraAcumulada += parseFloat(lote.Area_siembra) || 0;
       const collapseId = `collapseLote${index}`;
       const fecha = lote.Fecha_siembra
-        ? new Date(lote.Fecha_siembra).toLocaleDateString()
+        ? new Date(lote.Fecha_siembra).toLocaleDateString("es-CO", { year:"numeric", month:"short", day:"numeric" })
         : "No definida";
+      const estado = lote.Estado_fenologico || "—";
+      const bgColor = estadoColor[estado] || "#f5f5f5";
+      const accentColor = estadoAccent[estado] || "#555";
+      const cultivo = lote.datos_cultivo?.Nombre_especie || "—";
 
       lotesCont.innerHTML += `
-                <div class="lote-container mb-2">
-                    <div class="lote-header d-flex justify-content-between align-items-center" 
-                         data-bs-toggle="collapse" 
-                         data-bs-target="#${collapseId}" 
-                         style="cursor: pointer;">
-                        <span>🌽 Lote ${lote.Numero_Lote}</span>
-                        <span class="arrow">▼</span>
-                    </div>
-                    <div id="${collapseId}" class="collapse">
-                        <div class="lote-body p-3 bg-white border border-top-0 rounded-bottom">
-                            <div class="d-flex justify-content-between border-bottom py-2">
-                                <span>Área del lote</span> <strong>${lote.Area_total} ha</strong>
-                            </div>
-                            <div class="d-flex justify-content-between border-bottom py-2">
-                                <span>Área de siembra</span> <strong>${lote.Area_siembra} ha</strong>
-                            </div>
-                            <div class="d-flex justify-content-between border-bottom py-2">
-                                <span>Total de platas</span> <strong>${lote.Total_plantas}</strong>
-                            </div>
-                            <div class="d-flex justify-content-between border-bottom py-2">
-                                <span>Cultivo</span> <strong>${lote.datos_cultivo.Nombre_especie}</strong>
-                            </div>
-                            <div class="d-flex justify-content-between border-bottom py-2">
-                                <span>Estado fenológico</span> <strong>${lote.Estado_fenologico}</strong>
-                            </div>
-                            <div class="d-flex justify-content-between py-2">
-                                <span>Fecha de siembra</span> <strong>${fecha}</strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
+        <div class="mp-lote-card" style="--lote-accent: ${accentColor}; --lote-bg: ${bgColor};">
+          <div class="mp-lote-header" data-bs-toggle="collapse" data-bs-target="#${collapseId}">
+            <div class="mp-lote-header-left">
+              <span class="mp-lote-numero">Lote ${lote.Numero_Lote}</span>
+              <span class="mp-lote-cultivo">🌱 ${cultivo}</span>
+            </div>
+            <div class="mp-lote-header-right">
+              <span class="mp-lote-estado-badge">${estado}</span>
+              <span class="mp-lote-chevron">›</span>
+            </div>
+          </div>
+          <div id="${collapseId}" class="collapse">
+            <div class="mp-lote-body">
+              <div class="mp-lote-grid">
+                <div class="mp-lote-field">
+                  <span class="mp-field-label">Área del lote</span>
+                  <span class="mp-field-value">${parseFloat(lote.Area_total).toFixed(2)} ha</span>
+                </div>
+                <div class="mp-lote-field">
+                  <span class="mp-field-label">Área de siembra</span>
+                  <span class="mp-field-value">${parseFloat(lote.Area_siembra).toFixed(2)} ha</span>
+                </div>
+                <div class="mp-lote-field">
+                  <span class="mp-field-label">Total de plantas</span>
+                  <span class="mp-field-value">${lote.Total_plantas}</span>
+                </div>
+                <div class="mp-lote-field">
+                  <span class="mp-field-label">Fecha de siembra</span>
+                  <span class="mp-field-value">${fecha}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>`;
     });
   }
 
-  // Actualizar Cards de estadísticas de Lotes
+  // Stats de lotes
   statsLotes.innerHTML = `
-        <div class="col-md-4"><div class="stat-card"><label>TOTAL LOTES</label><div class="value">${lotes.length}</div></div></div>
-        <div class="col-md-4"><div class="stat-card"><label>ÁREA TOTAL ACUM.</label><div class="value">${areaTotalLugar.toFixed(2)} ha</div></div></div>
-        <div class="col-md-4"><div class="stat-card"><label>ÁREA SIEMBRA ACUM.</label><div class="value">${areaSiembraAcumulada.toFixed(2)} ha</div></div></div>
-    `;
+    <div class="col-4">
+      <div class="mp-stat-card">
+        <div class="mp-stat-icon">🌾</div>
+        <div class="mp-stat-info">
+          <div class="mp-stat-label">Total lotes</div>
+          <div class="mp-stat-value">${lotes.length}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-4">
+      <div class="mp-stat-card">
+        <div class="mp-stat-icon">📐</div>
+        <div class="mp-stat-info">
+          <div class="mp-stat-label">Área total acum.</div>
+          <div class="mp-stat-value">${areaTotalLugar.toFixed(2)} <small>ha</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-4">
+      <div class="mp-stat-card">
+        <div class="mp-stat-icon">🌱</div>
+        <div class="mp-stat-info">
+          <div class="mp-stat-label">Área siembra acum.</div>
+          <div class="mp-stat-value">${areaSiembraAcumulada.toFixed(2)} <small>ha</small></div>
+        </div>
+      </div>
+    </div>`;
 }
 
 // --- VARIABLES GLOBALES Y ESTADO ---
