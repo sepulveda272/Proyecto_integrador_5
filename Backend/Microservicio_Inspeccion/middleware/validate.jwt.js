@@ -3,7 +3,10 @@ import jwt from 'jsonwebtoken';
 import getConnection from "../database/conection.js";
 
 const validateJWT = async (req = request, res = response, next) => {
-    const { token } = req.cookies;
+    // Lee el token desde el header Authorization: Bearer <token>
+    const authHeader = req.headers['authorization'] || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
 
     if (!token) {
         return res.status(401).json({ msg: 'No hay token en la petición' });

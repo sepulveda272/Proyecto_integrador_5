@@ -1,7 +1,6 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
-import cookieParser from 'cookie-parser';
 
 import loginRouter from "../routes/login.routes.js";
 import tecnicoRouter from "../routes/tecnico.routes.js";
@@ -15,7 +14,6 @@ class Server {
     constructor() {
         this.app = express();
         this.port = process.env.PORT;
-        this.app.use(cookieParser());
 
         this.middlewares();
         this.routes();

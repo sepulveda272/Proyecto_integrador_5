@@ -1,13 +1,8 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
-import cookieParser from 'cookie-parser'
 
 import cultivoRouter from "../routes/cultivo.routes.js"
-//import loginRouter from '../routes/login.routes.js';
-//import candidatosRouter from "../routes/candidato.routes.js";
-//import solicitudesRouter from "../routes/solicitudes.routes.js";
-//import searchRouter from '../routes/search.routes.js'
 
 dotenv.config()
 
@@ -15,17 +10,13 @@ class Server{
     constructor(){
         this.app = express();
         this.port = process.env.PORT
-        this.app.use(cookieParser());
 
         this.middlewares();
         this.routes();
     }
 
     middlewares(){
-        this.app.use(cors(/* {
-            origin: 'http://localhost:3000', // Reemplaza con el dominio de tu aplicación React
-            credentials: true,
-          } */));
+        this.app.use(cors());
         this.app.use(express.json());
     }
 

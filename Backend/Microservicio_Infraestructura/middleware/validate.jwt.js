@@ -3,7 +3,9 @@ import jwt from 'jsonwebtoken';
 import getConnection from "../database/conection.js";
 
 const validateJWT = async (req = request, res = response, next) => {
-    const { token } = req.cookies;
+    // Lee el token desde el header Authorization: Bearer <token>
+    const authHeader = req.headers['authorization'] || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
     if (!token) {
         return res.status(401).json({ msg: 'No hay token en la petición' });
@@ -15,9 +17,6 @@ const validateJWT = async (req = request, res = response, next) => {
 
         // Definimos las tablas y el nombre de su columna ID según tus imágenes
         const tablas = [
-            { nombre: 'Admin', idCol: 'Id_admin', rol: 'ADMIN' },
-            { nombre: 'Funcionario_ICA', idCol: 'Id_funcionario', rol: 'FUNCIONARIO' },
-            { nombre: 'Tecnico_oficial', idCol: 'Id_tecnico', rol: 'TECNICO' },
             { nombre: 'Productor', idCol: 'Id_productor', rol: 'PRODUCTOR' }
         ];
 
