@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 29-05-2026 a las 12:43:11
+-- Tiempo de generación: 31-05-2026 a las 20:29:06
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -216,7 +216,8 @@ CREATE TABLE `productor` (
 
 INSERT INTO `productor` (`Id_productor`, `Numero_identificacion`, `Tipo_identificacion`, `Primer_nombre`, `Segundo_nombre`, `Primer_apellido`, `Segundo_apellido`, `Imagen`, `Celular`, `Correo`, `Password`, `Estado`) VALUES
 (1, '987654321', 'Cédula de ciudadanía', 'Juan', 'David', 'Sepulveda', '', '/uploads/productores/1780050826302-pbkhecyqsu.png', '33184606257', 'prueba2@gmail.com', '$2b$10$XkN53Ix32vRpIeJCsdhodeEMX1tAPd4wJ0jRoSsngjhXC231hwIgy', 'Activo'),
-(2, '123456789', 'Cédula de ciudadanía', 'Luisa', 'Fernanda', 'Marquez', 'Monsalve', 'https://ejemplo.com/fotos/juan.jpg', '3001234567', 'luisa@gmail.com', '$2b$10$8EgXie.nRwmI8dxy4r5hmeAt/J2EDixpi7bF0GaszAg.lNuRPQjI2', 'Activo');
+(2, '123456789', 'Cédula de ciudadanía', 'Luisa', 'Fernanda', 'Marquez', 'Monsalve', 'https://ejemplo.com/fotos/juan.jpg', '3001234567', 'luisa@gmail.com', '$2b$10$8EgXie.nRwmI8dxy4r5hmeAt/J2EDixpi7bF0GaszAg.lNuRPQjI2', 'Inactivo'),
+(3, '11010452545', 'Cédula de ciudadanía', 'Juan', 'Sebastian', 'Angel', 'Rodrigez', '/uploads/productores/1780207172357-8i34reslp9y.jpg', '3015597466', 'angel@gmail.com', '$2b$10$gywWBvXgUO4U/548fXDu0On6/gF/RN/L7vViIYRvbZmmseAdSpNBa', 'Inactivo');
 
 -- --------------------------------------------------------
 
@@ -356,7 +357,7 @@ ALTER TABLE `predio`
 -- AUTO_INCREMENT de la tabla `productor`
 --
 ALTER TABLE `productor`
-  MODIFY `Id_productor` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `Id_productor` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `vereda`

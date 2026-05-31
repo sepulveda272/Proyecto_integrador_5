@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 29-05-2026 a las 12:43:01
+-- Tiempo de generación: 31-05-2026 a las 20:28:55
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -52,7 +52,8 @@ INSERT INTO `afectado` (`Id_afectado`, `Id_cultivo`, `Id_plaga`) VALUES
 (12, 6, 4),
 (13, 6, 7),
 (14, 7, 4),
-(15, 7, 2);
+(15, 7, 2),
+(17, 8, 9);
 
 -- --------------------------------------------------------
 
@@ -80,7 +81,7 @@ INSERT INTO `cultivo` (`Id_cultivo`, `Nombre_especie`, `Variedad`, `Imagen`, `De
 (5, 'Limón', 'Tahití', 'https://upload.wikimedia.org/wikipedia/commons/6/68/Starr_061105-1380_Citrus_aurantiifolia.jpg', 'Cítrico sin semilla, muy resistente pero sensible a vectores'),
 (6, 'Arroz', 'Fedearroz 67', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGfVS3BHDVpJglJRLzWSidEYHWiyGrcSXHkA&s', 'Gramínea que crece en suelos inundados o de alta humedad.'),
 (7, 'Maíz', 'Híbrido Blanco', 'https://image.made-in-china.com/365f3j00mLSodlhPwBbV/Semillas-de-ma-z-h-brido-blanco-dulce-de-alta-calidad-F1-para-plantar.webp', 'Cereal versátil que se cultiva desde el nivel del mar hasta montañas.'),
-(8, 'prueba13', 'prueba12', 'prueba12', 'prueba122');
+(8, 'prueba  cultivo', 'prueba cultivo', '/uploads/cultivos/1780251373737-ldjmj1q2da.jpeg', 'prueba1');
 
 -- --------------------------------------------------------
 
@@ -108,7 +109,8 @@ INSERT INTO `plagas` (`Id_plaga`, `Nombre_cientifico`, `Nombre_comun`, `Imagen`,
 (5, 'Moniliophthora roreri', 'Monilia del Cacao', 'https://progresacaribe.info/wp-content/uploads/2022/08/Monilia-1.jpeg', 'Hongo que pudre internamente las mazorcas de cacao.'),
 (6, 'Stenoma catenifer', 'Pasador del Fruto', 'https://www.invesa.com/wp-content/uploads/2020/10/Pasador-del-fruto-aguacate.jpg', 'Polilla cuyas larvas dañan la semilla del aguacate.'),
 (7, 'Thrips palmi', 'Trips', 'https://static.wixstatic.com/media/1b8a25_e4338fe94f9c4fe3bbe251a87974fb99~mv2.jpg', 'Insectos diminutos que succionan savia y deforman brotes.'),
-(8, 'Diaphorina citri', 'Psílido de Cítricos', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRSZWx9j-pMerhAnIIcyFKZO9VlAKpDREwR_Q&s', 'Pequeño insecto vector de la enfermedad HLB.');
+(8, 'Diaphorina citri', 'Psílido de Cítricos', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRSZWx9j-pMerhAnIIcyFKZO9VlAKpDREwR_Q&s', 'Pequeño insecto vector de la enfermedad HLB.'),
+(9, 'prueba plaga', 'prueba plaga', '/uploads/plagas/1780251411723-aeuxmpk1cus.jpeg', 'prueba');
 
 --
 -- Índices para tablas volcadas
@@ -142,7 +144,7 @@ ALTER TABLE `plagas`
 -- AUTO_INCREMENT de la tabla `afectado`
 --
 ALTER TABLE `afectado`
-  MODIFY `Id_afectado` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `Id_afectado` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT de la tabla `cultivo`
@@ -154,7 +156,7 @@ ALTER TABLE `cultivo`
 -- AUTO_INCREMENT de la tabla `plagas`
 --
 ALTER TABLE `plagas`
-  MODIFY `Id_plaga` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Clave primaria autoincremental', AUTO_INCREMENT=9;
+  MODIFY `Id_plaga` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Clave primaria autoincremental', AUTO_INCREMENT=10;
 
 --
 -- Restricciones para tablas volcadas
