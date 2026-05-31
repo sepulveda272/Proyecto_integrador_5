@@ -1,38 +1,293 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIFEX</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet"  href="../css/main.css">  
-    <link rel="stylesheet" href="../css/intento.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIFEX — Acceso al sistema</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="../css/login.css">
 </head>
+
 <body class="login-page">
-  <div class="card-login">
-    <div class="icon-login">🌿</div>
-    <h1>SIFEX</h1>
-    <p class="subtitle">Acceso al Sistema de Inspección Fitosanitaria para Exportación</p>
 
-    <div class="input-group">
-        <label>Email</label>
-        <input type="email" id="email" placeholder="tunombre@sifex.gov.co">
-    </div>
+  <div class="card-login" id="card-login" role="main">
 
-    <div class="input-group">
-        <label>Contraseña</label>
-        <input type="password" id="password" placeholder="••••••••">
-    </div>
+    <div class="icon-login" aria-hidden="true">🌿</div>
 
-    <button id="btnLogin">Iniciar Sesión</button>
+    <!-- ── PANEL LOGIN ── -->
+    <div id="panel-login">
 
-    <div class="forgot">¿Olvidaste tu contraseña?</div>
+      <h1 aria-live="polite">SIFEX</h1>
+      <p class="subtitle">Acceso al Sistema de Inspección Fitosanitaria para Exportación</p>
 
-    <div class="footer-login">
-        © 2026 Sistema de Inspección Fitosanitaria para Exportación
-    </div>
-  </div>
+      <form id="form-login" novalidate>
 
+        <div class="input-group">
+          <label for="email">Correo electrónico</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="tunombre@sifex.gov.co"
+            autocomplete="username"
+            aria-required="true"
+            aria-describedby="err-login-email"
+          >
+          <span id="err-login-email" class="login-field-error" role="alert"></span>
+        </div>
+
+        <div class="input-group">
+          <label for="password">Contraseña</label>
+          <div class="pass-wrapper">
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              aria-required="true"
+              aria-describedby="err-login-pass"
+            >
+            <button
+              type="button"
+              class="pass-toggle"
+              aria-label="Mostrar contraseña"
+              aria-controls="password"
+              tabindex="0"
+              onclick="togglePass('password', this)"
+            >
+              <svg class="eye-icon eye-show" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg class="eye-icon eye-hide" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:none">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+          <span id="err-login-pass" class="login-field-error" role="alert"></span>
+        </div>
+
+        <button id="btnLogin" type="submit">Iniciar sesión</button>
+
+      </form>
+
+      <p class="registro-texto registro-texto--top">
+        ¿Aún no estás registrado?
+        <a href="#" class="link-registro"
+          onclick="switchToPanel('panel-registro'); return false;"
+          aria-controls="panel-registro"
+          aria-label="Ir al formulario de registro"
+        >Regístrate aquí</a>
+      </p>
+
+      <a href="#" class="forgot">¿Olvidaste tu contraseña?</a>
+
+    </div><!-- /panel-login -->
+
+
+    <!-- ── PANEL REGISTRO ── -->
+    <div id="panel-registro" hidden>
+
+      <h1 aria-live="polite">Crear cuenta</h1>
+      <p class="subtitle">Completa los datos para solicitar acceso al sistema.</p>
+
+      <!-- Selector de rol — define a qué microservicio se envía el registro -->
+      <div class="rol-selector" id="rol-selector">
+        <p class="rol-selector-label">¿Cómo vas a usar el sistema?</p>
+        <div class="rol-opciones">
+          <button type="button" class="rol-btn" data-rol="PRODUCTOR" onclick="seleccionarRol('PRODUCTOR', this)">
+            <span class="rol-icon">🌾</span>
+            <span class="rol-nombre">Productor</span>
+          </button>
+          <button type="button" class="rol-btn" data-rol="TECNICO" onclick="seleccionarRol('TECNICO', this)">
+            <span class="rol-icon">🔬</span>
+            <span class="rol-nombre">Técnico oficial</span>
+          </button>
+          <button type="button" class="rol-btn" data-rol="FUNCIONARIO" onclick="seleccionarRol('FUNCIONARIO', this)">
+            <span class="rol-icon">🏛️</span>
+            <span class="rol-nombre">Funcionario ICA</span>
+          </button>
+        </div>
+        <span id="err-rol" class="login-field-error" role="alert"></span>
+      </div>
+
+      <div class="form-registro-scroll">
+        <form id="form-registro" novalidate>
+
+          <!-- Bloque 1: Identificación -->
+          <div class="input-group">
+            <label for="reg-tipo-doc">Tipo de identificación <span class="campo-requerido" aria-hidden="true">*</span></label>
+            <select id="reg-tipo-doc" name="tipo_identificacion" aria-required="true" aria-describedby="err-reg-tipo-doc">
+              <option value="" disabled selected>Selecciona un tipo…</option>
+              <option value="Cédula de ciudadanía">Cédula de Ciudadanía (CC)</option>
+              <option value="Cédula de extranjería">Cédula de Extranjería (CE)</option>
+              <option value="Tarjeta de identidad">Tarjeta de Identidad (TI)</option>
+              <option value="Pasaporte">Pasaporte (PA)</option>
+            </select>
+            <span id="err-reg-tipo-doc" class="login-field-error" role="alert"></span>
+          </div>
+
+          <div class="input-group">
+            <label for="reg-numero-doc">Número de identificación <span class="campo-requerido" aria-hidden="true">*</span></label>
+            <input type="text" id="reg-numero-doc" name="numero_identificacion"
+              placeholder="Ej. 10345678" autocomplete="off" inputmode="numeric"
+              aria-required="true" aria-describedby="err-reg-numero-doc">
+            <span id="err-reg-numero-doc" class="login-field-error" role="alert"></span>
+          </div>
+
+          <div class="login-divider" aria-hidden="true"></div>
+
+          <!-- Bloque 2: Nombre completo -->
+          <div class="input-group">
+            <label for="reg-primer-nombre">Primer nombre <span class="campo-requerido" aria-hidden="true">*</span></label>
+            <input type="text" id="reg-primer-nombre" name="primer_nombre"
+              placeholder="Ej. María" autocomplete="given-name"
+              aria-required="true" aria-describedby="err-reg-primer-nombre">
+            <span id="err-reg-primer-nombre" class="login-field-error" role="alert"></span>
+          </div>
+
+          <div class="input-group">
+            <label for="reg-segundo-nombre">Segundo nombre <span class="campo-opcional">(opcional)</span></label>
+            <input type="text" id="reg-segundo-nombre" name="segundo_nombre"
+              placeholder="Ej. Lucía" autocomplete="additional-name">
+          </div>
+
+          <div class="input-group">
+            <label for="reg-primer-apellido">Primer apellido <span class="campo-requerido" aria-hidden="true">*</span></label>
+            <input type="text" id="reg-primer-apellido" name="primer_apellido"
+              placeholder="Ej. Pérez" autocomplete="family-name"
+              aria-required="true" aria-describedby="err-reg-primer-apellido">
+            <span id="err-reg-primer-apellido" class="login-field-error" role="alert"></span>
+          </div>
+
+          <div class="input-group">
+            <label for="reg-segundo-apellido">Segundo apellido <span class="campo-opcional">(opcional)</span></label>
+            <input type="text" id="reg-segundo-apellido" name="segundo_apellido"
+              placeholder="Ej. Gómez" autocomplete="off">
+          </div>
+
+          <div class="login-divider" aria-hidden="true"></div>
+
+          <!-- Bloque 3: Contacto -->
+          <div class="input-group">
+            <label for="reg-celular">Celular <span class="campo-requerido" aria-hidden="true">*</span></label>
+            <input type="tel" id="reg-celular" name="celular"
+              placeholder="Ej. 3001234567" autocomplete="tel" inputmode="numeric"
+              aria-required="true" aria-describedby="err-reg-celular">
+            <span id="err-reg-celular" class="login-field-error" role="alert"></span>
+          </div>
+
+          <div class="input-group">
+            <label for="reg-correo">Correo electrónico <span class="campo-requerido" aria-hidden="true">*</span></label>
+            <input type="email" id="reg-correo" name="correo"
+              placeholder="tunombre@sifex.gov.co" autocomplete="email"
+              aria-required="true" aria-describedby="err-reg-correo">
+            <span id="err-reg-correo" class="login-field-error" role="alert"></span>
+          </div>
+
+          <div class="login-divider" aria-hidden="true"></div>
+
+          <!-- Bloque 4: Foto de perfil -->
+          <div class="input-group input-group--full">
+            <label>Foto de perfil <span class="campo-opcional">(opcional)</span></label>
+            <div class="foto-upload" id="foto-upload" onclick="document.getElementById('reg-imagen').click()" role="button" tabindex="0"
+              onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('reg-imagen').click()">
+              <div class="foto-preview-wrap">
+                <div class="foto-placeholder" id="foto-placeholder">
+                  <span class="foto-placeholder-icon">📷</span>
+                  <span class="foto-placeholder-text">Haz clic para subir tu foto</span>
+                  <span class="foto-placeholder-sub">JPG, PNG o WEBP · máx. 2 MB</span>
+                </div>
+                <img id="foto-preview" class="foto-preview" src="" alt="Vista previa de la foto" style="display:none">
+              </div>
+              <input type="file" id="reg-imagen" name="Imagen" accept="image/jpeg,image/png,image/webp"
+                style="display:none" onchange="previewImagen(this)">
+            </div>
+            <button type="button" class="foto-quitar" id="foto-quitar" style="display:none"
+              onclick="quitarImagen()">✕ Quitar foto</button>
+            <span id="err-reg-imagen" class="login-field-error" role="alert"></span>
+          </div>
+
+          <div class="login-divider" aria-hidden="true"></div>
+
+          <!-- Bloque 5: Contraseña -->
+          <div class="input-group input-group--full">
+            <label for="reg-pass">Contraseña <span class="campo-requerido" aria-hidden="true">*</span></label>
+            <div class="pass-wrapper">
+              <input type="password" id="reg-pass" name="password"
+                placeholder="Mínimo 8 caracteres" autocomplete="new-password"
+                aria-required="true" aria-describedby="err-reg-pass pass-meter-desc">
+              <button type="button" class="pass-toggle"
+                aria-label="Mostrar contraseña" aria-controls="reg-pass"
+                tabindex="0" onclick="togglePass('reg-pass', this)">
+                <svg class="eye-icon eye-show" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg class="eye-icon eye-hide" viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="display:none">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+            <span id="err-reg-pass" class="login-field-error" role="alert"></span>
+
+            <div class="pass-meter" id="pass-meter" aria-hidden="true">
+              <div class="pass-meter-bar">
+                <span class="pass-meter-seg" id="pm-seg-1"></span>
+                <span class="pass-meter-seg" id="pm-seg-2"></span>
+                <span class="pass-meter-seg" id="pm-seg-3"></span>
+              </div>
+              <span class="pass-meter-label" id="pass-meter-label"></span>
+            </div>
+            <span id="pass-meter-desc" class="sr-only" aria-live="polite" aria-atomic="true"></span>
+
+            <ul class="pass-req-list" id="pass-req-list" aria-label="Requisitos de contraseña">
+              <li id="req-len"    class="pass-req"><span class="req-icon" aria-hidden="true">○</span> Mínimo 8 caracteres</li>
+              <li id="req-upper"  class="pass-req"><span class="req-icon" aria-hidden="true">○</span> Al menos una mayúscula</li>
+              <li id="req-number" class="pass-req"><span class="req-icon" aria-hidden="true">○</span> Al menos un número</li>
+              <li id="req-symbol" class="pass-req"><span class="req-icon" aria-hidden="true">○</span> Al menos un símbolo especial</li>
+            </ul>
+          </div>
+
+          <button type="submit">Solicitar acceso</button>
+
+        </form>
+      </div><!-- /form-registro-scroll -->
+
+      <p class="registro-texto">
+        ¿Ya tienes cuenta?
+        <a href="#" class="link-registro"
+          onclick="switchToPanel('panel-login'); return false;"
+          aria-controls="panel-login"
+          aria-label="Volver al formulario de inicio de sesión"
+        >Inicia sesión aquí</a>
+      </p>
+
+    </div><!-- /panel-registro -->
+
+    <p class="footer-login">© 2026 Sistema de Inspección Fitosanitaria para Exportación</p>
+
+  </div><!-- /card-login -->
+
+  <!--
+    loginJs.js:  contiene la lógica de autenticación original del proyecto
+                 (admin fijo + microservicios puerto 9000 y 8003).
+    login.js:    agrega togglePass() y switchToPanel() para el diseño nuevo.
+    registro.js: medidor de contraseña y validación del formulario de registro.
+  -->
+  <!-- login.js PRIMERO: define togglePass() y switchToPanel() que el HTML
+       llama con onclick inline. Si carga después, los botones no responden. -->
+  <script src="../js/login.js"></script>
+  <!-- loginJs.js: lógica de autenticación (admin + microservicios) -->
   <script src="../js/loginJs.js"></script>
+  <!-- registro.js: medidor de contraseña y validación del panel registro -->
+  <script src="../js/registro.js"></script>
+
 </body>
 </html>

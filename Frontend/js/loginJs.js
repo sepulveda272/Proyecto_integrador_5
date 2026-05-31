@@ -1,13 +1,16 @@
-const loginButton   = document.querySelector('button');
-const emailInput    = document.querySelector('input[type="email"]');
-const passwordInput = document.querySelector('input[type="password"]');
+// ─── Selectores específicos — compatibles con el nuevo HTML ──────────────────
+// Antes: querySelector('button') agarraba el botón del ojo (primer botón del DOM)
+// Ahora: usamos el id #btnLogin para apuntar exactamente al botón correcto
+const loginButton   = document.getElementById('btnLogin');
+const emailInput    = document.getElementById('email');
+const passwordInput = document.getElementById('password');
 
-// ─── Credenciales fijas del administrador ────────────────────────────────────────────
+// ─── Credenciales fijas del administrador ────────────────────────────────────
 const ADMIN_CREDENTIALS = {
     correo:   'sepulvedarojasjuandavid@gmail.com',
     password: 'juan123'
 };
-// ────────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 
 loginButton.addEventListener('click', async (e) => {
     e.preventDefault();
@@ -57,7 +60,6 @@ loginButton.addEventListener('click', async (e) => {
             const resultInfra = await respInfra.json();
 
             if (respInfra.ok) {
-                // El microservicio de infraestructura no devuelve rol; lo asignamos aquí
                 resultInfra.data.rol = 'PRODUCTOR';
                 _guardarYRedirigir(resultInfra);
                 return;

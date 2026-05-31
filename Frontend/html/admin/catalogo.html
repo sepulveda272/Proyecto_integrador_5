@@ -7,7 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="../../css/general.css">
     <link rel="stylesheet" href="../../css/admin.css">
-    <link rel="stylesheet" href="../../css/intento.css">
 
     <style>
       /* ── Miniatura circular en la columna "Nombre especie" ── */
@@ -295,6 +294,8 @@
         color: #9ca3af;
         font-style: italic;
       }
+
+      .plag-badge-cultivo { display:inline-block;font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:20px;margin:1px;background:#e8f5e9;color:#2e7d32; }
     </style>
 
 </head>
@@ -321,13 +322,8 @@
             <span class="icon" aria-hidden="true">👥</span> Usuarios
         </a>
 
-        <!-- Ítem: Gestión de lugares (activo en esta vista) -->
-        <a class="nav-item" href="gestionLugares.html" aria-current="page">
-            <span class="icon" aria-hidden="true">🌱</span> Lugares de producción
-        </a>
-
         <!-- Ítem: Catálogo de plantas y cultivos -->
-        <a class="nav-item" href="catalogo.html">
+        <a class="nav-item" href="catalogo.html" aria-current="page">
             <span class="icon" aria-hidden="true">📋</span> Catálogo
         </a>
 
@@ -347,7 +343,7 @@
                         <!-- Encabezado -->
                         <div class="gu-header">
                             <div class="gu-header__titles">
-                                <h1>Catálogo</h1>
+                                <h1>Catálogo de cultivos y plagas</h1>
                                 <p>Administre los cultivos y las plagas registrados en el sistema.</p>
                             </div>
                             <button class="gu-btn-nuevo" id="cat-btn-nuevo" aria-label="Agregar registro">
