@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 
 import cultivoRouter from "../routes/cultivo.routes.js"
+import plagaRouter   from "../routes/plaga.routes.js";
 
 dotenv.config()
 
@@ -18,10 +19,12 @@ class Server{
     middlewares(){
         this.app.use(cors());
         this.app.use(express.json());
+        this.app.use("/uploads", express.static("uploads"));
     }
 
     routes(){
         this.app.use("/cultivo", cultivoRouter);
+        this.app.use("/plaga",   plagaRouter);  
     }
 
     listen(){
