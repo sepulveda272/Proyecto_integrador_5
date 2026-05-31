@@ -19,19 +19,18 @@ export const getLotes = async (req, res) => {
         const lotesConCultivo = await Promise.all(lotes.map(async (lote) => {
             try {
                 const response = await axios.get(`${CULTIVOS_SERVICE_URL}/${lote.Id_cultivo}`);
-                const datosCultivo = response.data;
+                // getCultivo devuelve { status: "Success", data: { Id_cultivo, Nombre_especie, Imagen, ... } }
+                const datosCultivo = response.data?.data ?? null;
 
-                // Como tu microservicio devuelve un array [ { ... } ]
-                // Extraemos el primer elemento si existe
                 return {
                     ...lote,
-                    datos_cultivo: datosCultivo.length > 0 ? datosCultivo[0] : "Cultivo no encontrado"
+                    datos_cultivo: datosCultivo ?? null
                 };
             } catch (error) {
                 // Si falla el microservicio de cultivos para un lote específico
                 return {
                     ...lote,
-                    datos_cultivo: "Error al conectar con microservicio"
+                    datos_cultivo: null
                 };
             }
         }));
@@ -88,12 +87,10 @@ export const addLote = async (req, res) => {
         try {
             const responseCultivo = await axios.get(`${CULTIVOS_SERVICE_URL}/${Id_cultivo}`);
             
-            // IMPORTANTE: Como tu getCultivo hace res.json(result), 
-            // responseCultivo.data es un ARREGLO [ {...} ]
-            const datosCultivo = responseCultivo.data; 
+            // getCultivo devuelve { status: "Success", data: { Id_cultivo, ... } }
+            const datosCultivo = responseCultivo.data?.data;
 
-            // Si el arreglo está vacío, el cultivo no existe en la BD del otro microservicio
-            if (!datosCultivo || datosCultivo.length === 0) {
+            if (!datosCultivo) {
                 return res.status(404).json({
                     status: "Error",
                     message: `El cultivo con ID ${Id_cultivo} no existe.`
@@ -157,7 +154,7 @@ export const updateLote = async (req, res) => {
         if (Id_cultivo) {
             try {
                 const response = await axios.get(`${CULTIVOS_SERVICE_URL}/${Id_cultivo}`);
-                if (!response.data || response.data.length === 0) {
+                if (!response.data?.data) {
                     return res.status(404).json({
                         status: "Error",
                         message: "El nuevo cultivo asignado no existe."
